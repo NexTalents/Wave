@@ -1,4 +1,5 @@
 export { RequireAuth } from "./guards"
 export { AuthProvider } from "./provider"
 export { hasPermission, permissions, organizationRoles, rolePermissions } from "./permissions"
+export { useCurrentUser } from "./use-current-user"
 export type { OrganizationRole, Permission } from "./permissions"

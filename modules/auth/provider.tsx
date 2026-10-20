@@ -8,13 +8,13 @@ import { useMemo, type ReactNode } from "react"
 export function AuthProvider({ children }: { children: ReactNode }) {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-  const convex = useMemo(() => new ConvexReactClient(convexUrl ?? ""), [convexUrl])
+  const convex = useMemo(() => (convexUrl ? new ConvexReactClient(convexUrl) : null), [convexUrl])
 
   if (!publishableKey) {
     throw new Error("Missing NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY")
   }
 
-  if (!convexUrl) {
+  if (!convex) {
     throw new Error("Missing NEXT_PUBLIC_CONVEX_URL")
   }
 
