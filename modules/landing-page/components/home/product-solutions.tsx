@@ -20,7 +20,7 @@ function PhoneMockup({ index }: { index: number }) {
           fill
           key={item.id}
           priority={index === 0}
-          sizes="(max-width: 1199px) 220px, 600px"
+          sizes="(max-width: 1199px) 220px, 380px"
           src={item.image.src}
         />
       </div>
@@ -90,13 +90,13 @@ export function ProductSolutions() {
       className="relative h-[400svh] bg-brand-700 text-white desktop:h-[300svh]"
     >
       <div className="sticky top-0 h-svh overflow-hidden">
-      <div className="mx-auto grid h-full max-w-[1440px] grid-rows-[auto_minmax(0,1fr)_auto] px-5 py-14 md:px-8 md:py-10 desktop:grid-cols-[0.8fr_1.3fr_0.9fr] desktop:grid-rows-1 desktop:items-center desktop:px-[72px] desktop:py-12">
-          <h2 className="max-w-[360px] text-[24px] leading-[1.32] md:max-w-[250px] md:text-[30px] md:leading-[1.2] desktop:max-w-[360px] desktop:self-start desktop:pt-24 desktop:text-[38px] desktop:leading-[1.4]" id="products-heading">
+      <div className="mx-auto grid h-full max-w-[1440px] grid-rows-[auto_minmax(0,1fr)_auto] px-5 py-14 md:px-8 md:py-10 desktop:!grid-cols-[0.8fr_1.3fr_0.9fr] desktop:grid-rows-1 desktop:items-center desktop:px-[72px] desktop:py-12">
+          <h2 className="max-w-[360px] text-[24px] leading-[1.32] md:max-w-[250px] md:text-[30px] md:leading-[1.2] desktop:!max-w-[360px] desktop:self-start desktop:pt-24 desktop:!text-[38px] desktop:!leading-[1.4]" id="products-heading">
             {products.heading}
           </h2>
 
           <div className="flex min-h-0 translate-y-2 items-center justify-center py-4 desktop:h-full desktop:translate-y-0 desktop:py-0">
-            <div className="w-[205px] md:w-[215px] lg:w-[230px] desktop:w-[600px]">
+            <div className="w-[205px] md:w-[215px] lg:w-[230px] desktop:!w-[380px]">
               <PhoneMockup index={activeIndex} />
             </div>
           </div>
