@@ -36,3 +36,26 @@ export function PrivatePanel() {
 ```
 
 New business modules should add a permission to `permissions.ts` only when the feature exists, then call the Convex authorization helper before reading or writing organization data.
+
+## Client API
+
+Use `useCurrentUser` after the provider is mounted. It creates the local Convex profile the first time an authenticated Clerk session is seen.
+
+```tsx
+import { useCurrentUser } from "@/modules/auth"
+
+const user = useCurrentUser()
+```
+
+## Convex API
+
+Organization-scoped mutations should derive the actor from the session and check the permission before changing data:
+
+```ts
+import { requirePermission } from "../auth/authorization"
+import { permissions } from "../../modules/auth/permissions"
+
+const actor = await requirePermission(ctx, args.organizationId, permissions.depositsCreate)
+```
+
+Do not accept a user ID from the client for authorization, and do not use a UI guard as a security check. The Convex function is the enforcement point.
