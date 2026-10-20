@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useId, useRef, useState } from "react"
+import { useId, useState } from "react"
 import { cn } from "@/modules/landing-page/utils"
 
 export function Disclosure({
@@ -41,25 +41,4 @@ export function Disclosure({
       </div>
     </div>
   )
-}
-
-export function useDisclosureOutside<T extends HTMLElement>(onOutside: () => void) {
-  const ref = useRef<T | null>(null)
-
-  useEffect(() => {
-    function onPointerDown(event: PointerEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) onOutside()
-    }
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onOutside()
-    }
-    document.addEventListener("pointerdown", onPointerDown)
-    document.addEventListener("keydown", onKeyDown)
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown)
-      document.removeEventListener("keydown", onKeyDown)
-    }
-  }, [onOutside])
-
-  return ref
 }
