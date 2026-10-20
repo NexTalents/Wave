@@ -20,7 +20,7 @@ function PhoneMockup({ index }: { index: number }) {
           fill
           key={item.id}
           priority={index === 0}
-          sizes="(max-width: 1199px) 220px, 380px"
+          sizes="(max-width: 1199px) 220px, 460px"
           src={item.image.src}
         />
       </div>
@@ -87,7 +87,7 @@ export function ProductSolutions() {
     <section
       ref={ref}
       aria-labelledby="products-heading"
-      className="relative h-[400svh] bg-brand-700 text-white"
+      className="relative h-[400svh] bg-brand-700 text-white desktop:h-[300svh]"
     >
       <div className="sticky top-0 h-svh overflow-hidden">
       <div className="mx-auto grid h-full max-w-[1440px] grid-rows-[auto_minmax(0,1fr)_auto] px-5 py-14 md:px-8 md:py-10 desktop:grid-cols-[0.95fr_1.15fr_0.9fr] desktop:grid-rows-1 desktop:items-center desktop:px-[72px] desktop:py-12">
@@ -96,7 +96,7 @@ export function ProductSolutions() {
           </h2>
 
           <div className="flex min-h-0 translate-y-2 items-center justify-center py-4 desktop:h-full desktop:translate-y-0 desktop:py-0">
-            <div className="w-[205px] md:w-[215px] lg:w-[230px] desktop:w-[380px]">
+            <div className="w-[205px] md:w-[215px] lg:w-[230px] desktop:w-[460px]">
               <PhoneMockup index={activeIndex} />
             </div>
           </div>
