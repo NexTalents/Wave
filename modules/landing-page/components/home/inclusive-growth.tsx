@@ -1,10 +1,10 @@
 "use client"
 
 import Image from "next/image"
-import { useScrollProgress } from "@/modules/amartha-landing-page/components/motion/use-scroll-progress"
-import { homeAssets } from "@/modules/amartha-landing-page/config"
-import { type Scene } from "@/modules/amartha-landing-page/config"
-import { useLocalizedContent } from "@/modules/amartha-landing-page/language"
+import { useScrollProgress } from "@/modules/landing-page/components/motion/use-scroll-progress"
+import { homeAssets } from "@/modules/landing-page/config"
+import { type Scene } from "@/modules/landing-page/config"
+import { useLocalizedContent } from "@/modules/landing-page/language"
 
 const clamp = (value: number) => Math.min(1, Math.max(0, value))
 

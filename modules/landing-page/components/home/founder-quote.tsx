@@ -2,9 +2,9 @@
 
 import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
-import { PageContainer } from "@/modules/amartha-landing-page/components/layout/page-container"
-import { homeAssets } from "@/modules/amartha-landing-page/config"
-import { useLocalizedContent } from "@/modules/amartha-landing-page/language"
+import { PageContainer } from "@/modules/landing-page/components/layout/page-container"
+import { homeAssets } from "@/modules/landing-page/config"
+import { useLocalizedContent } from "@/modules/landing-page/language"
 
 export function FounderQuote() {
   const { home: localizedHome } = useLocalizedContent()

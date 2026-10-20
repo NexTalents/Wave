@@ -1,6 +1,6 @@
 import Link from "next/link"
-import type { LinkRef } from "@/modules/amartha-landing-page/config"
-import { cn } from "@/modules/amartha-landing-page/utils"
+import type { LinkRef } from "@/modules/landing-page/config"
+import { cn } from "@/modules/landing-page/utils"
 
 const base =
   "inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-colors duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:outline-2 focus-visible:outline-offset-2"
@@ -38,4 +38,3 @@ export function ActionLink({
     </Link>
   )
 }
-

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useId, useRef, useState } from "react"
-import { cn } from "@/modules/amartha-landing-page/utils"
+import { cn } from "@/modules/landing-page/utils"
 
 export function Disclosure({
   summary,
@@ -63,4 +63,3 @@ export function useDisclosureOutside<T extends HTMLElement>(onOutside: () => voi
 
   return ref
 }
-

@@ -1,11 +1,11 @@
 "use client"
 
 import Image from "next/image"
-import { ActionLink } from "@/modules/amartha-landing-page/components/primitives/action-link"
-import { useScrollProgress } from "@/modules/amartha-landing-page/components/motion/use-scroll-progress"
-import { homeAssets } from "@/modules/amartha-landing-page/config"
-import { cn } from "@/modules/amartha-landing-page/utils"
-import { useLocalizedContent } from "@/modules/amartha-landing-page/language"
+import { ActionLink } from "@/modules/landing-page/components/primitives/action-link"
+import { useScrollProgress } from "@/modules/landing-page/components/motion/use-scroll-progress"
+import { homeAssets } from "@/modules/landing-page/config"
+import { cn } from "@/modules/landing-page/utils"
+import { useLocalizedContent } from "@/modules/landing-page/language"
 
 function PhoneMockup({ index }: { index: number }) {
   const { home: localizedHome } = useLocalizedContent()

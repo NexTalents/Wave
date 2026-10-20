@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useMemo, useState } from "react"
-import { homeByLanguage, siteByLanguage, type Language } from "@/modules/amartha-landing-page/config"
+import { homeByLanguage, siteByLanguage, type Language } from "@/modules/landing-page/config"
 
 type LanguageContextValue = { language: Language; setLanguage: (language: Language) => void }
 const LanguageContext = createContext<LanguageContextValue | null>(null)

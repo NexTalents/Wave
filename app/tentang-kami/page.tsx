@@ -1,18 +1,18 @@
 "use client"
 
-import { PageContainer } from "@/modules/amartha-landing-page/components/layout/page-container"
-import { SiteFooter } from "@/modules/amartha-landing-page/components/layout/site-footer"
-import { SiteHeader } from "@/modules/amartha-landing-page/components/layout/site-header"
-import { ActionLink } from "@/modules/amartha-landing-page/components/primitives/action-link"
-import { aboutByLanguage } from "@/modules/amartha-landing-page/config"
-import { LanguageProvider, useLanguage } from "@/modules/amartha-landing-page/language"
+import { PageContainer } from "@/modules/landing-page/components/layout/page-container"
+import { SiteFooter } from "@/modules/landing-page/components/layout/site-footer"
+import { SiteHeader } from "@/modules/landing-page/components/layout/site-header"
+import { ActionLink } from "@/modules/landing-page/components/primitives/action-link"
+import { aboutByLanguage } from "@/modules/landing-page/config"
+import { LanguageProvider, useLanguage } from "@/modules/landing-page/language"
 
 function AboutContent() {
   const { language } = useLanguage()
   const about = aboutByLanguage[language]
 
   return (
-    <div className="amartha-landing min-h-screen">
+    <div className="wave-landing min-h-screen">
       <SiteHeader />
       <main className="bg-white px-5 pb-24 pt-36 desktop:px-10 desktop:pt-48">
         <PageContainer>

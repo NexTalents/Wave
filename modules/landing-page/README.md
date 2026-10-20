@@ -1,11 +1,11 @@
-# Amartha Landing Page Module
+# WAVE Landing Page Module
 
 Reusable landing-page UI for Wave. The page is intentionally isolated under this directory so the host app only needs to mount the module and load its styles.
 
 ## Mount
 
 ```tsx
-import { LandingPage } from "@/modules/amartha-landing-page"
+import { LandingPage } from "@/modules/landing-page"
 
 export default function Page() {
   return <LandingPage />
@@ -29,6 +29,5 @@ The section components are presentational and consume this centralized configura
 - `components/layout`: header, footer, and page container.
 - `components/motion`: scroll progress and smooth-scroll behavior.
 - `components/primitives`: links and disclosure UI.
-- `styles.css`: Amartha design tokens, responsive breakpoint, and module animations.
+- `styles.css`: WAVE design tokens, responsive breakpoint, and module animations.
 - `index.ts`: public module entry point.
-

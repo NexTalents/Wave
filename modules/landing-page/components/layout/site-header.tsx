@@ -4,9 +4,9 @@ import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useId, useRef, useState } from "react"
-import { homeAssets } from "@/modules/amartha-landing-page/config"
-import { useLanguage, useLocalizedContent } from "@/modules/amartha-landing-page/language"
-import { cn } from "@/modules/amartha-landing-page/utils"
+import { homeAssets } from "@/modules/landing-page/config"
+import { useLanguage, useLocalizedContent } from "@/modules/landing-page/language"
+import { cn } from "@/modules/landing-page/utils"
 
 type HeaderMode = "visible" | "hidden"
 

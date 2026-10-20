@@ -1,8 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ActionLink } from "@/modules/amartha-landing-page/components/primitives/action-link"
-import { useLocalizedContent } from "@/modules/amartha-landing-page/language"
+import { ActionLink } from "@/modules/landing-page/components/primitives/action-link"
+import { useLocalizedContent } from "@/modules/landing-page/language"
 
 export function HomeHero() {
   const { home: localizedHome } = useLocalizedContent()

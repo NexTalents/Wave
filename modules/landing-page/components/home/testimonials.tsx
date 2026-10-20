@@ -2,9 +2,9 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { PageContainer } from "@/modules/amartha-landing-page/components/layout/page-container"
-import { cn } from "@/modules/amartha-landing-page/utils"
-import { useLocalizedContent } from "@/modules/amartha-landing-page/language"
+import { PageContainer } from "@/modules/landing-page/components/layout/page-container"
+import { cn } from "@/modules/landing-page/utils"
+import { useLocalizedContent } from "@/modules/landing-page/language"
 
 export function TestimonialsCarousel() {
   const { home: localizedHome } = useLocalizedContent()

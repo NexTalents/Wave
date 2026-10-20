@@ -1,10 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import type { LinkRef } from "@/modules/amartha-landing-page/config"
-import { PageContainer } from "@/modules/amartha-landing-page/components/layout/page-container"
-import { Disclosure } from "@/modules/amartha-landing-page/components/primitives/disclosure"
-import { useLocalizedContent } from "@/modules/amartha-landing-page/language"
+import type { LinkRef } from "@/modules/landing-page/config"
+import { PageContainer } from "@/modules/landing-page/components/layout/page-container"
+import { Disclosure } from "@/modules/landing-page/components/primitives/disclosure"
+import { useLocalizedContent } from "@/modules/landing-page/language"
 
 function FooterLink({ link }: { link: LinkRef }) {
   const external = link.external || /^https?:\/\//.test(link.href)
