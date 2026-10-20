@@ -2,7 +2,7 @@ import { v } from "convex/values"
 import { mutation, query } from "../_generated/server"
 import { getCurrentUser, requireUser, writeAuditLog } from "./authorization"
 
-const organizationType = v.union(
+const organizationCreationType = v.union(
   v.literal("bank_sampah"),
   v.literal("aggregator"),
   v.literal("industrial_buyer"),
@@ -13,7 +13,7 @@ const organizationType = v.union(
 )
 
 export const create = mutation({
-  args: { name: v.string(), type: organizationType },
+  args: { name: v.string(), type: organizationCreationType },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx)
     const name = args.name.trim()
