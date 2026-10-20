@@ -16,7 +16,6 @@ const CONTENT_HUB_ORIGIN = "https://content-hub.amartha.com/uploads"
 const contentHub = (file: string, alt: string, width?: number, height?: number): ReferenceAsset => ({ src: `${CONTENT_HUB_ORIGIN}/${file}`, alt, width, height })
 
 export const homeAssets = {
-  logo: { src: `${WAVE_ORIGIN}/logo.svg`, alt: "WAVE", width: 144, height: 36 } satisfies ReferenceAsset,
   hero: { video: `${WAVE_ORIGIN}/hero-video.mp4`, videoMobile: `${WAVE_ORIGIN}/hero-video-mobile.mp4` },
   inclusive: {
     petals: [

@@ -78,13 +78,7 @@ export function FounderQuote() {
               {founderQuote.name}
             </cite>
             <span className="block text-[16px] leading-tight text-muted desktop:text-[18px]">{founderQuote.role}</span>
-            <Image
-              alt={homeAssets.logo.alt}
-              className="mt-5 h-auto w-[164px] desktop:mt-6 desktop:w-[160px]"
-              height={homeAssets.logo.height ?? 36}
-              src={homeAssets.logo.src}
-              width={homeAssets.logo.width ?? 144}
-            />
+            <span className="mt-5 inline-block text-2xl font-semibold tracking-[-0.04em] text-brand-500 desktop:mt-6">WAVE</span>
           </footer>
         </blockquote>
       </PageContainer>

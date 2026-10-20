@@ -1,10 +1,8 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect, useId, useRef, useState } from "react"
-import { homeAssets } from "@/modules/landing-page/config"
 import { useLanguage, useLocalizedContent } from "@/modules/landing-page/language"
 import { cn } from "@/modules/landing-page/utils"
 
@@ -12,15 +10,8 @@ type HeaderMode = "visible" | "hidden"
 
 function Logo() {
   return (
-    <Link className="flex shrink-0 items-center" href="/" aria-label="WAVE, ke beranda">
-      <Image
-        alt="WAVE"
-        className="h-auto w-36"
-        height={homeAssets.logo.height ?? 36}
-        priority
-        src={homeAssets.logo.src}
-        width={homeAssets.logo.width ?? 144}
-      />
+    <Link className="flex h-9 shrink-0 items-center" href="/" aria-label="WAVE, ke beranda">
+      <span className="text-2xl font-semibold tracking-[-0.04em] text-brand-500">WAVE</span>
     </Link>
   )
 }
