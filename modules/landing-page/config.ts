@@ -9,7 +9,6 @@ export type ReferenceAsset = { src: string; mobileSrc?: string; alt: string; wid
 export type Scene = { id: string; text: string; mobileLines?: readonly string[]; image: ReferenceAsset }
 export type ProductItem = { id: string; title: string; description: string; cta: LinkRef; image: ReferenceAsset }
 export type Testimonial = { id: string; name: string; role: string; quote: string; image: ReferenceAsset }
-export type Article = { id: string; title: string; href: string; placeholder?: string; image?: ReferenceAsset }
 
 const WAVE_ORIGIN = "https://amartha.com"
 const CONTENT_HUB_ORIGIN = "https://content-hub.amartha.com/uploads"
@@ -45,8 +44,6 @@ export const homeAssets = {
     contentHub("Nurjannah_fb989a9c56.jpg", "Bank sampah mitra", 356, 368),
   ],
 } as const
-
-export const referenceImageHosts = ["amartha.com", "content-hub.amartha.com"] as const
 
 const commonSite = {
   appHref: "#mulai",
@@ -123,6 +120,4 @@ export const aboutByLanguage = {
 
 export type SiteContent = (typeof siteByLanguage)[Language]
 export type HomeContent = (typeof homeByLanguage)[Language]
-export const site = siteByLanguage.ID
-export const home = homeByLanguage.ID
-export const landingPageConfig = { site, homeAssets, home } as const
+export const landingPageConfig = { site: siteByLanguage.ID, homeAssets, home: homeByLanguage.ID } as const

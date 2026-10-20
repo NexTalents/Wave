@@ -17,7 +17,7 @@ export default function Page() {
 Edit `config.ts` for the landing-page UI configuration:
 
 - `site`: navigation, footer links, contact details, and social links.
-- `home`: section copy, CTA routes, product items, business slides, founder quote, testimonials, and article metadata.
+- `home`: section copy, CTA routes, product items, business slides, founder quote, and testimonials.
 - `homeAssets`: remote image and video sources, including mobile-specific scene assets.
 
 The section components are presentational and consume this centralized configuration, so content and asset changes do not require editing the motion/layout components.
