@@ -7,7 +7,7 @@ import { ActionLink } from "@/modules/landing-page/components/primitives/action-
 import { aboutByLanguage } from "@/modules/landing-page/config"
 import { LanguageProvider, useLanguage } from "@/modules/landing-page/language"
 
-function AboutContent() {
+function AboutUsContent() {
   const { language } = useLanguage()
   const about = aboutByLanguage[language]
 
@@ -29,6 +29,6 @@ function AboutContent() {
   )
 }
 
-export default function AboutPage() {
-  return <LanguageProvider><AboutContent /></LanguageProvider>
+export function AboutUsPage() {
+  return <LanguageProvider><AboutUsContent /></LanguageProvider>
 }

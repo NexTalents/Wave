@@ -57,9 +57,9 @@ export const siteByLanguage = {
     ...commonSite,
     name: "WAVE",
     languages: ["EN", "ID"] as const,
-    primaryNav: [{ label: "Tentang WAVE", href: "/tentang-kami" }, { label: "Cara Kerja", href: "/#cara-kerja" }, { label: "Untuk Pemulung", href: "/#untuk-pemulung" }, { label: "Untuk Bisnis", href: "/#untuk-bisnis" }] as NavItem[],
+    primaryNav: [{ label: "Tentang WAVE", href: "/about-us" }, { label: "Cara Kerja", href: "/#cara-kerja" }, { label: "Untuk Pemulung", href: "/#untuk-pemulung" }, { label: "Untuk Bisnis", href: "/#untuk-bisnis" }] as NavItem[],
     footerGroups: [
-      { title: "Jelajahi", links: [{ label: "Tentang WAVE", href: "/tentang-kami" }, { label: "Cara Kerja", href: "/#cara-kerja" }, { label: "Dampak", href: "/#dampak" }] },
+      { title: "Jelajahi", links: [{ label: "Tentang WAVE", href: "/about-us" }, { label: "Cara Kerja", href: "/#cara-kerja" }, { label: "Dampak", href: "/#dampak" }] },
       { title: "Ekosistem", links: [{ label: "Pemulung", href: "/#untuk-pemulung" }, { label: "Bank Sampah", href: "/#untuk-bank-sampah" }, { label: "Pembeli Industri", href: "/#untuk-bisnis" }] },
     ] satisfies FooterGroup[],
     disclosure: { summary: "Tentang data WAVE", body: "WAVE menggunakan transaksi tervalidasi untuk membentuk indeks harga limbah. Harga acuan dapat berubah mengikuti data pasar dan tidak menjamin harga transaksi tertentu." },
@@ -68,9 +68,9 @@ export const siteByLanguage = {
     ...commonSite,
     name: "WAVE",
     languages: ["EN", "ID"] as const,
-    primaryNav: [{ label: "About WAVE", href: "/tentang-kami" }, { label: "How It Works", href: "/#cara-kerja" }, { label: "For Waste Pickers", href: "/#untuk-pemulung" }, { label: "For Businesses", href: "/#untuk-bisnis" }] as NavItem[],
+    primaryNav: [{ label: "About WAVE", href: "/about-us" }, { label: "How It Works", href: "/#cara-kerja" }, { label: "For Waste Pickers", href: "/#untuk-pemulung" }, { label: "For Businesses", href: "/#untuk-bisnis" }] as NavItem[],
     footerGroups: [
-      { title: "Explore", links: [{ label: "About WAVE", href: "/tentang-kami" }, { label: "How It Works", href: "/#cara-kerja" }, { label: "Impact", href: "/#dampak" }] },
+      { title: "Explore", links: [{ label: "About WAVE", href: "/about-us" }, { label: "How It Works", href: "/#cara-kerja" }, { label: "Impact", href: "/#dampak" }] },
       { title: "Ecosystem", links: [{ label: "Waste Pickers", href: "/#untuk-pemulung" }, { label: "Waste Banks", href: "/#untuk-bank-sampah" }, { label: "Industrial Buyers", href: "/#untuk-bisnis" }] },
     ] satisfies FooterGroup[],
     disclosure: { summary: "About WAVE data", body: "WAVE uses validated transactions to build a waste-price index. Reference prices can change with market data and do not guarantee a specific transaction price." },
