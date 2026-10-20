@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useMemo, useState } from "react"
+import { createContext, useContext, useState } from "react"
 import { homeByLanguage, siteByLanguage, type Language } from "@/modules/landing-page/config"
 
 type LanguageContextValue = { language: Language; setLanguage: (language: Language) => void }
@@ -19,5 +19,5 @@ export function useLanguage() {
 
 export function useLocalizedContent() {
   const { language } = useLanguage()
-  return useMemo(() => ({ language, site: siteByLanguage[language], home: homeByLanguage[language] }), [language])
+  return { language, site: siteByLanguage[language], home: homeByLanguage[language] }
 }
