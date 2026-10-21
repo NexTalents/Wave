@@ -1,0 +1,106 @@
+@theme {
+  --color-brand-50: #f4e5f4;
+  --color-brand-100: #e8d2e8;
+  --color-brand-200: #dfb0e2;
+  --color-brand-400: #9a579f;
+  --color-brand-500: #833995;
+  --color-brand-600: #590f6b;
+  --color-brand-700: #432258;
+  --color-brand-800: #331749;
+  --color-brand-950: #130526;
+  --color-gold: #e7c78e;
+  --color-ink: #343742;
+  --color-muted: #8a8a8a;
+  --color-neutral-base: #e1e1e1;
+  --color-neutral-light: #fbeafb;
+  --color-surface: #ffffff;
+  --color-success: #14ae53;
+  --color-warning: #e38619;
+
+  --font-heading: "cora", "Avenir Next", "Segoe UI", ui-sans-serif, sans-serif;
+  --font-body: "adelle-sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --radius-card: 1rem;
+  --radius-panel: 2rem;
+  --radius-hero: 52px;
+
+  --ease-brand: cubic-bezier(0.4, 0, 0.2, 1);
+  --breakpoint-desktop: 1200px;
+}
+
+@layer components {
+  .wave-landing {
+    min-height: 100%;
+    overflow-x: clip;
+    background: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    line-height: 1.5;
+  }
+
+  .wave-landing h1,
+  .wave-landing h2,
+  .wave-landing h3,
+  .wave-landing h4 {
+    font-family: var(--font-heading);
+    font-weight: 400;
+  }
+
+  .wave-landing :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
+
+  .wave-landing .marquee-track {
+    display: flex;
+    width: max-content;
+    animation: wave-marquee-left var(--marquee-duration, 60s) linear infinite;
+  }
+
+  .wave-landing .marquee-track[data-direction="right"] {
+    animation-direction: reverse;
+  }
+
+  .wave-landing .home-product-enter {
+    animation: wave-home-product-enter 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+@keyframes wave-marquee-left {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes wave-home-product-enter {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wave-landing .marquee-track,
+  .wave-landing .marquee-track[data-direction="right"] {
+    animation: none;
+  }
+
+  .wave-landing .motion-reveal {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .wave-landing .home-product-enter {
+    animation: none;
+  }
+}
