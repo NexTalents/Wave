@@ -46,7 +46,7 @@ export const homeAssets = {
 } as const
 
 const commonSite = {
-  appHref: "#mulai",
+  appHref: "/login",
   contact: { call: "+62 811-2000-2026", whatsapp: "+62 811-2000-2026", email: "hello@wave.id" },
   social: [{ label: "linkedin", href: "https://www.linkedin.com/" }, { label: "instagram", href: "https://www.instagram.com/" }, { label: "youtube", href: "https://www.youtube.com/" }] satisfies LinkRef[],
   copyright: "© 2026 WAVE (Waste Value Exchange)",
@@ -79,13 +79,13 @@ export const siteByLanguage = {
 
 const idProducts: ProductItem[] = [
   { id: "produk-1", title: "Catat Setoran dengan Transparan", description: "Operator bank sampah mencatat berat, grade, harga acuan WPI, dan harga yang dibayar dalam satu alur.", cta: { label: "Pelajari alurnya", href: "/#cara-kerja" }, image: homeAssets.productScreens[0] },
-  { id: "produk-2", title: "Pantau Waste Price Index", description: "Ticker harga per komoditas, wilayah, dan grade membantu semua pihak memahami nilai pasar.", cta: { label: "Lihat indeks WPI", href: "/#cara-kerja" }, image: homeAssets.productScreens[1] },
+  { id: "produk-2", title: "Pantau Waste Price Index", description: "Ticker harga per komoditas, wilayah, dan grade membantu semua pihak memahami nilai pasar.", cta: { label: "Lihat indeks WPI", href: "/wpi" }, image: homeAssets.productScreens[1] },
   { id: "produk-3", title: "Jual di Waktu yang Lebih Baik", description: "Prediksi harga dan kalkulator Jual Sekarang vs Tunggu membantu bank sampah mengambil keputusan dengan sadar risiko.", cta: { label: "Kenali intelijennya", href: "/#untuk-bank-sampah" }, image: homeAssets.productScreens[2] },
   { id: "produk-4", title: "Hubungkan dengan Pembeli Industri", description: "Kebutuhan bahan baku bertemu pasokan terverifikasi untuk transaksi batch yang lebih efisien.", cta: { label: "Untuk pembeli industri", href: "/#untuk-bisnis" }, image: homeAssets.productScreens[3] },
 ]
 const enProducts: ProductItem[] = [
   { id: "produk-1", title: "Record Deposits Transparently", description: "Waste-bank operators record weight, grade, WPI reference price, and paid price in one workflow.", cta: { label: "Explore the flow", href: "/#cara-kerja" }, image: homeAssets.productScreens[0] },
-  { id: "produk-2", title: "Track the Waste Price Index", description: "Commodity, region, and grade tickers help everyone understand market value.", cta: { label: "View the WPI", href: "/#cara-kerja" }, image: homeAssets.productScreens[1] },
+  { id: "produk-2", title: "Track the Waste Price Index", description: "Commodity, region, and grade tickers help everyone understand market value.", cta: { label: "View the WPI", href: "/wpi" }, image: homeAssets.productScreens[1] },
   { id: "produk-3", title: "Sell at a Better Time", description: "Price forecasts and the Sell Now vs Wait calculator help waste banks make risk-aware decisions.", cta: { label: "Explore the intelligence", href: "/#untuk-bank-sampah" }, image: homeAssets.productScreens[2] },
   { id: "produk-4", title: "Connect with Industrial Buyers", description: "Verified supply meets material demand for more efficient batch transactions.", cta: { label: "For industrial buyers", href: "/#untuk-bisnis" }, image: homeAssets.productScreens[3] },
 ]
@@ -116,6 +116,27 @@ export const homeByLanguage = {
 export const aboutByLanguage = {
   ID: { eyebrow: "Tentang WAVE", title: "Membuat harga limbah terlihat, agar nilainya bisa dibagi lebih adil.", paragraphs: ["WAVE (Waste Value Exchange) adalah platform indeks harga limbah yang dihitung dari transaksi nyata dan dibangun bersama bank sampah serta pengelola limbah.", "Kami meminjam tampilan bursa—ticker, indeks, dan grafik—untuk membuat pasar yang selama ini gelap menjadi lebih terbuka bagi pemulung, operator, pengepul, dan pembeli industri.", "Pemulung tidak perlu memiliki aplikasi. Mereka tetap bisa menerima struk digital atau cetak, melihat papan harga publik, dan mengecek harga melalui WhatsApp."], cta: { label: "Kembali ke beranda", href: "/" } satisfies LinkRef },
   EN: { eyebrow: "About WAVE", title: "Making waste prices visible, so value can be shared more fairly.", paragraphs: ["WAVE (Waste Value Exchange) is a waste-price index platform built from real transactions and developed with waste banks and waste-management operators.", "We borrow the language of an exchange—tickers, indices, and charts—to open up a market that has long been opaque to waste pickers, operators, aggregators, and industrial buyers.", "Waste pickers do not need an app. They can receive digital or printed receipts, view public price boards, and check prices through WhatsApp."], cta: { label: "Back to home", href: "/" } satisfies LinkRef },
+} as const
+
+export const wpiByLanguage = {
+  ID: {
+    eyebrow: "Waste Price Index",
+    title: "Indeks harga limbah untuk pasar yang lebih terbuka.",
+    paragraphs: [
+      "WPI menyatukan data transaksi nyata menjadi referensi harga yang lebih mudah dipahami oleh pemulung, bank sampah, agregator, dan pembeli industri.",
+      "Dengan harga yang terlihat dan dapat ditelusuri, setiap pihak dapat mengambil keputusan berdasarkan data yang sama.",
+    ],
+    cta: { label: "Kembali ke beranda", href: "/" } satisfies LinkRef,
+  },
+  EN: {
+    eyebrow: "Waste Price Index",
+    title: "A waste-price index for a more open market.",
+    paragraphs: [
+      "WPI turns real transaction data into a clearer price reference for waste pickers, waste banks, aggregators, and industrial buyers.",
+      "With visible and traceable prices, every participant can make decisions from the same source of market information.",
+    ],
+    cta: { label: "Back to home", href: "/" } satisfies LinkRef,
+  },
 } as const
 
 export type SiteContent = (typeof siteByLanguage)[Language]

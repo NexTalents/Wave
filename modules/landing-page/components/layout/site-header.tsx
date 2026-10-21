@@ -199,14 +199,12 @@ export function SiteHeader() {
           </ul>
           <div className="flex shrink-0 items-center gap-3">
             <LanguageToggle />
-            <a
+            <Link
               className="rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-300 hover:bg-brand-600"
               href={site.appHref}
-              rel="noopener noreferrer"
-              target="_blank"
             >
               {language === "ID" ? "Mulai bersama WAVE" : "Get started with WAVE"}
-            </a>
+            </Link>
           </div>
         </nav>
       </div>
