@@ -1,6 +1,6 @@
 # Auth module
 
-The module provides one Clerk + Convex provider and a small permission contract for authenticated WAVE features.
+The module provides a custom WAVE auth experience backed by Clerk and Convex. The UI does not render Clerk's prebuilt `SignIn` or `SignUp` components, so login and registration remain brandable and watermark-free.
 
 ## Setup
 
@@ -12,6 +12,17 @@ NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 ```
 
 Set `CLERK_JWT_ISSUER_DOMAIN` in the Convex deployment environment. The value is the Clerk Frontend API URL used by the Convex integration.
+
+Enable email/password and email verification in Clerk. Google and Apple buttons are available on `/login` when those social connections are enabled in the Clerk Dashboard.
+
+Routes:
+
+- `/login` — custom email/password and social login
+- `/register` — individual or business registration
+- `/verify` — email verification and MFA verification
+- `/sso-callback` — Clerk OAuth callback without a visible Clerk UI
+
+Business registration stores the account type and creates a pending Convex organization with the registering user as owner after email verification. Individual registration creates only the user profile.
 
 ## Use in an authenticated area
 
