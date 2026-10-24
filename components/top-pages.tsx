@@ -78,7 +78,7 @@ export function TopPages() {
 
 			<div className="mask-t-from-30% absolute inset-x-0 bottom-0 flex h-1/5 items-center justify-center bg-background">
 				<Button className="relative" variant="ghost" render={<a href="#" />} nativeButton={false}>View All
-                						<ArrowRightIcon aria-hidden="true" /></Button>
+						<ArrowRightIcon aria-hidden="true" /></Button>
 			</div>
 		</Card>
 	);

@@ -40,9 +40,9 @@ export function OnlineNow() {
 					<CardDescription>
 						<Tooltip>
 							<TooltipTrigger render={<Button className={cn(
-                            										"cursor-help px-1 py-px font-normal text-muted-foreground",
-                            										"hover:underline-0"
-                            									)} type="button" variant="link" />}><StatusIndicator /><span>visitors online</span></TooltipTrigger>
+										"cursor-help px-1 py-px font-normal text-muted-foreground",
+										"hover:underline-0"
+									)} type="button" variant="link" />}><StatusIndicator /><span>visitors online</span></TooltipTrigger>
 							<TooltipContent side="bottom">
 								In the last 5 minutes.
 							</TooltipContent>
