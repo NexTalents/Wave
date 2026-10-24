@@ -8,9 +8,12 @@
 | `pnpm test:unit` | Passed | 25 tests, including public projection privacy and reference-only behavior. |
 | `pnpm lint` | Passed | 0 errors; 5 pre-existing warnings remain outside the Phase 5 implementation. |
 | `pnpm build` | Passed | Next.js 16.4.3 production build; public WPI routes are dynamic. |
-| `pnpm exec convex run wpi/snapshots:publicData '{}'` | Passed | Anonymous query returned an empty catalog/snapshot result on the configured deployment. |
-| `pnpm exec convex run wpi/snapshots:published '{}'` | Passed | Anonymous query returned an empty safe snapshot array. |
-| `curl http://localhost:3100/wpi` and `/wpi/pet` | Passed | Production server rendered empty-state copy without mock prices. |
+| `pnpm exec convex codegen --typecheck enable` | Passed | Generated Convex bindings after adding the simulation fixture. |
+| `pnpm exec convex run wpi/seed:simulationData '{}'` | Passed | Development deployment created 11 marked observations; a second run created 0 duplicates. |
+| `pnpm exec convex run wpi/admin:runCalculation '{}'` | Passed | Admin identity produced 11 calculation inputs and 4 candidate snapshots. |
+| `pnpm exec convex run wpi/snapshots:publish ...` | Passed | Admin identity published 4 snapshots: 3 verified transactions and 1 reference-only snapshot. |
+| `pnpm exec convex run wpi/snapshots:publicData '{}'` | Passed | Anonymous query returned the seeded catalog and four safe published snapshots. |
+| `curl http://localhost:3100/wpi` and `/wpi/pet` | Passed (baseline) | Before the fixture was seeded, production server rendered empty-state copy without mock prices. |
 
 ## Coverage mapped to Phase 5
 
@@ -23,10 +26,11 @@
 
 ## Not run
 
-- Full observation submission -> review -> calculation -> publication -> public
-  retrieval E2E against a populated deployment.
+- Browser-based observation submission -> review -> calculation -> publication
+  -> public retrieval E2E against the populated deployment.
 - Authenticated cross-organization and admin Playwright flows.
 - Visual baseline comparison and responsive browser matrix.
 
-The missing live E2E checks are an environment/fixture limitation, not a
-substitution of mock price data into the public page.
+The remaining browser checks are an environment/session limitation; the
+authenticated lifecycle itself was exercised through Convex CLI identity and
+the public retrieval was verified anonymously.

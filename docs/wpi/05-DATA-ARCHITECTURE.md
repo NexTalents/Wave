@@ -55,7 +55,7 @@ Review and publication states are server-controlled. Rejected/quarantined observ
 
 ## Master data and migration
 
-`convex/wpi/seed.ts` provides an internal idempotent seed for the six existing materials, three draft grades, and six regions. It never seeds price observations. Public pages now use `api.wpi.snapshots.publicData`; local constants are used only when the catalog is unavailable or not seeded, never for public prices.
+`convex/wpi/seed.ts` provides an internal idempotent `masterData` seed for the six existing materials, three draft grades, and six regions. It never seeds price observations. A separate, explicitly marked `simulationData` fixture creates synthetic observations for development/demo verification only; it is not a production ingestion path. Public pages now use `api.wpi.snapshots.publicData`; local constants are used only when the catalog is unavailable or not seeded, never for public prices.
 
 ## Backward compatibility
 

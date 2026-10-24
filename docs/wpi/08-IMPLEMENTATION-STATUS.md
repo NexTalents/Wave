@@ -23,12 +23,21 @@ Implemented:
 - A loading boundary is present at `app/wpi/loading.tsx`.
 - Public contract tests assert that run IDs, organization IDs, evidence, and
   raw observation fields cannot enter the public projection.
+- The admin console includes an explicitly labelled synthetic fixture seed for
+  development verification. It creates eligible transaction/reference
+  observations with the `SIMULATION_WPI_SEED:v1` marker; calculation and
+  publication remain separate actions.
 
 ## Deliberate behavior and limitations
 
-- The current configured Convex deployment has an empty WPI catalog and no
-  published snapshots. The UI therefore renders the empty published state;
-  this is expected and is not replaced with seed prices.
+- A fresh Convex deployment still starts with an empty WPI catalog and no
+  published snapshots. The configured development deployment has now been
+  populated with the synthetic fixture and four published snapshots for
+  verification; production deployments must be seeded through an explicit,
+  approved data process.
+- The synthetic fixture is for development/demo verification only. Its values
+  are not real market observations and must not be interpreted as production
+  WPI data.
 - Catalog fallback values are used only for route/filter labels when the
   backend is unavailable or not seeded. They never provide public price data.
 - Staleness is shown when the published snapshot itself carries

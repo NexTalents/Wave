@@ -315,3 +315,30 @@ Konfirmasi sebelum melaporkan selesai:
 - **Business Context**: Keamanan projection dan state kosong diverifikasi sebelum data pasar nyata dipublikasikan; tidak ada klaim harga ketika deployment belum memiliki snapshot.
 - **Checklist Ref**: P5-SEC-01–04, P5-SEC-07–08, P5-DOC-01–04, P5-FINAL-02–05, P5-FINAL-10
 - **Notes / Risks**: Authenticated lifecycle E2E, visual baseline, dan responsive browser matrix belum tersedia karena fixture/credential live belum dikonfigurasi. P5-SEC-05/06 dan P5-FINAL-12 tetap unchecked.
+
+### [2026-10-24T19:45:47+07:00] feat — Menambahkan synthetic WPI seed fixture untuk verifikasi deployment
+- **Type**: feat
+- **Files**:
+  - `convex/wpi/simulation.ts` (added)
+  - `convex/wpi/seed.ts` (modified)
+  - `convex/wpi/admin.ts` (modified)
+  - `modules/wpi/admin-console.tsx` (modified)
+  - `convex/_generated/api.d.ts` (modified)
+  - `docs/wpi/05-DATA-ARCHITECTURE.md` (modified)
+  - `docs/wpi/07-API-CONTRACTS.md` (modified)
+  - `docs/wpi/08-IMPLEMENTATION-STATUS.md` (modified)
+- **Summary**: Menambahkan fixture idempoten berisi master data, organisasi synthetic, dua source, 10 transaksi, dan satu harga referensi. Observasi melewati transisi `submitted → eligible`, memiliki marker `SIMULATION_WPI_SEED:v1`, dan dapat dijalankan dari admin console atau internal Convex seed.
+- **Business Context**: Deployment development dapat diverifikasi end-to-end tanpa memasukkan data pasar palsu ke jalur produksi atau menyamarkan angka simulasi sebagai harga WPI nyata. Kalkulasi dan publish tetap menjadi aksi eksplisit admin.
+- **Checklist Ref**: P5-INT-01–02, P5-SEC-07–08, P5-FINAL-01–05, P5-FINAL-13
+- **Notes / Risks**: Fixture hanya untuk development/demo. Snapshot public baru muncul setelah `Run calculation` dan `Publish candidate`; authenticated browser verification masih membutuhkan session Clerk.
+
+### [2026-10-24T19:47:05+07:00] test — Menjalankan fixture dan memverifikasi public publication boundary
+- **Type**: test
+- **Files**:
+  - `docs/wpi/08-IMPLEMENTATION-STATUS.md` (modified)
+  - `docs/wpi/09-TEST-RESULTS.md` (modified)
+  - `.agents/docs/plan_log/PHASE-5-PUBLIC-INTEGRATION-VERIFICATION.md` (modified)
+- **Summary**: Development Cloud berhasil diisi dengan 11 observasi synthetic, seed kedua idempotent, kalkulasi menghasilkan 4 candidate, dan publish menghasilkan 4 snapshot public yang aman.
+- **Business Context**: Demo dapat menampilkan angka terhitung tanpa mengklaimnya sebagai data pasar nyata; 3 scope memiliki `verified_transaction` dan 1 scope tetap berlabel `reference_only`.
+- **Checklist Ref**: P5-CONTRACT-01, P5-INT-01–02, P5-SEC-07–08, P5-FINAL-01–05
+- **Notes / Risks**: Verifikasi browser terautentikasi dan responsive matrix belum dijalankan; validasi CLI identity dan anonymous public query sudah lulus.

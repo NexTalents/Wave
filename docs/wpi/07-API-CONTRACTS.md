@@ -28,6 +28,13 @@ All authorization below is enforced inside Convex functions, not only in routes 
 **Authorization:** internal Convex call only.  
 **State:** inserts materials, draft grades, and regions from existing constants; never price observations.
 
+## `internal.wpi.seed.simulationData`
+
+**Args:** optional active platform-admin user ID; when omitted, the first active platform administrator in the development deployment is used.
+**Returns:** idempotent fixture result with organization, source, and observation counts.
+**Authorization:** internal Convex call only; the selected creator must be an active platform administrator.
+**State:** creates clearly marked synthetic organization/sources and eligible observations after recording the `submitted → eligible` transition. It never represents real market data and does not publish snapshots automatically; calculation and publication remain explicit admin actions.
+
 ## `api.wpi.snapshots.publish`
 
 **Args:** candidate calculation run ID and candidate snapshot IDs.  
@@ -56,11 +63,11 @@ All authorization below is enforced inside Convex functions, not only in routes 
 **Authorization:** platform admin only.  
 **State:** uses eligible observations and active policy, creates candidate snapshots and input/exclusion provenance, and records the calculation audit event.
 
-### `api.wpi.admin.updateMaterial`, `.seedMasterData`
+### `api.wpi.admin.updateMaterial`, `.seedMasterData`, `.seedSimulationData`
 
 **Args:** safe material label/active updates, or no args for idempotent seed.  
 **Authorization:** platform admin only.  
-**State:** updates master data without mutating snapshots and records configuration/seed audit events. Seed imports only material, grade, and region master data from existing constants.
+**State:** updates master data without mutating snapshots and records configuration/seed audit events. `seedMasterData` imports only material, grade, and region master data from existing constants. `seedSimulationData` is an admin-facing wrapper around the internal development fixture and creates no production-labelled data.
 
 ## Business functions
 
