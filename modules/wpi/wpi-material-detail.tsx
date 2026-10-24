@@ -14,28 +14,35 @@ import { WpiEmptyState } from "@/modules/wpi/components/wpi-empty-state"
 import { WpiPrototypeBanner } from "@/modules/wpi/components/wpi-prototype-banner"
 import { WpiMaterialExplorer } from "@/modules/wpi/components/wpi-material-explorer"
 import { wpiContentByLanguage } from "@/modules/wpi/content"
-import type { Material, WpiRow, WpiSeries } from "@/modules/wpi/data"
+import type {
+  Material,
+  WpiDataState,
+  WpiRow,
+  WpiSeries,
+  WpiSnapshotItem,
+} from "@/modules/wpi/data"
 
 type Detail = {
   material: Material
   row?: WpiRow
+  referenceRow?: WpiRow
   referencePrice?: number
   series: WpiSeries
   gradeRows: WpiRow[]
   regionRows: WpiRow[]
-  related: {
-    materialSlug: string
-    material: { ID: string; EN: string }
-    index: number
-    change: number
-  }[]
+  related: WpiSnapshotItem[]
+  dataState: WpiDataState
 }
 
 function DetailContent({ detail }: { detail: Detail }) {
   const { language } = useLanguage()
   const copy = wpiContentByLanguage[language]
   const row = detail.row
-  const snapshotDate = row?.observedAt ?? detail.series.at(-1)?.date
+  const scope = row ?? detail.referenceRow
+  const snapshotDate =
+    row?.observedAt ??
+    detail.referenceRow?.observedAt ??
+    detail.series.at(-1)?.date
   const Icon =
     row && row.change > 0
       ? ArrowUpRight
@@ -84,10 +91,20 @@ function DetailContent({ detail }: { detail: Detail }) {
           </section>
 
           <div className="mt-4">
-            <WpiPrototypeBanner text={copy.prototype} />
+            <WpiPrototypeBanner
+              text={
+                detail.dataState === "published"
+                  ? copy.publishedData
+                  : detail.dataState === "stale"
+                    ? copy.staleData
+                    : detail.dataState === "empty"
+                      ? copy.emptyData
+                      : copy.unavailableData
+              }
+            />
           </div>
 
-          {row ? (
+          {scope ? (
             <section
               aria-labelledby="material-summary-title"
               className="mt-8 rounded-[32px] border border-brand-100 bg-white p-5 shadow-[0_16px_50px_rgb(16_40_21_/.06)] sm:p-7"
@@ -98,11 +115,23 @@ function DetailContent({ detail }: { detail: Detail }) {
               <div className="grid gap-4 desktop:grid-cols-2">
                 <div className="rounded-[24px] bg-brand-800 p-6 text-white">
                   <p className="wave-body-sm text-white/75">{copy.index}</p>
-                  <p className="wave-kpi mt-3">{formatRupiah(row.price)}</p>
-                  <p className="wave-body-sm mt-3 flex items-center gap-1 text-white/80">
-                    <Icon aria-hidden="true" size={16} />
-                    {formatPercent(row.change)}
+                  <p className="wave-kpi mt-3">
+                    {row
+                      ? formatRupiah(row.price)
+                      : language === "ID"
+                        ? "Belum tersedia"
+                        : "Not available"}
                   </p>
+                  {row ? (
+                    <p className="wave-body-sm mt-3 flex items-center gap-1 text-white/80">
+                      <Icon aria-hidden="true" size={16} />
+                      {row.changeAvailable === false
+                        ? language === "ID"
+                          ? "Perubahan belum tersedia"
+                          : "Change not available"
+                        : formatPercent(row.change)}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="rounded-[24px] border border-gold/60 bg-disclosure p-6">
                   <p className="wave-body-sm text-brand-700">
@@ -128,7 +157,7 @@ function DetailContent({ detail }: { detail: Detail }) {
                     {copy.grade}
                   </dt>
                   <dd className="mt-2 font-semibold text-brand-800">
-                    {row.grade.name[language]}
+                    {scope.grade.name[language]}
                   </dd>
                 </div>
                 <div>
@@ -136,7 +165,7 @@ function DetailContent({ detail }: { detail: Detail }) {
                     {copy.region}
                   </dt>
                   <dd className="mt-2 font-semibold text-brand-800">
-                    {row.region.name[language]}
+                    {scope.region.name[language]}
                   </dd>
                 </div>
                 <div>
@@ -144,7 +173,7 @@ function DetailContent({ detail }: { detail: Detail }) {
                     {copy.observations}
                   </dt>
                   <dd className="mt-2 font-semibold text-brand-800">
-                    {row.transactionCount.toLocaleString("id-ID")}
+                    {scope.transactionCount.toLocaleString("id-ID")}
                   </dd>
                 </div>
                 <div>
@@ -152,7 +181,7 @@ function DetailContent({ detail }: { detail: Detail }) {
                     {copy.updated}
                   </dt>
                   <dd className="mt-2 font-semibold text-brand-800">
-                    {formatDate(row.observedAt, language)}
+                    {formatDate(scope.observedAt, language)}
                   </dd>
                 </div>
               </dl>
@@ -160,9 +189,11 @@ function DetailContent({ detail }: { detail: Detail }) {
           ) : (
             <div className="mt-8">
               <WpiEmptyState>
-                {language === "ID"
-                  ? "Belum cukup data untuk membentuk ringkasan material ini."
-                  : "There is not enough data to form this material summary."}
+                {detail.dataState === "unavailable"
+                  ? copy.unavailableData
+                  : language === "ID"
+                    ? "Belum cukup data untuk membentuk ringkasan material ini."
+                    : "There is not enough data to form this material summary."}
               </WpiEmptyState>
             </div>
           )}

@@ -1,29 +1,27 @@
 import { PageContainer } from "@/modules/landing-page/components/layout/page-container"
 import { formatDate } from "@/modules/wpi/data"
 import type { Language } from "@/modules/landing-page/config"
-type WpiStatusSummary = {
-  updatedAt: string
-  period: string
-  transactions: number
-  regions: number
-  materials: number
-}
+import type { WpiStatus } from "@/modules/wpi/data"
 
 export function WpiStatusBar({
   status,
   language,
 }: {
-  status: WpiStatusSummary
+  status: WpiStatus
   language: Language
 }) {
+  const unavailable = language === "ID" ? "Belum tersedia" : "Not available"
+  const period = status.period
+    ? `${formatDate(status.period.start, language)} — ${formatDate(status.period.end, language)}`
+    : unavailable
   const items = [
     [
       language === "ID" ? "Diperbarui" : "Updated",
-      formatDate(status.updatedAt, language),
+      status.updatedAt ? formatDate(status.updatedAt, language) : unavailable,
     ],
-    [language === "ID" ? "Periode" : "Period", status.period],
+    [language === "ID" ? "Periode" : "Period", period],
     [
-      language === "ID" ? "Transaksi" : "Transactions",
+      language === "ID" ? "Observasi" : "Observations",
       status.transactions.toLocaleString("id-ID"),
     ],
     [language === "ID" ? "Wilayah" : "Regions", status.regions],

@@ -1,21 +1,18 @@
 import Link from "next/link"
 import { formatRupiah, formatPercent } from "@/modules/wpi/data"
 import type { Language } from "@/modules/landing-page/config"
+import type { WpiSnapshotItem } from "@/modules/wpi/data"
 
 export function WpiMaterialExplorer({
   items,
   language,
   copy,
 }: {
-  items: {
-    materialSlug: string
-    material: { ID: string; EN: string }
-    index: number
-    change: number
-  }[]
+  items: WpiSnapshotItem[]
   language: Language
   copy: { explorer: string; viewDetail: string }
 }) {
+  if (!items.length) return null
   return (
     <section>
       <h2 className="wave-section-title text-brand-800">{copy.explorer}</h2>
@@ -31,11 +28,17 @@ export function WpiMaterialExplorer({
                 {item.material[language]}
               </h3>
               <span className="wave-body-sm text-brand-600 tabular-nums">
-                {formatPercent(item.change)}
+                {item.changeAvailable === false
+                  ? "—"
+                  : formatPercent(item.change)}
               </span>
             </div>
             <p className="wave-kpi mt-4 text-brand-600">
-              {formatRupiah(item.index)}
+              {item.index === undefined
+                ? language === "ID"
+                  ? "Belum tersedia"
+                  : "Not available"
+                : formatRupiah(item.index)}
             </p>
             <p className="wave-button mt-3 text-brand-500">
               {copy.viewDetail} →
