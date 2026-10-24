@@ -342,3 +342,18 @@ Konfirmasi sebelum melaporkan selesai:
 - **Business Context**: Demo dapat menampilkan angka terhitung tanpa mengklaimnya sebagai data pasar nyata; 3 scope memiliki `verified_transaction` dan 1 scope tetap berlabel `reference_only`.
 - **Checklist Ref**: P5-CONTRACT-01, P5-INT-01–02, P5-SEC-07–08, P5-FINAL-01–05
 - **Notes / Risks**: Verifikasi browser terautentikasi dan responsive matrix belum dijalankan; validasi CLI identity dan anonymous public query sudah lulus.
+
+### [2026-10-24T19:53:29+07:00] feat — Memperluas seed menjadi skenario demo WPI lengkap
+- **Type**: feat
+- **Files**:
+  - `convex/wpi/simulation.ts` (modified)
+  - `modules/wpi/admin-console.tsx` (modified)
+  - `docs/wpi/05-DATA-ARCHITECTURE.md` (modified)
+  - `docs/wpi/07-API-CONTRACTS.md` (modified)
+  - `docs/wpi/08-IMPLEMENTATION-STATUS.md` (modified)
+  - `docs/wpi/09-TEST-RESULTS.md` (modified)
+  - `.agents/docs/plan_log/PHASE-5-PUBLIC-INTEGRATION-VERIFICATION.md` (modified)
+- **Summary**: Memperluas fixture idempoten dari seed dasar menjadi 25 observasi pada dua organisasi synthetic dan tujuh source. Dataset mencakup transaksi eligible, offer submitted/validated/rejected, observation quarantined dari source suspended, external reference-only, dan satu outlier yang dicatat oleh kalkulasi. Tombol admin kini menjelaskan dan menjalankan seed demo lengkap.
+- **Business Context**: Demo teman dapat memperlihatkan perbedaan source dan kualitas data, antrean review, alasan penolakan/quarantine, exclusion outlier, VWAP verified transaction, reference-only price, publication boundary, dan isolasi organisasi tanpa memakai data pasar atau PII nyata.
+- **Checklist Ref**: P5-INT-01–02, P5-SEC-07–08, P5-FINAL-01–05, P5-FINAL-13
+- **Notes / Risks**: Fixture tetap khusus development/demo; review, kalkulasi, dan publish tidak otomatis dijalankan oleh seed. Deployment Development Cloud sudah diverifikasi menghasilkan 8 calculation inputs, 1 outlier exclusion, 3 candidate baru, dan total 7 snapshot published.
