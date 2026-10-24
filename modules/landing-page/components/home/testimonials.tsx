@@ -56,7 +56,7 @@ export function TestimonialsCarousel() {
               </blockquote>
               <figcaption className="mt-auto pt-7">
                 <span className="block text-[20px] leading-tight text-brand-500 desktop:text-[24px]">{active.name}</span>
-                <span className="mt-2 block text-[16px] leading-tight text-muted desktop:text-[17px]">{active.role}</span>
+                <span className="mt-2 block text-[16px] leading-tight text-brand-700 desktop:text-[17px]">{active.role}</span>
               </figcaption>
             </div>
             <div className="relative order-1 h-[210px] w-full overflow-hidden desktop:order-2 desktop:h-[368px] desktop:rounded-[16px]">

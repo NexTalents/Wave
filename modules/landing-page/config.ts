@@ -57,10 +57,10 @@ export const siteByLanguage = {
     ...commonSite,
     name: "WAVE",
     languages: ["EN", "ID"] as const,
-    primaryNav: [{ label: "Tentang WAVE", href: "/about-us" }, { label: "Cara Kerja", href: "/#cara-kerja" }, { label: "Untuk Pemulung", href: "/#untuk-pemulung" }, { label: "Untuk Bisnis", href: "/#untuk-bisnis" }] as NavItem[],
+    primaryNav: [{ label: "Tentang WAVE", href: "/about-us" }, { label: "Cara Kerja", href: "/cara-kerja" }, { label: "WPI", href: "/wpi" }, { label: "Untuk Pemulung", href: "/untuk-pemulung" }, { label: "Untuk Bisnis", href: "/untuk-bisnis" }] as NavItem[],
     footerGroups: [
-      { title: "Jelajahi", links: [{ label: "Tentang WAVE", href: "/about-us" }, { label: "Cara Kerja", href: "/#cara-kerja" }, { label: "Dampak", href: "/#dampak" }] },
-      { title: "Ekosistem", links: [{ label: "Pemulung", href: "/#untuk-pemulung" }, { label: "Bank Sampah", href: "/#untuk-bank-sampah" }, { label: "Pembeli Industri", href: "/#untuk-bisnis" }] },
+      { title: "Jelajahi", links: [{ label: "Tentang WAVE", href: "/about-us" }, { label: "Cara Kerja", href: "/cara-kerja" }, { label: "WPI", href: "/wpi" }, { label: "Dampak", href: "/about-us#dampak" }] },
+      { title: "Ekosistem", links: [{ label: "Pemulung", href: "/untuk-pemulung" }, { label: "Bank Sampah", href: "/untuk-bisnis#bank-sampah" }, { label: "Pembeli Industri", href: "/untuk-bisnis#pembeli-industri" }] },
     ] satisfies FooterGroup[],
     disclosure: { summary: "Tentang data WAVE", body: "WAVE menggunakan transaksi tervalidasi untuk membentuk indeks harga limbah. Harga acuan dapat berubah mengikuti data pasar dan tidak menjamin harga transaksi tertentu." },
   },
@@ -68,74 +68,48 @@ export const siteByLanguage = {
     ...commonSite,
     name: "WAVE",
     languages: ["EN", "ID"] as const,
-    primaryNav: [{ label: "About WAVE", href: "/about-us" }, { label: "How It Works", href: "/#cara-kerja" }, { label: "For Waste Pickers", href: "/#untuk-pemulung" }, { label: "For Businesses", href: "/#untuk-bisnis" }] as NavItem[],
+    primaryNav: [{ label: "About WAVE", href: "/about-us" }, { label: "How It Works", href: "/cara-kerja" }, { label: "WPI", href: "/wpi" }, { label: "For Waste Pickers", href: "/untuk-pemulung" }, { label: "For Businesses", href: "/untuk-bisnis" }] as NavItem[],
     footerGroups: [
-      { title: "Explore", links: [{ label: "About WAVE", href: "/about-us" }, { label: "How It Works", href: "/#cara-kerja" }, { label: "Impact", href: "/#dampak" }] },
-      { title: "Ecosystem", links: [{ label: "Waste Pickers", href: "/#untuk-pemulung" }, { label: "Waste Banks", href: "/#untuk-bank-sampah" }, { label: "Industrial Buyers", href: "/#untuk-bisnis" }] },
+      { title: "Explore", links: [{ label: "About WAVE", href: "/about-us" }, { label: "How It Works", href: "/cara-kerja" }, { label: "WPI", href: "/wpi" }, { label: "Impact", href: "/about-us#dampak" }] },
+      { title: "Ecosystem", links: [{ label: "Waste Pickers", href: "/untuk-pemulung" }, { label: "Waste Banks", href: "/untuk-bisnis#bank-sampah" }, { label: "Industrial Buyers", href: "/untuk-bisnis#pembeli-industri" }] },
     ] satisfies FooterGroup[],
     disclosure: { summary: "About WAVE data", body: "WAVE uses validated transactions to build a waste-price index. Reference prices can change with market data and do not guarantee a specific transaction price." },
   },
 } as const
 
 const idProducts: ProductItem[] = [
-  { id: "produk-1", title: "Catat Setoran dengan Transparan", description: "Operator bank sampah mencatat berat, grade, harga acuan WPI, dan harga yang dibayar dalam satu alur.", cta: { label: "Pelajari alurnya", href: "/#cara-kerja" }, image: homeAssets.productScreens[0] },
+  { id: "produk-1", title: "Catat Setoran dengan Transparan", description: "Operator bank sampah mencatat berat, grade, harga acuan WPI, dan harga yang dibayar dalam satu alur.", cta: { label: "Pelajari alurnya", href: "/cara-kerja" }, image: homeAssets.productScreens[0] },
   { id: "produk-2", title: "Pantau Waste Price Index", description: "Ticker harga per komoditas, wilayah, dan grade membantu semua pihak memahami nilai pasar.", cta: { label: "Lihat indeks WPI", href: "/wpi" }, image: homeAssets.productScreens[1] },
-  { id: "produk-3", title: "Jual di Waktu yang Lebih Baik", description: "Prediksi harga dan kalkulator Jual Sekarang vs Tunggu membantu bank sampah mengambil keputusan dengan sadar risiko.", cta: { label: "Kenali intelijennya", href: "/#untuk-bank-sampah" }, image: homeAssets.productScreens[2] },
-  { id: "produk-4", title: "Hubungkan dengan Pembeli Industri", description: "Kebutuhan bahan baku bertemu pasokan terverifikasi untuk transaksi batch yang lebih efisien.", cta: { label: "Untuk pembeli industri", href: "/#untuk-bisnis" }, image: homeAssets.productScreens[3] },
+  { id: "produk-3", title: "Jual di Waktu yang Lebih Baik", description: "Prediksi harga dan kalkulator Jual Sekarang vs Tunggu membantu bank sampah mengambil keputusan dengan sadar risiko.", cta: { label: "Kenali intelijennya", href: "/untuk-bisnis#bank-sampah" }, image: homeAssets.productScreens[2] },
+  { id: "produk-4", title: "Hubungkan dengan Pembeli Industri", description: "Kebutuhan bahan baku bertemu pasokan terverifikasi untuk transaksi batch yang lebih efisien.", cta: { label: "Untuk pembeli industri", href: "/untuk-bisnis#pembeli-industri" }, image: homeAssets.productScreens[3] },
 ]
 const enProducts: ProductItem[] = [
-  { id: "produk-1", title: "Record Deposits Transparently", description: "Waste-bank operators record weight, grade, WPI reference price, and paid price in one workflow.", cta: { label: "Explore the flow", href: "/#cara-kerja" }, image: homeAssets.productScreens[0] },
+  { id: "produk-1", title: "Record Deposits Transparently", description: "Waste-bank operators record weight, grade, WPI reference price, and paid price in one workflow.", cta: { label: "Explore the flow", href: "/cara-kerja" }, image: homeAssets.productScreens[0] },
   { id: "produk-2", title: "Track the Waste Price Index", description: "Commodity, region, and grade tickers help everyone understand market value.", cta: { label: "View the WPI", href: "/wpi" }, image: homeAssets.productScreens[1] },
-  { id: "produk-3", title: "Sell at a Better Time", description: "Price forecasts and the Sell Now vs Wait calculator help waste banks make risk-aware decisions.", cta: { label: "Explore the intelligence", href: "/#untuk-bank-sampah" }, image: homeAssets.productScreens[2] },
-  { id: "produk-4", title: "Connect with Industrial Buyers", description: "Verified supply meets material demand for more efficient batch transactions.", cta: { label: "For industrial buyers", href: "/#untuk-bisnis" }, image: homeAssets.productScreens[3] },
+  { id: "produk-3", title: "Sell at a Better Time", description: "Price forecasts and the Sell Now vs Wait calculator help waste banks make risk-aware decisions.", cta: { label: "Explore the intelligence", href: "/untuk-bisnis#bank-sampah" }, image: homeAssets.productScreens[2] },
+  { id: "produk-4", title: "Connect with Industrial Buyers", description: "Verified supply meets material demand for more efficient batch transactions.", cta: { label: "For industrial buyers", href: "/untuk-bisnis#pembeli-industri" }, image: homeAssets.productScreens[3] },
 ]
 
 export const homeByLanguage = {
   ID: {
-    hero: { heading: "Harga limbah transparan untuk ekonomi sirkular Indonesia", cta: { label: "Lihat cara kerja WAVE", href: "/#cara-kerja" } satisfies LinkRef, video: homeAssets.hero.video, videoMobile: homeAssets.hero.videoMobile, overlay: "radial-gradient(circle at center, rgba(0,0,0,0.5), rgba(0,0,0,0) 70%)" },
+    hero: { heading: "Harga limbah transparan untuk ekonomi sirkular Indonesia", cta: { label: "Lihat cara kerja WAVE", href: "/cara-kerja" } satisfies LinkRef, video: homeAssets.hero.video, videoMobile: homeAssets.hero.videoMobile, overlay: "radial-gradient(circle at center, var(--overlay), transparent 70%)" },
     inclusive: { heading: "Membuka nilai limbah, dari pemulung hingga industri", scenes: [
       { id: "inclusive-1", text: "Harga acuan yang lahir dari transaksi nyata, bukan keputusan sepihak", mobileLines: ["Harga acuan dari", "transaksi nyata,", "bukan keputusan sepihak"], image: homeAssets.inclusive.scenes[0] },
       { id: "inclusive-2", text: "Informasi harga yang sampai ke pemulung tanpa perlu memiliki aplikasi", mobileLines: ["Informasi harga sampai", "ke pemulung tanpa", "perlu aplikasi"], image: homeAssets.inclusive.scenes[1] },
       { id: "inclusive-3", text: "Pasokan yang lebih pasti untuk bank sampah dan pembeli industri", mobileLines: ["Pasokan lebih pasti", "untuk bank sampah", "dan pembeli industri"], image: homeAssets.inclusive.scenes[2] },
     ] satisfies Scene[] },
     products: { heading: "Satu platform untuk seluruh rantai nilai limbah", items: idProducts },
-    business: { heading: "Nilai untuk setiap peran", subheading: "WAVE membuat pasar limbah lebih terbuka, terukur, dan inklusif.", slides: [{ id: "bisnis-1", title: "Untuk Bank Sampah & Agregator", description: "Pencatatan digital, prediksi harga, stok yang terlihat, dan akses ke pembeli industri membantu operasional tumbuh dengan sehat.", cta: { label: "Mulai dari operasional", href: "/#untuk-bank-sampah" } satisfies LinkRef }, { id: "bisnis-2", title: "Untuk Pembeli Industri", description: "Temukan pasokan yang lebih stabil, publikasikan kebutuhan, dan gunakan data pasar untuk merencanakan pembelian bahan baku.", cta: { label: "Bangun kemitraan", href: "/#untuk-bisnis" } satisfies LinkRef }] },
+    business: { heading: "Nilai untuk setiap peran", subheading: "WAVE membuat pasar limbah lebih terbuka, terukur, dan inklusif.", slides: [{ id: "bisnis-1", title: "Untuk Bank Sampah & Agregator", description: "Pencatatan digital, prediksi harga, stok yang terlihat, dan akses ke pembeli industri membantu operasional tumbuh dengan sehat.", cta: { label: "Mulai dari operasional", href: "/untuk-bisnis#bank-sampah" } satisfies LinkRef }, { id: "bisnis-2", title: "Untuk Pembeli Industri", description: "Temukan pasokan yang lebih stabil, publikasikan kebutuhan, dan gunakan data pasar untuk merencanakan pembelian bahan baku.", cta: { label: "Bangun kemitraan", href: "/untuk-bisnis#pembeli-industri" } satisfies LinkRef }] },
     founderQuote: { quote: "Ketika harga menjadi terbuka, setiap kilogram limbah punya peluang untuk menciptakan nilai yang lebih adil.", name: "WAVE", role: "Waste Value Exchange" },
     testimonials: { heading: "Membangun kepercayaan di setiap transaksi", items: [{ id: "testi-1", name: "Operator Bank Sampah", role: "Pengguna utama WAVE", quote: "Kami bisa menunjukkan dengan jelas dari mana harga dibentuk dan berapa nilai yang diterima pemulung.", image: homeAssets.testimonials[0] }, { id: "testi-2", name: "Pemulung Mitra", role: "Penerima manfaat", quote: "Saya bisa mengecek harga kardus hari ini dan tahu kapan stok saya lebih baik dijual.", image: homeAssets.testimonials[1] }, { id: "testi-3", name: "Pembeli Industri", role: "Pengguna data pasar", quote: "Data volume dan grade membuat kami lebih mudah merencanakan kebutuhan bahan baku.", image: homeAssets.testimonials[2] }, { id: "testi-4", name: "Mitra Ekosistem", role: "Penggerak ekonomi sirkular", quote: "WAVE memberi bahasa bersama untuk menghubungkan dampak sosial, lingkungan, dan nilai bisnis.", image: homeAssets.testimonials[3] }] satisfies Testimonial[] },
   },
   EN: {
-    hero: { heading: "Transparent waste prices for Indonesia's circular economy", cta: { label: "See how WAVE works", href: "/#cara-kerja" } satisfies LinkRef, video: homeAssets.hero.video, videoMobile: homeAssets.hero.videoMobile, overlay: "radial-gradient(circle at center, rgba(0,0,0,0.5), rgba(0,0,0,0) 70%)" },
+    hero: { heading: "Transparent waste prices for Indonesia's circular economy", cta: { label: "See how WAVE works", href: "/cara-kerja" } satisfies LinkRef, video: homeAssets.hero.video, videoMobile: homeAssets.hero.videoMobile, overlay: "radial-gradient(circle at center, var(--overlay), transparent 70%)" },
     inclusive: { heading: "Unlocking waste value, from waste pickers to industry", scenes: [{ id: "inclusive-1", text: "A reference price built from real transactions, not one-sided decisions", mobileLines: ["A reference price from", "real transactions,", "not one-sided decisions"], image: homeAssets.inclusive.scenes[0] }, { id: "inclusive-2", text: "Price information that reaches waste pickers without requiring an app", mobileLines: ["Price information reaches", "waste pickers without", "requiring an app"], image: homeAssets.inclusive.scenes[1] }, { id: "inclusive-3", text: "More predictable supply for waste banks and industrial buyers", mobileLines: ["More predictable supply", "for waste banks", "and industrial buyers"], image: homeAssets.inclusive.scenes[2] }] satisfies Scene[] },
     products: { heading: "One platform for the entire waste value chain", items: enProducts },
-    business: { heading: "Value for every role", subheading: "WAVE makes the waste market more open, measurable, and inclusive.", slides: [{ id: "bisnis-1", title: "For Waste Banks & Aggregators", description: "Digital records, price forecasts, visible inventory, and access to industrial buyers help operations grow sustainably.", cta: { label: "Start with operations", href: "/#untuk-bank-sampah" } satisfies LinkRef }, { id: "bisnis-2", title: "For Industrial Buyers", description: "Find more stable supply, post material needs, and use market data to plan raw-material purchases.", cta: { label: "Build a partnership", href: "/#untuk-bisnis" } satisfies LinkRef }] },
+    business: { heading: "Value for every role", subheading: "WAVE makes the waste market more open, measurable, and inclusive.", slides: [{ id: "bisnis-1", title: "For Waste Banks & Aggregators", description: "Digital records, price forecasts, visible inventory, and access to industrial buyers help operations grow sustainably.", cta: { label: "Start with operations", href: "/untuk-bisnis#bank-sampah" } satisfies LinkRef }, { id: "bisnis-2", title: "For Industrial Buyers", description: "Find more stable supply, post material needs, and use market data to plan raw-material purchases.", cta: { label: "Build a partnership", href: "/untuk-bisnis#pembeli-industri" } satisfies LinkRef }] },
     founderQuote: { quote: "When prices become visible, every kilogram of waste has a chance to create fairer value.", name: "WAVE", role: "Waste Value Exchange" },
     testimonials: { heading: "Building trust into every transaction", items: [{ id: "testi-1", name: "Waste-bank Operator", role: "WAVE's primary user", quote: "We can clearly show how the price was formed and how much value reaches waste pickers.", image: homeAssets.testimonials[0] }, { id: "testi-2", name: "Partner Waste Picker", role: "Beneficiary", quote: "I can check today's cardboard price and know when my stock may be better sold.", image: homeAssets.testimonials[1] }, { id: "testi-3", name: "Industrial Buyer", role: "Market-data user", quote: "Volume and grade data make it easier to plan our raw-material needs.", image: homeAssets.testimonials[2] }, { id: "testi-4", name: "Ecosystem Partner", role: "Circular-economy enabler", quote: "WAVE gives social impact, environmental impact, and business value a shared language.", image: homeAssets.testimonials[3] }] satisfies Testimonial[] },
-  },
-} as const
-
-export const aboutByLanguage = {
-  ID: { eyebrow: "Tentang WAVE", title: "Membuat harga limbah terlihat, agar nilainya bisa dibagi lebih adil.", paragraphs: ["WAVE (Waste Value Exchange) adalah platform indeks harga limbah yang dihitung dari transaksi nyata dan dibangun bersama bank sampah serta pengelola limbah.", "Kami meminjam tampilan bursa—ticker, indeks, dan grafik—untuk membuat pasar yang selama ini gelap menjadi lebih terbuka bagi pemulung, operator, pengepul, dan pembeli industri.", "Pemulung tidak perlu memiliki aplikasi. Mereka tetap bisa menerima struk digital atau cetak, melihat papan harga publik, dan mengecek harga melalui WhatsApp."], cta: { label: "Kembali ke beranda", href: "/" } satisfies LinkRef },
-  EN: { eyebrow: "About WAVE", title: "Making waste prices visible, so value can be shared more fairly.", paragraphs: ["WAVE (Waste Value Exchange) is a waste-price index platform built from real transactions and developed with waste banks and waste-management operators.", "We borrow the language of an exchange—tickers, indices, and charts—to open up a market that has long been opaque to waste pickers, operators, aggregators, and industrial buyers.", "Waste pickers do not need an app. They can receive digital or printed receipts, view public price boards, and check prices through WhatsApp."], cta: { label: "Back to home", href: "/" } satisfies LinkRef },
-} as const
-
-export const wpiByLanguage = {
-  ID: {
-    eyebrow: "Waste Price Index",
-    title: "Indeks harga limbah untuk pasar yang lebih terbuka.",
-    paragraphs: [
-      "WPI menyatukan data transaksi nyata menjadi referensi harga yang lebih mudah dipahami oleh pemulung, bank sampah, agregator, dan pembeli industri.",
-      "Dengan harga yang terlihat dan dapat ditelusuri, setiap pihak dapat mengambil keputusan berdasarkan data yang sama.",
-    ],
-    cta: { label: "Kembali ke beranda", href: "/" } satisfies LinkRef,
-  },
-  EN: {
-    eyebrow: "Waste Price Index",
-    title: "A waste-price index for a more open market.",
-    paragraphs: [
-      "WPI turns real transaction data into a clearer price reference for waste pickers, waste banks, aggregators, and industrial buyers.",
-      "With visible and traceable prices, every participant can make decisions from the same source of market information.",
-    ],
-    cta: { label: "Back to home", href: "/" } satisfies LinkRef,
   },
 } as const
 

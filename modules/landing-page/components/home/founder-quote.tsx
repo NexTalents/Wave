@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
+import { BrandLogo } from "@/modules/landing-page/components/brand-logo"
 import { PageContainer } from "@/modules/landing-page/components/layout/page-container"
 import { homeAssets } from "@/modules/landing-page/config"
 import { useLocalizedContent } from "@/modules/landing-page/language"
@@ -77,8 +78,8 @@ export function FounderQuote() {
             <cite className="block text-[20px] font-medium not-italic leading-tight text-brand-950 desktop:text-[24px]">
               {founderQuote.name}
             </cite>
-            <span className="block text-[16px] leading-tight text-muted desktop:text-[18px]">{founderQuote.role}</span>
-            <span className="mt-5 inline-block text-2xl font-semibold tracking-[-0.04em] text-brand-500 desktop:mt-6">WAVE</span>
+            <span className="block text-[16px] leading-tight text-brand-700 desktop:text-[18px]">{founderQuote.role}</span>
+            <BrandLogo className="mt-5 h-12 w-[67px] desktop:mt-6" />
           </footer>
         </blockquote>
       </PageContainer>

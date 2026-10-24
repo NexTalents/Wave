@@ -3,7 +3,7 @@ import type { LinkRef } from "@/modules/landing-page/config"
 import { cn } from "@/modules/landing-page/utils"
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-colors duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:outline-2 focus-visible:outline-offset-2"
+  "wave-button inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 transition-colors duration-150 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:outline-2 focus-visible:outline-offset-2"
 
 const variants = {
   primary: "bg-brand-500 text-white hover:bg-brand-600",
@@ -26,7 +26,12 @@ export function ActionLink({
 
   if (isExternal) {
     return (
-      <a className={classes} href={link.href} rel="noopener noreferrer" target="_blank">
+      <a
+        className={classes}
+        href={link.href}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
         {link.label}
       </a>
     )

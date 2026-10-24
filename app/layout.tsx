@@ -1,20 +1,28 @@
-import { Geist, Geist_Mono } from "next/font/google"
 import type { Metadata } from "next"
+import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils"
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'})
-
-const fontMono = Geist_Mono({
+const sans = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  variable: "--font-mono",
+  variable: "--font-wave-sans",
+  display: "swap",
+  weight: "variable",
+})
+
+const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-wave-mono",
+  display: "swap",
+  weight: "variable",
 })
 
 export const metadata: Metadata = {
   title: "WAVE — Waste Value Exchange",
-  description: "Indeks harga limbah transparan untuk ekonomi sirkular Indonesia.",
+  description:
+    "Indeks harga limbah transparan untuk ekonomi sirkular Indonesia.",
 }
 
 export default function RootLayout({
@@ -26,7 +34,7 @@ export default function RootLayout({
     <html
       lang="id"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", geist.variable)}
+      className={cn("font-sans antialiased", mono.variable, sans.variable)}
     >
       <body>
         <ThemeProvider>{children}</ThemeProvider>

@@ -12,7 +12,7 @@ function PhoneMockup({ index }: { index: number }) {
   const item = localizedHome.products.items[index]
 
   return (
-    <div className="relative aspect-[702/1420] w-full drop-shadow-[0_22px_50px_rgba(10,2,20,.28)]">
+    <div className="relative aspect-[702/1420] w-full drop-shadow-[0_22px_50px_rgb(16_40_21_/.28)]">
       <div className="absolute inset-[1.8%_5.2%_2.4%] overflow-hidden rounded-[10%/5%] bg-white">
         <Image
           alt={item.image.alt}
@@ -43,7 +43,7 @@ function StaticProductSolutions() {
 
   return (
     <section aria-labelledby="products-heading" className="bg-brand-700 px-5 py-16 text-white md:px-10">
-      <h2 className="mx-auto max-w-[1296px] text-3xl md:text-5xl" id="products-heading">
+      <h2 className="wave-section-title mx-auto max-w-[1296px]" id="products-heading">
         {products.heading}
       </h2>
       <div className="mx-auto mt-14 grid max-w-[1296px] gap-20">
@@ -53,8 +53,8 @@ function StaticProductSolutions() {
               <PhoneMockup index={index} />
             </div>
             <div className="space-y-4">
-              <h3 className="text-3xl">{item.title}</h3>
-              <p className="max-w-md text-white/85">{item.description}</p>
+              <h3 className="wave-section-title">{item.title}</h3>
+              <p className="wave-body max-w-md text-white/85">{item.description}</p>
               <ActionLink link={item.cta} variant="onDark" />
             </div>
           </article>
@@ -91,7 +91,7 @@ export function ProductSolutions() {
     >
       <div className="sticky top-0 h-svh overflow-hidden">
       <div className="mx-auto grid h-full max-w-[1440px] grid-rows-[auto_minmax(0,1fr)_auto] px-5 py-14 md:px-8 md:py-10 desktop:!grid-cols-[0.8fr_1.3fr_0.9fr] desktop:grid-rows-1 desktop:items-center desktop:px-[72px] desktop:py-12">
-          <h2 className="max-w-[360px] text-[24px] leading-[1.32] md:max-w-[250px] md:text-[30px] md:leading-[1.2] desktop:!max-w-[360px] desktop:self-start desktop:pt-24 desktop:!text-[38px] desktop:!leading-[1.4]" id="products-heading">
+          <h2 className="wave-page-title max-w-[360px] desktop:self-start desktop:pt-24" id="products-heading">
             {products.heading}
           </h2>
 
@@ -120,11 +120,11 @@ export function ProductSolutions() {
             </div>
 
             <div aria-live="polite" className="home-product-enter max-w-[310px] space-y-3 md:max-w-[260px] desktop:max-w-[390px] desktop:space-y-4" key={active.id}>
-              <h3 className="text-[25px] leading-[1.24] md:text-[28px] desktop:text-3xl desktop:leading-[1.34]">
+              <h3 className="wave-section-title">
                 {activeIndex === 0 ? <em>Impactful Investments</em> : active.title.split(" ").slice(0, 3).join(" ")}
                 {activeIndex === 0 ? " ke Usaha Mikro Desa" : ` ${active.title.split(" ").slice(3).join(" ")}`}
               </h3>
-              <p className="max-w-sm text-[16px] leading-relaxed text-white/88">{active.description}</p>
+              <p className="wave-body max-w-sm text-white/88">{active.description}</p>
               <ActionLink link={active.cta} variant="onDark" />
             </div>
           </div>
