@@ -11,7 +11,5 @@ export const metadata: Metadata = {
 
 export default async function Page({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const filters = parseFilters(await searchParams)
-  // Sparkline kartu ringkasan memakai basis yang sama dengan getSnapshot(): grade A, Indonesia (agregat), 30 hari.
-  const sparklines = Object.fromEntries(materials.map((item) => [item.slug, getSeries({ material: item.slug, grade: "A", region: "indonesia", priceType: "transactionIndex", period: "30d" }, item.slug)]))
-  return <WpiOverview filters={filters} materials={materials} regions={regions} rows={getRows(filters)} series={getSeries(filters)} snapshot={getSnapshot()} sparklines={sparklines} status={getStatusSummary()} />
+  return <WpiOverview filters={filters} materials={materials} regions={regions} rows={getRows(filters)} series={getSeries(filters)} snapshot={getSnapshot()} status={getStatusSummary()} />
 }
