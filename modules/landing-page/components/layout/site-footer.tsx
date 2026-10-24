@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import type { LinkRef } from "@/modules/landing-page/config"
+import { BrandLogo } from "@/modules/landing-page/components/brand-logo"
 import { PageContainer } from "@/modules/landing-page/components/layout/page-container"
 import { Disclosure } from "@/modules/landing-page/components/primitives/disclosure"
 import { useLocalizedContent } from "@/modules/landing-page/language"
@@ -29,11 +30,8 @@ export function SiteFooter() {
       <PageContainer className="py-16 md:py-20">
         <div className="grid gap-12 desktop:grid-cols-[1.2fr_1fr_1fr]">
           <div className="space-y-6">
-            <p className="text-2xl font-semibold text-white">WAVE</p>
-            <address className="space-y-1 text-sm not-italic text-white/75">
-              <p>Waste Value Exchange</p>
-              <p>Indonesia</p>
-            </address>
+            <BrandLogo className="h-[90px] w-[90px]" inverse />
+            
             <div className="space-y-1 text-sm text-white/75">
               <p>
                 Telepon: <span className="text-white">{site.contact.call}</span>

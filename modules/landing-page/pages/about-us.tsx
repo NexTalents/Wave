@@ -1,34 +1,79 @@
 "use client"
 
-import { PageContainer } from "@/modules/landing-page/components/layout/page-container"
-import { SiteFooter } from "@/modules/landing-page/components/layout/site-footer"
-import { SiteHeader } from "@/modules/landing-page/components/layout/site-header"
-import { ActionLink } from "@/modules/landing-page/components/primitives/action-link"
-import { aboutByLanguage } from "@/modules/landing-page/config"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Separator } from "@/components/ui/separator"
+import { CtaPanel, FeatureGrid, MarketingSection, MarketingShell, PageHero } from "@/modules/landing-page/components/marketing/marketing-blocks"
 import { LanguageProvider, useLanguage } from "@/modules/landing-page/language"
+import { aboutByLanguage } from "@/modules/landing-page/pages-content"
 
 function AboutUsContent() {
   const { language } = useLanguage()
   const about = aboutByLanguage[language]
 
   return (
-    <div className="wave-landing min-h-screen">
-      <SiteHeader />
-      <main className="bg-white px-5 pb-24 pt-36 desktop:px-10 desktop:pt-48">
-        <PageContainer>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand-500">{about.eyebrow}</p>
-          <h1 className="mt-5 max-w-5xl text-[42px] leading-[1.02] tracking-[-0.04em] text-brand-700 desktop:text-[76px]">{about.title}</h1>
-          <div className="mt-12 grid max-w-5xl gap-6 text-lg leading-relaxed text-brand-950 desktop:grid-cols-3 desktop:text-xl">
-            {about.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+    <MarketingShell>
+      <PageHero hero={about.hero} />
+
+      <MarketingSection heading={about.story.heading} id="cerita">
+        <div className="grid gap-10 desktop:grid-cols-[1.4fr_1fr]">
+          <div className="flex flex-col gap-5 text-lg leading-relaxed">
+            {about.story.paragraphs.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
           </div>
-          <ActionLink className="mt-12" link={about.cta} />
-        </PageContainer>
-      </main>
-      <SiteFooter />
-    </div>
+          <div className="flex flex-col gap-5">
+            {about.mission.map(({ icon: Icon, title, description }) => (
+              <Card key={title}>
+                <CardHeader className="gap-2">
+                  <span aria-hidden="true" className="mb-3 flex size-11 items-center justify-center rounded-xl bg-secondary text-secondary-foreground">
+                    <Icon className="size-5" />
+                  </span>
+                  <CardTitle className="text-xl">{title}</CardTitle>
+                  <CardDescription className="text-base">{description}</CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </MarketingSection>
+
+      <MarketingSection heading={about.problems.heading} id="masalah" tone="muted">
+        <FeatureGrid items={about.problems.items} />
+      </MarketingSection>
+
+      <MarketingSection heading={about.values.heading} id="nilai">
+        <FeatureGrid columns={4} items={about.values.items} />
+      </MarketingSection>
+
+      <MarketingSection heading={about.impact.heading} id="dampak" tone="muted">
+        <FeatureGrid items={about.impact.items} />
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">{about.ecosystem.title}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <Separator />
+            <ul className="flex flex-wrap gap-2">
+              {about.ecosystem.items.map((item) => (
+                <li key={item}>
+                  <Badge variant="outline">{item}</Badge>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      </MarketingSection>
+
+      <CtaPanel cta={about.cta} />
+    </MarketingShell>
   )
 }
 
 export function AboutUsPage() {
-  return <LanguageProvider><AboutUsContent /></LanguageProvider>
+  return (
+    <LanguageProvider>
+      <AboutUsContent />
+    </LanguageProvider>
+  )
 }

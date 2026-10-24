@@ -33,3 +33,4 @@ The section components are presentational and consume this centralized configura
 - `components/primitives`: links and disclosure UI.
 - `styles.css`: WAVE design tokens, responsive breakpoint, and module animations.
 - `index.ts`: public module entry point.
+WPI public pages live in `modules/wpi` and are routed from `app/wpi`.

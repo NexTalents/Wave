@@ -31,7 +31,7 @@ function StaticNarrative({ headingId = "inclusive-heading" }: { headingId?: stri
             style={{ opacity: 0.16 + index * 0.05, transform: `scale(${0.82 + index * 0.18}) rotate(${index % 2 === 0 ? -4 : 4}deg)` }}
           />
         ))}
-        <h2 className="relative z-20 max-w-5xl text-center text-[32px] leading-[1.08] tracking-[-0.035em] text-brand-600 md:text-5xl desktop:!text-[72px] desktop:!leading-none" id={headingId}>
+        <h2 className="wave-display relative z-20 max-w-5xl text-center text-brand-600" id={headingId}>
           {inclusive.heading}
         </h2>
       </div>
@@ -40,7 +40,7 @@ function StaticNarrative({ headingId = "inclusive-heading" }: { headingId?: stri
         {inclusive.scenes.map((scene) => (
           <article className="relative mx-auto min-h-[105svh] max-w-[1500px] overflow-hidden rounded-none desktop:min-h-screen" key={scene.id}>
             <Image alt={scene.image.alt} className="object-cover" fill sizes="100vw" src={scene.image.src} />
-            <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,5,25,.08),rgba(15,5,25,.48))]" />
+            <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(180deg,rgb(16_40_21_/.08),rgb(16_40_21_/.48))]" />
             <h3 className="absolute inset-x-5 top-1/2 text-center text-[24px] leading-[1.14] text-white md:inset-x-16 md:text-5xl desktop:!text-[58px]">
               {scene.text}
             </h3>
@@ -58,7 +58,7 @@ function SceneMedia({ scene, translateY }: { scene: Scene; translateY: number })
         {scene.image.mobileSrc ? <source media="(max-width: 1199px)" srcSet={scene.image.mobileSrc} /> : null}
         <Image alt={scene.image.alt} className="object-cover object-center" fill sizes="100vw" src={scene.image.src} />
       </picture>
-      <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(249deg,rgba(131,57,149,0),rgba(93,41,108,.4)_63%)]" />
+      <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(249deg,rgb(36_90_50_/0),rgb(23_63_36_/.4)_63%)]" />
     </div>
   )
 }
@@ -109,7 +109,7 @@ export function InclusiveGrowth() {
           </div>
           <div className="relative z-10 flex h-full items-center justify-center px-6 py-16 md:px-10 desktop:px-16">
             <h2
-              className="max-w-5xl text-center text-[32px] leading-none tracking-[-0.035em] text-brand-600 md:text-[48px] desktop:text-7xl"
+              className="wave-display max-w-5xl text-center text-brand-600"
               id="inclusive-heading"
               style={{ opacity: titleFade, transform: `translateY(${(1 - titleFade) * -40}px) scale(${0.94 + titleFade * 0.06})` }}
             >
@@ -140,7 +140,7 @@ export function InclusiveGrowth() {
                 <div className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center">
                   <div className="mx-auto w-full max-w-6xl px-6 text-center">
                     <h3
-                      className="mx-auto max-w-[330px] text-[24px] leading-[1.25] text-white md:max-w-[680px] md:text-[40px] desktop:max-w-none desktop:text-[52px]"
+                      className="mx-auto max-w-[330px] text-[24px] leading-[1.25] text-white md:max-w-[680px] desktop:max-w-none desktop:text-[52px]"
                       style={{ opacity: titleOpacity, visibility: titleOpacity < 0.01 ? "hidden" : "visible", transform: `translateY(${(1 - titleOpacity) * 28}px)` }}
                     >
                       <SceneTitle scene={scene} />
