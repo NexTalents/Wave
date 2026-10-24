@@ -824,11 +824,22 @@ export function AdminWpiConsole() {
                     ) : null}
                     <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
                       <p className="text-sm text-muted-foreground">
-                        Publish adalah aksi eksplisit dan memindahkan snapshot
-                        lama menjadi superseded.
+                        {candidates.snapshots.some(
+                          (snapshot) =>
+                            snapshot.dataQuality === "insufficient_data"
+                        )
+                          ? "Candidate tanpa harga tidak dapat dipublish. Tambahkan atau approve observasi yang cukup lalu jalankan kalkulasi ulang."
+                          : "Publish adalah aksi eksplisit dan memindahkan snapshot lama menjadi superseded."}
                       </p>
                       <Button
-                        disabled={busy || !candidates.snapshots.length}
+                        disabled={
+                          busy ||
+                          !candidates.snapshots.length ||
+                          candidates.snapshots.some(
+                            (snapshot) =>
+                              snapshot.dataQuality === "insufficient_data"
+                          )
+                        }
                         onClick={() => {
                           if (
                             window.confirm(

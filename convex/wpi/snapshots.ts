@@ -239,6 +239,18 @@ export const publish = mutation({
       )
     )
       throw new Error("Snapshot candidate is invalid")
+    if (
+      snapshots.some(
+        (snapshot) =>
+          snapshot !== null &&
+          (snapshot.dataQuality === "insufficient_data" ||
+            (snapshot.verifiedTransactionPricePerKgIdr === undefined &&
+              snapshot.referencePricePerKgIdr === undefined))
+      )
+    )
+      throw new Error(
+        "Cannot publish a snapshot without a calculated public price"
+      )
     const now = Date.now()
     for (const snapshot of snapshots) {
       const previous = await ctx.db
