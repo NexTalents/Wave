@@ -10,6 +10,8 @@
 
 # testing
 /coverage
+/playwright-report/
+/test-results/
 
 # next.js
 /.next/
@@ -21,6 +23,10 @@
 # misc
 .DS_Store
 *.pem
+/.agents/
+/.cursor/
+/app/wpi/zip.zip
+/modules/wpi/zip2.zip
 
 # debug
 npm-debug.log*

@@ -1,24 +1,29 @@
 @theme {
-  --color-brand-50: #f4e5f4;
-  --color-brand-100: #e8d2e8;
-  --color-brand-200: #dfb0e2;
-  --color-brand-400: #9a579f;
-  --color-brand-500: #833995;
-  --color-brand-600: #590f6b;
-  --color-brand-700: #432258;
-  --color-brand-800: #331749;
-  --color-brand-950: #130526;
-  --color-gold: #e7c78e;
-  --color-ink: #343742;
-  --color-muted: #8a8a8a;
-  --color-neutral-base: #e1e1e1;
-  --color-neutral-light: #fbeafb;
+  --color-brand-50: #eff5ec;
+  --color-brand-100: #dce6d8;
+  --color-brand-200: #b9cdb4;
+  --color-brand-400: #86ad7e;
+  --color-brand-500: #245a32;
+  --color-brand-600: #173f24;
+  --color-brand-700: #173f24;
+  --color-brand-800: #102815;
+  --color-brand-950: #0c1810;
+  --color-brand-coral: #bf5b5a;
+  --color-gold: #8d7239;
+  --color-chart-reference: #8d7239;
+  --color-disclosure: #fff4d4;
+  --color-ink: #172b1c;
+  --color-muted: #647466;
+  --color-neutral-base: #f7faf5;
+  --color-neutral-light: #f2f6f0;
   --color-surface: #ffffff;
-  --color-success: #14ae53;
-  --color-warning: #e38619;
+  --color-surface-alt: #f2f6f0;
+  --color-success: #245a32;
+  --color-warning: #7a5100;
 
-  --font-heading: "cora", "Avenir Next", "Segoe UI", ui-sans-serif, sans-serif;
-  --font-body: "adelle-sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: var(--font-wave-sans);
+  --font-body: var(--font-wave-sans);
+  --font-technical: var(--font-wave-mono);
 
   --radius-card: 1rem;
   --radius-panel: 2rem;
@@ -32,10 +37,18 @@
   .wave-landing {
     min-height: 100%;
     overflow-x: clip;
-    background: var(--color-surface);
+    background: var(--color-neutral-base);
     color: var(--color-ink);
     font-family: var(--font-body);
-    line-height: 1.5;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .wave-auth {
+    overflow-x: clip;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.6;
   }
 
   .wave-landing h1,
@@ -43,12 +56,112 @@
   .wave-landing h3,
   .wave-landing h4 {
     font-family: var(--font-heading);
+    font-weight: 700;
+  }
+
+  .wave-auth h1,
+  .wave-auth h2,
+  .wave-auth h3,
+  .wave-auth h4 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+  }
+
+  .wave-display {
+    font-family: var(--font-heading);
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+  }
+
+  .wave-page-title {
+    font-family: var(--font-heading);
+    font-size: clamp(1.875rem, 3vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+  }
+
+  .wave-section-title {
+    font-family: var(--font-heading);
+    font-size: clamp(1.625rem, 2.5vw, 2rem);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.025em;
+  }
+
+  .wave-card-title {
+    font-family: var(--font-heading);
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .wave-lead {
+    font-size: clamp(1.0625rem, 1.4vw, 1.1875rem);
     font-weight: 400;
+    line-height: 1.65;
+  }
+
+  .wave-body {
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.6;
+  }
+
+  .wave-body-sm {
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  .wave-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.35;
+  }
+
+  .wave-caption {
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1.45;
+  }
+
+  .wave-button {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .wave-kpi {
+    font-size: clamp(1.75rem, 3vw, 2.75rem);
+    font-weight: 700;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wave-code {
+    font-family: var(--font-technical);
+    font-size: 0.8125rem;
+    font-weight: 400;
+    line-height: 1.55;
   }
 
   .wave-landing :focus-visible {
     outline: 2px solid var(--color-brand-500);
     outline-offset: 2px;
+  }
+
+  .wave-auth :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
+
+  .wave-landing ::selection,
+  .wave-auth ::selection {
+    background: var(--color-brand-200);
+    color: var(--color-brand-950);
   }
 
   .wave-landing .marquee-track {
@@ -63,6 +176,37 @@
 
   .wave-landing .home-product-enter {
     animation: wave-home-product-enter 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Maps shadcn/ui tokens to the WAVE palette for marketing pages. */
+  .wave-brand {
+    --background: var(--color-neutral-base);
+    --foreground: var(--color-ink);
+    --card: var(--color-surface);
+    --card-foreground: var(--color-ink);
+    --popover: var(--color-surface);
+    --popover-foreground: var(--color-ink);
+    --primary: var(--color-brand-500);
+    --primary-foreground: #ffffff;
+    --secondary: var(--color-brand-50);
+    --secondary-foreground: var(--color-brand-600);
+    --muted: var(--color-neutral-light);
+    --muted-foreground: var(--color-muted);
+    --accent: #e3eee0;
+    --accent-foreground: var(--color-brand-600);
+    --border: var(--color-brand-100);
+    --input: var(--color-brand-200);
+    --ring: var(--color-brand-400);
+    --radius: 1rem;
+  }
+
+  .wave-brand-inverse {
+    --foreground: #ffffff;
+    --muted: rgb(255 255 255 / 0.12);
+    --muted-foreground: rgb(255 255 255 / 0.72);
+    --secondary: #ffffff;
+    --secondary-foreground: var(--color-brand-700);
+    --border: rgb(255 255 255 / 0.18);
   }
 }
 

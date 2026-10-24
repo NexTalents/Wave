@@ -52,12 +52,12 @@ function BusinessSlide({
       <div aria-hidden="true" className="absolute inset-0 bg-black/45" />
 
       <div
-        className="absolute bottom-[33.5%] left-6 right-6 rounded-[24px] bg-white px-5 py-5 text-brand-950 shadow-[0_14px_38px_rgba(13,4,23,.16)] transition-[transform,opacity] duration-700 ease-out desktop:bottom-[3.5%] desktop:left-auto desktop:right-[9.3%] desktop:w-[min(45.2vw,650px)] desktop:px-5 desktop:py-[27px]"
+        className="absolute bottom-[33.5%] left-6 right-6 rounded-[24px] bg-white px-5 py-5 text-brand-950 shadow-[0_14px_38px_rgb(16_40_21_/.16)] transition-[transform,opacity] duration-700 ease-out desktop:bottom-[3.5%] desktop:left-auto desktop:right-[9.3%] desktop:w-[min(45.2vw,650px)] desktop:px-5 desktop:py-[27px]"
         style={{ transform: `translateY(${entranceOffset}px)` }}
       >
-        <h3 className="text-[20px] leading-tight text-brand-500 desktop:text-[28px]">{slide.title}</h3>
-        <p className="mt-3 text-[14px] leading-[1.45] desktop:text-base">{details.description}</p>
-        <ul className="mt-2 grid gap-1.5 text-[13px] leading-tight desktop:gap-2 desktop:text-sm">
+        <h3 className="wave-card-title text-brand-500 desktop:text-xl">{slide.title}</h3>
+        <p className="wave-body-sm mt-3">{details.description}</p>
+        <ul className="wave-body-sm mt-2 grid gap-1.5 desktop:gap-2">
           {(language === "ID" ? ["Harga lebih transparan", "Data transaksi tervalidasi", "Akses lintas ekosistem"] : ["More transparent prices", "Validated transaction data", "Cross-ecosystem access"]).map((bullet) => (
             <li className="flex items-center gap-3" key={bullet}>
               <span aria-hidden="true" className="grid h-7 w-7 shrink-0 place-items-center rounded-[10px] bg-green-50 text-sm text-green-500">
@@ -71,11 +71,11 @@ function BusinessSlide({
       </div>
 
       <aside
-        className="absolute bottom-[17.5%] right-6 w-[223px] rounded-[22px] bg-white/95 px-5 py-[22px] text-brand-950 shadow-[0_10px_24px_rgba(13,4,23,.2)] transition-[transform,opacity] duration-700 ease-out desktop:bottom-[8%] desktop:right-[4.8%] desktop:w-[216px] desktop:px-6 desktop:py-4"
+        className="absolute bottom-[17.5%] right-6 w-[223px] rounded-[22px] bg-white/95 px-5 py-[22px] text-brand-950 shadow-[0_10px_24px_rgb(16_40_21_/.2)] transition-[transform,opacity] duration-700 ease-out desktop:bottom-[8%] desktop:right-[4.8%] desktop:w-[216px] desktop:px-6 desktop:py-4"
         style={{ transform: `translateY(${entranceOffset * 0.6}px)` }}
       >
-        <h4 className="whitespace-nowrap text-[15px] font-semibold leading-tight desktop:text-base">{language === "ID" ? "Dengan dukungan:" : "Powered by:"}</h4>
-        <ul className="mt-3 grid gap-2 text-xs leading-tight desktop:mt-3 desktop:gap-2">
+        <h4 className="wave-label whitespace-nowrap font-semibold">{language === "ID" ? "Dengan dukungan:" : "Powered by:"}</h4>
+        <ul className="wave-caption mt-3 grid gap-2 desktop:mt-3 desktop:gap-2">
           {(language === "ID" ? ["WPI berbasis transaksi", "Prediksi harga", "Pencatatan batch"] : ["Transaction-based WPI", "Price forecasts", "Batch records"]).map((scheme) => (
             <li className="flex items-center gap-3" key={scheme}>
               <span aria-hidden="true" className="h-3 w-3 shrink-0 rounded-full bg-brand-100" />
@@ -95,8 +95,8 @@ function StaticBusinessSolutions() {
   return (
     <section aria-labelledby="business-heading" className="bg-brand-950 text-white" data-evidence="home.business-solutions">
       <div className="px-6 py-12 desktop:px-[4.8%] desktop:py-16">
-        <p className="text-xs font-semibold tracking-wide text-white/80 desktop:text-base">{business.heading}</p>
-        <h3 className="mt-3 max-w-[1320px] text-[24px] leading-[1.18] tracking-[-0.02em] text-white desktop:mt-2 desktop:text-[36px] desktop:leading-[1.2]" id="business-heading">
+        <p className="wave-caption font-semibold tracking-wide text-white/80">{business.heading}</p>
+        <h3 className="wave-page-title mt-3 max-w-[1320px] text-white desktop:mt-2" id="business-heading">
           {business.subheading}
         </h3>
       </div>
@@ -131,8 +131,8 @@ export function BusinessSolutions() {
     <section ref={ref} aria-labelledby="business-heading" className="relative h-[220svh] bg-brand-950 text-white desktop:h-[350svh]" data-evidence="home.business-solutions">
       <div className="sticky top-0 h-svh overflow-hidden">
         <div className="absolute inset-x-6 top-[17%] z-20 desktop:left-[4.8%] desktop:right-[4.8%] desktop:top-8">
-          <p className="text-xs font-semibold tracking-wide text-white/80 desktop:text-base">{business.heading}</p>
-          <h3 className="mt-3 max-w-[1320px] text-[24px] leading-[1.18] tracking-[-0.02em] text-white desktop:mt-2 desktop:text-[36px] desktop:leading-[1.2]" id="business-heading">
+          <p className="wave-caption font-semibold tracking-wide text-white/80">{business.heading}</p>
+          <h3 className="wave-page-title mt-3 max-w-[1320px] text-white desktop:mt-2" id="business-heading">
             {business.subheading}
           </h3>
         </div>

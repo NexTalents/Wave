@@ -1,0 +1,31 @@
+import { test, expect } from "@playwright/test"
+import {
+  authUsers,
+  expectAuthShell,
+  expectDashboard,
+  hasTestUsers,
+} from "../test-cases"
+
+test.describe("Login", () => {
+  test.skip(
+    !hasTestUsers(),
+    "Set WAVE_TEST_* credentials to run Clerk-backed auth tests"
+  )
+
+  for (const user of authUsers) {
+    test(`${user.accountType} user can sign in and reach dashboard`, async ({
+      page,
+    }) => {
+      await page.goto("/login")
+      await expectAuthShell(page, "Masuk ke WAVE")
+      await page.getByLabel("Email").fill(user.email)
+      await page.locator('input[name="password"]').fill(user.password)
+      await page.getByRole("button", { name: "Masuk dengan email" }).click()
+
+      await expect(page).toHaveURL(
+        new RegExp(`/dashboard/${user.accountType}$`)
+      )
+      await expectDashboard(page, user.accountType)
+    })
+  }
+})

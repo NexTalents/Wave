@@ -25,6 +25,9 @@ export default defineSchema({
     tokenIdentifier: v.string(),
     email: v.optional(v.string()),
     name: v.optional(v.string()),
+    accountType: v.optional(
+      v.union(v.literal("individual"), v.literal("business"))
+    ),
     status: v.union(v.literal("active"), v.literal("suspended")),
   }).index("by_token_identifier", ["tokenIdentifier"]),
 

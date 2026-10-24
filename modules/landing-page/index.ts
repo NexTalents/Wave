@@ -1,4 +1,7 @@
 export { LandingPage } from "./landing-page"
 export { AboutUsPage } from "./pages/about-us"
+export { BusinessPage } from "./pages/business"
+export { HowItWorksPage } from "./pages/how-it-works"
+export { WastePickersPage } from "./pages/waste-pickers"
 export { landingPageConfig } from "./config"
 export type { LinkRef, NavItem, FooterGroup, ReferenceAsset, Scene, ProductItem, Testimonial } from "./config"

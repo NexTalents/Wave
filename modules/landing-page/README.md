@@ -26,9 +26,11 @@ The section components are presentational and consume this centralized configura
 
 - `landing-page.tsx`: module shell and section composition.
 - `pages/about-us.tsx`: About Us page composition within the landing-page module.
+- `pages/wpi.tsx`: public Waste Price Index page composition within the landing-page module.
 - `components/home`: hero, inclusive-growth motion, product, business, founder, and testimonial sections.
 - `components/layout`: header, footer, and page container.
 - `components/motion`: scroll progress and smooth-scroll behavior.
 - `components/primitives`: links and disclosure UI.
 - `styles.css`: WAVE design tokens, responsive breakpoint, and module animations.
 - `index.ts`: public module entry point.
+WPI public pages live in `modules/wpi` and are routed from `app/wpi`.
