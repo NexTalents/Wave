@@ -1,10 +1,17 @@
 "use client"
 
 import { useSignIn } from "@clerk/nextjs/legacy"
+import { Apple, LoaderCircle } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { AuthInput, AuthShell } from "./auth-shell"
+import {
+  AuthInput,
+  AuthShell,
+  GoogleMark,
+  authPrimaryButtonClass,
+  authSocialButtonClass,
+} from "./auth-shell"
 import { getAuthError } from "./errors"
 
 export function LoginForm() {
@@ -14,6 +21,9 @@ export function LoginForm() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [oauthLoading, setOauthLoading] = useState<"google" | "apple" | null>(
+    null
+  )
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -30,7 +40,7 @@ export function LoginForm() {
       })
       if (result.status === "complete" && result.createdSessionId) {
         await setActive({ session: result.createdSessionId })
-        router.push("/")
+        router.push("/dashboard")
         return
       }
 
@@ -52,15 +62,18 @@ export function LoginForm() {
   async function continueWith(strategy: "oauth_google" | "oauth_apple") {
     if (!isLoaded) return
     setError("")
+    setOauthLoading(strategy === "oauth_google" ? "google" : "apple")
 
     try {
       await signIn.authenticateWithRedirect({
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/",
+        redirectUrlComplete: "/dashboard",
         strategy,
       })
     } catch (value) {
       setError(getAuthError(value))
+    } finally {
+      setOauthLoading(null)
     }
   }
 
@@ -71,29 +84,39 @@ export function LoginForm() {
     >
       <div className="space-y-3">
         <button
-          className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-black/15 bg-white text-sm font-medium transition hover:bg-black/[0.03] disabled:opacity-50"
-          disabled={!isLoaded}
+          aria-busy={oauthLoading === "google"}
+          className={authSocialButtonClass}
+          disabled={!isLoaded || oauthLoading !== null || loading}
           onClick={() => void continueWith("oauth_google")}
           type="button"
         >
-          <span className="font-bold text-[#4285f4]">G</span>
+          {oauthLoading === "google" ? (
+            <LoaderCircle aria-hidden="true" className="size-5 animate-spin" />
+          ) : (
+            <GoogleMark />
+          )}
           Lanjutkan dengan Google
         </button>
         <button
-          className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-black/15 bg-white text-sm font-medium transition hover:bg-black/[0.03] disabled:opacity-50"
-          disabled={!isLoaded}
+          aria-busy={oauthLoading === "apple"}
+          className={authSocialButtonClass}
+          disabled={!isLoaded || oauthLoading !== null || loading}
           onClick={() => void continueWith("oauth_apple")}
           type="button"
         >
-          <span className="text-base">●</span>
+          {oauthLoading === "apple" ? (
+            <LoaderCircle aria-hidden="true" className="size-5 animate-spin" />
+          ) : (
+            <Apple aria-hidden="true" className="size-5" />
+          )}
           Lanjutkan dengan Apple
         </button>
       </div>
 
-      <div className="my-7 flex items-center gap-3 text-xs text-black/35">
-        <span className="h-px flex-1 bg-black/10" />
+      <div className="my-7 flex items-center gap-3 text-xs text-brand-700">
+        <span className="h-px flex-1 bg-border" />
         atau masuk dengan email
-        <span className="h-px flex-1 bg-black/10" />
+        <span className="h-px flex-1 bg-border" />
       </div>
 
       <form className="space-y-4" onSubmit={submit}>
@@ -117,25 +140,30 @@ export function LoginForm() {
         />
         {error ? (
           <p
-            className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700"
+            aria-live="polite"
+            className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive"
             role="alert"
           >
             {error}
           </p>
         ) : null}
         <button
-          className="h-12 w-full rounded-xl bg-[#56256d] px-5 text-sm font-semibold text-white transition hover:bg-[#432052] disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={!isLoaded || loading}
+          aria-busy={loading}
+          className={authPrimaryButtonClass}
+          disabled={!isLoaded || loading || oauthLoading !== null}
           type="submit"
         >
+          {loading ? (
+            <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+          ) : null}
           {loading ? "Memproses..." : "Masuk dengan email"}
         </button>
       </form>
 
       <div className="mt-7 flex items-center justify-between gap-4 text-sm">
-        <span className="text-black/50">Belum punya akun?</span>
+        <span className="text-brand-700">Belum punya akun?</span>
         <Link
-          className="font-semibold text-[#56256d] hover:underline"
+          className="font-semibold text-brand-600 underline-offset-4 hover:underline"
           href="/register"
         >
           Buat akun
