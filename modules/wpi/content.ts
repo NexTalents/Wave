@@ -4,9 +4,19 @@ export const wpiContentByLanguage = {
   ID: {
     eyebrow: "Waste Price Index",
     title: "Harga limbah yang terlihat, untuk keputusan yang lebih adil.",
-    description: "Lihat indeks harga material daur ulang berdasarkan transaksi tervalidasi, harga acuan setoran, wilayah, grade, dan periode pengamatan.",
+    description:
+      "Lihat indeks harga material daur ulang berdasarkan transaksi tervalidasi, harga acuan setoran, wilayah, grade, dan periode pengamatan.",
     lastUpdated: "Data terakhir diperbarui",
-    prototype: "Data prototipe — angka pada halaman ini bersifat ilustratif dan belum merepresentasikan pasar aktual.",
+    prototype:
+      "Data prototipe — angka pada halaman ini bersifat ilustratif dan belum merepresentasikan pasar aktual.",
+    publishedData:
+      "Data published WAVE — angka berasal dari snapshot yang dipublikasikan melalui pipeline WPI.",
+    staleData:
+      "Snapshot published terakhir berstatus stale — gunakan sebagai referensi dengan kehati-hatian.",
+    emptyData:
+      "Belum ada snapshot published untuk ditampilkan. Data akan muncul setelah kalkulasi dan publikasi disetujui.",
+    unavailableData:
+      "Data WPI belum dapat dimuat. Coba lagi setelah koneksi ke backend tersedia.",
     snapshot: "Ringkasan pasar",
     filters: "Filter data",
     table: "Harga material",
@@ -36,26 +46,62 @@ export const wpiContentByLanguage = {
     updated: "Diperbarui",
     source: "Sumber",
     faq: [
-      ["Apa itu WPI?", "WPI menyatukan transaksi tervalidasi menjadi referensi harga material daur ulang yang dapat dibaca publik."],
-      ["Apa perbedaan indeks dan harga acuan?", "Indeks transaksi dibentuk dari transaksi yang selesai dan tervalidasi. Harga acuan setoran membantu menentukan nilai awal saat material diserahkan."],
-      ["Apakah WPI menjamin harga transaksi?", "Tidak. Harga aktual dapat berbeda berdasarkan lokasi, volume, grade, kebersihan, logistik, dan kesepakatan para pihak."],
-      ["Bagaimana indeks dihitung?", "Versi prototipe menggunakan agregasi harga transaksi per material, grade, wilayah, dan periode. Versi metodologi: draft-0."],
-      ["Berapa minimum data yang dibutuhkan?", "Kombinasi dengan kurang dari lima transaksi tidak dipublikasikan sebagai indeks."],
-      ["Bagaimana outlier diperlakukan?", "Aturan outlier masih menjadi keputusan bisnis terbuka dan akan dicatat dalam versi metodologi berikutnya."],
-      ["Seberapa sering data diperbarui?", "Snapshot publik prototipe menggunakan tanggal acuan tetap. Pipeline pembaruan produksi akan ditentukan bersama dashboard internal."],
-      ["Bagaimana grade ditentukan?", "Definisi grade di halaman ini bersifat sementara dan menunggu persetujuan bisnis."],
+      [
+        "Apa itu WPI?",
+        "WPI menyatukan transaksi tervalidasi menjadi referensi harga material daur ulang yang dapat dibaca publik.",
+      ],
+      [
+        "Apa perbedaan indeks dan harga acuan?",
+        "Indeks transaksi dibentuk dari transaksi yang selesai dan tervalidasi. Harga acuan setoran membantu menentukan nilai awal saat material diserahkan.",
+      ],
+      [
+        "Apakah WPI menjamin harga transaksi?",
+        "Tidak. Harga aktual dapat berbeda berdasarkan lokasi, volume, grade, kebersihan, logistik, dan kesepakatan para pihak.",
+      ],
+      [
+        "Bagaimana indeks dihitung?",
+        "Indeks yang tampil berasal dari snapshot hasil kalkulasi backend per material, grade, wilayah, dan periode. Versi metodologi mengikuti metadata snapshot yang dipublikasikan.",
+      ],
+      [
+        "Berapa minimum data yang dibutuhkan?",
+        "Kombinasi dengan kurang dari lima transaksi tidak dipublikasikan sebagai indeks.",
+      ],
+      [
+        "Bagaimana outlier diperlakukan?",
+        "Aturan outlier masih menjadi keputusan bisnis terbuka dan akan dicatat dalam versi metodologi berikutnya.",
+      ],
+      [
+        "Seberapa sering data diperbarui?",
+        "Halaman publik membaca snapshot yang sudah dipublikasikan. Frekuensi pembaruan mengikuti pipeline kalkulasi dan publikasi WPI.",
+      ],
+      [
+        "Bagaimana grade ditentukan?",
+        "Definisi grade di halaman ini bersifat sementara dan menunggu persetujuan bisnis.",
+      ],
     ] as [string, string][],
-    disclaimer: "WPI adalah informasi referensi pasar, bukan jaminan harga transaksi tertentu.",
-    chartNote: "Grafik menunjukkan median/agregasi prototipe transaksi tervalidasi.",
+    disclaimer:
+      "WPI adalah informasi referensi pasar, bukan jaminan harga transaksi tertentu.",
+    chartNote:
+      "Grafik hanya menggunakan snapshot published; garis emas menunjukkan harga acuan setoran jika tersedia.",
     related: "Material terkait",
     back: "Kembali ke WPI",
   },
   EN: {
     eyebrow: "Waste Price Index",
     title: "Visible waste prices, for fairer decisions.",
-    description: "Explore recycled-material prices based on validated transactions, deposit reference prices, regions, grades, and observation periods.",
+    description:
+      "Explore recycled-material prices based on validated transactions, deposit reference prices, regions, grades, and observation periods.",
     lastUpdated: "Last updated",
-    prototype: "Prototype data — figures on this page are illustrative and do not represent the actual market.",
+    prototype:
+      "Prototype data — figures on this page are illustrative and do not represent the actual market.",
+    publishedData:
+      "WAVE published data — figures come from snapshots published through the WPI pipeline.",
+    staleData:
+      "The latest published snapshot is marked stale — use it as a reference with care.",
+    emptyData:
+      "There is no published snapshot to display yet. Data will appear after an approved calculation and publication.",
+    unavailableData:
+      "WPI data could not be loaded. Try again when the backend connection is available.",
     snapshot: "Market snapshot",
     filters: "Data filters",
     table: "Material prices",
@@ -85,17 +131,43 @@ export const wpiContentByLanguage = {
     updated: "Updated",
     source: "Source",
     faq: [
-      ["What is WPI?", "WPI turns validated transactions into a public reference for recycled-material prices."],
-      ["What is the difference between the index and reference price?", "The transaction index is formed from completed, validated transactions. The deposit reference price helps set an initial value when material is handed over."],
-      ["Does WPI guarantee a transaction price?", "No. Actual prices can differ based on location, volume, grade, cleanliness, logistics, and the parties' agreement."],
-      ["How is the index calculated?", "The prototype aggregates transaction prices by material, grade, region, and period. Methodology version: draft-0."],
-      ["What is the minimum data needed?", "Combinations with fewer than five transactions are not published as an index."],
-      ["How are outliers handled?", "Outlier rules remain an open business decision and will be recorded in a future methodology version."],
-      ["How often is data updated?", "The public prototype uses a fixed reference date. The production update pipeline will be defined with the internal dashboard."],
-      ["How are grades defined?", "Grade definitions on this page are provisional and pending business approval."],
+      [
+        "What is WPI?",
+        "WPI turns validated transactions into a public reference for recycled-material prices.",
+      ],
+      [
+        "What is the difference between the index and reference price?",
+        "The transaction index is formed from completed, validated transactions. The deposit reference price helps set an initial value when material is handed over.",
+      ],
+      [
+        "Does WPI guarantee a transaction price?",
+        "No. Actual prices can differ based on location, volume, grade, cleanliness, logistics, and the parties' agreement.",
+      ],
+      [
+        "How is the index calculated?",
+        "The displayed index comes from a backend snapshot calculated by material, grade, region, and observation window. The snapshot carries its methodology version.",
+      ],
+      [
+        "What is the minimum data needed?",
+        "Combinations with fewer than five transactions are not published as an index.",
+      ],
+      [
+        "How are outliers handled?",
+        "Outlier rules remain an open business decision and will be recorded in a future methodology version.",
+      ],
+      [
+        "How often is data updated?",
+        "The public page reads published snapshots. Update frequency follows the WPI calculation and publication pipeline.",
+      ],
+      [
+        "How are grades defined?",
+        "Grade definitions on this page are provisional and pending business approval.",
+      ],
     ] as [string, string][],
-    disclaimer: "WPI is market-reference information, not a guarantee of any specific transaction price.",
-    chartNote: "The chart shows a prototype aggregation of validated transactions.",
+    disclaimer:
+      "WPI is market-reference information, not a guarantee of any specific transaction price.",
+    chartNote:
+      "The chart only uses published snapshots; the gold line shows the deposit reference price when available.",
     related: "Related materials",
     back: "Back to WPI",
   },

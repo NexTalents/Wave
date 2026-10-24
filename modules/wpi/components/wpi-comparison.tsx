@@ -52,7 +52,9 @@ export function WpiComparison({
                     {formatRupiah(row.price)}
                   </td>
                   <td className="px-5 py-4 text-brand-700">
-                    {formatPercent(row.change)}
+                    {row.changeAvailable === false
+                      ? "—"
+                      : formatPercent(row.change)}
                   </td>
                   <td className="px-5 py-4">
                     {row.transactionCount.toLocaleString("id-ID")}
@@ -86,7 +88,9 @@ export function WpiComparison({
                   {formatRupiah(row.price)}
                 </p>
                 <p className="mt-1 text-sm text-brand-700">
-                  {formatPercent(row.change)}
+                  {row.changeAvailable === false
+                    ? "—"
+                    : formatPercent(row.change)}
                 </p>
               </div>
             </article>

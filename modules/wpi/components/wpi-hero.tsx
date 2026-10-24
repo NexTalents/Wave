@@ -1,7 +1,7 @@
 import { PageContainer } from "@/modules/landing-page/components/layout/page-container"
 import { formatDate } from "@/modules/wpi/data"
 import type { Language } from "@/modules/landing-page/config"
-type WpiStatusSummary = { updatedAt: string }
+import type { WpiStatus } from "@/modules/wpi/data"
 
 export function WpiHero({
   copy,
@@ -10,7 +10,7 @@ export function WpiHero({
 }: {
   copy: { title: string; description: string; lastUpdated: string }
   language: Language
-  status: WpiStatusSummary
+  status: WpiStatus
 }) {
   return (
     <section className="bg-brand-800 text-white">
@@ -26,7 +26,11 @@ export function WpiHero({
             {copy.lastUpdated}
           </p>
           <p className="wave-kpi mt-2">
-            {formatDate(status.updatedAt, language)}
+            {status.updatedAt
+              ? formatDate(status.updatedAt, language)
+              : language === "ID"
+                ? "Belum tersedia"
+                : "Not available"}
           </p>
           <p className="wave-body-sm mt-3 text-white/75">
             {language === "ID"
