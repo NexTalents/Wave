@@ -58,7 +58,14 @@ Posisi di lifecycle: **Publication -> Public consumption**, ditambah verifikasi 
 ## 4. Checklist Progres
 
 - **Current step:** P5-PUB-01
-- **Last updated:** 2026-10-24T18:18:16+07:00
+- **Last updated:** 2026-10-24T18:57:07+07:00
+
+### 4.0 Preflight sebelum implementasi
+
+- [x] **P5-PREFLIGHT-01** Exit criteria Phase 3 Admin dan Phase 4 Business terpenuhi pada implementation branch.
+- [x] **P5-PREFLIGHT-02** Security upgrade Next.js 16.4.0 -> 16.4.3 selesai di branch terpisah, diverifikasi, lalu di-fast-forward ke `codex/wpi-phase5-ready`.
+- [x] **P5-PREFLIGHT-03** Perubahan WPI dipisahkan ke branch dan commit bertema: foundation, admin, business, docs/test/navigation, dan security.
+- [x] **P5-PREFLIGHT-04** Public data gap teridentifikasi: `modules/wpi/data/query.ts` masih memakai mock lokal; public query published sudah tersedia; seri reference/gold tetap diberi label sebagai definisi bisnis yang belum terverifikasi.
 
 ### 4.1 Preservasi UI Public
 
@@ -253,3 +260,16 @@ Konfirmasi sebelum melaporkan selesai:
 - **Business Context**: Harga yang dilihat publik berasal dari snapshot published yang traceable dan jujur soal freshness serta kualitas data, tanpa membocorkan transaksi organisasi. MVP ditutup dengan verifikasi end-to-end.
 - **Checklist Ref**: -
 - **Notes / Risks**: Status seri referensi emas bergantung pada keputusan Phase 1 dan Phase 2.
+
+### [2026-10-24T18:57:07+07:00] chore — Menyelesaikan preflight Phase 5
+- **Type**: chore
+- **Files**:
+  - `package.json` (modified)
+  - `pnpm-lock.yaml` (modified)
+  - `pnpm-workspace.yaml` (modified)
+  - `next.config.ts` (modified)
+  - `.agents/docs/plan_log/PHASE-5-PUBLIC-INTEGRATION-VERIFICATION.md` (modified)
+- **Summary**: Menyelesaikan upgrade security Next.js ke 16.4.3, memastikan dependency install/build lulus, dan mencatat branch/commit baseline yang siap menjadi titik awal integrasi public.
+- **Business Context**: Sebelum harga published dikonsumsi publik, deployment baseline sudah melewati security gate dependency dan lifecycle admin/business sudah terlacak secara terpisah.
+- **Checklist Ref**: P5-PREFLIGHT-01–04
+- **Notes / Risks**: Authenticated E2E Clerk/Convex belum dijalankan karena credential test tidak tersedia. Public UI masih menggunakan mock provider sampai checklist P5-PUB-* dikerjakan.

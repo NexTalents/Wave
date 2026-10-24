@@ -245,3 +245,16 @@ Aturan:
 - **Business Context**: Integritas data acquisition WPI lebih kuat sebelum observasi masuk review queue.
 - **Checklist Ref**: P4-SUB-02, P4-SUB-04, P4-TEST-01–02
 - **Notes / Risks**: -
+
+### [2026-10-24T18:57:07+07:00] chore — Preflight Phase 5 selesai
+- **Type**: chore
+- **Files**:
+  - `next.config.ts` (modified)
+  - `package.json` (modified)
+  - `pnpm-lock.yaml` (modified)
+  - `pnpm-workspace.yaml` (modified)
+  - `.agents/docs/plan_log/PHASE-5-PUBLIC-INTEGRATION-VERIFICATION.md` (modified)
+- **Summary**: Security upgrade Next.js 16.4.0 -> 16.4.3 selesai dan diverifikasi di branch `codex/security-next-upgrade`, lalu di-fast-forward ke `codex/wpi-phase5-ready`. Preflight Phase 5 dicatat tanpa menandai implementasi public sebagai selesai.
+- **Business Context**: Baseline Phase 5 aman untuk mulai menghubungkan public WPI ke snapshot published tanpa mencampur pekerjaan public dengan branch admin/business.
+- **Checklist Ref**: P5-PREFLIGHT-01–04
+- **Notes / Risks**: Public UI masih memakai mock data; ini adalah scope utama Phase 5.
