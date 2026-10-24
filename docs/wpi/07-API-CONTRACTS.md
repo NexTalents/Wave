@@ -40,7 +40,7 @@ All authorization below is enforced inside Convex functions, not only in routes 
 **Args:** candidate calculation run ID and candidate snapshot IDs.  
 **Returns:** run ID, publication timestamp, and count.  
 **Authorization:** `requirePlatformAdmin(ctx)` checks active user and `users.platformRole = "admin"` server-side.  
-**Validation:** run and snapshots must be candidates from the same run. Existing same-scope published snapshots become `superseded`; candidates become `published`; run becomes `published`; audit log is appended atomically.
+**Validation:** run and snapshots must be candidates from the same run and must contain a calculated public price. `insufficient_data` candidates are rejected. Existing same-scope published snapshots become `superseded`; candidates become `published`; run becomes `published`; audit log is appended atomically.
 
 ## Admin functions
 

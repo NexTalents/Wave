@@ -357,3 +357,19 @@ Konfirmasi sebelum melaporkan selesai:
 - **Business Context**: Demo teman dapat memperlihatkan perbedaan source dan kualitas data, antrean review, alasan penolakan/quarantine, exclusion outlier, VWAP verified transaction, reference-only price, publication boundary, dan isolasi organisasi tanpa memakai data pasar atau PII nyata.
 - **Checklist Ref**: P5-INT-01–02, P5-SEC-07–08, P5-FINAL-01–05, P5-FINAL-13
 - **Notes / Risks**: Fixture tetap khusus development/demo; review, kalkulasi, dan publish tidak otomatis dijalankan oleh seed. Deployment Development Cloud sudah diverifikasi menghasilkan 8 calculation inputs, 1 outlier exclusion, 3 candidate baru, dan total 7 snapshot published.
+
+### [2026-10-24T20:07:53+07:00] fix — Menampilkan data seed pada public WPI dan menjaga publication boundary
+- **Type**: fix
+- **Files**:
+  - `convex/wpi/simulation.ts` (modified)
+  - `convex/wpi/snapshots.ts` (modified)
+  - `modules/wpi/admin-console.tsx` (modified)
+  - `docs/wpi/05-DATA-ARCHITECTURE.md` (modified)
+  - `docs/wpi/07-API-CONTRACTS.md` (modified)
+  - `docs/wpi/08-IMPLEMENTATION-STATUS.md` (modified)
+  - `docs/wpi/09-TEST-RESULTS.md` (modified)
+  - `.agents/docs/plan_log/PHASE-5-PUBLIC-INTEGRATION-VERIFICATION.md` (modified)
+- **Summary**: Menambahkan lima transaksi PET Grade A untuk wilayah Indonesia agregat dan tiga transaksi PP regional untuk pemulihan snapshot demo, sehingga `/wpi` default menampilkan harga dan filter Jawa Barat memiliki snapshot verified. Publish backend dan UI kini menolak candidate `insufficient_data` atau tanpa harga publik agar snapshot valid tidak tertutup hasil kosong.
+- **Business Context**: Teman dapat langsung melihat data demo di halaman public tanpa harus memilih wilayah terlebih dahulu, tetapi kualitas data tetap mengikuti aturan: transaksi minimum membentuk indeks, reference-only tetap dibedakan, dan hasil kalkulasi tanpa harga tidak boleh menggantikan data published yang valid.
+- **Checklist Ref**: P5-PUB-01–08, P5-CONTRACT-01, P5-INT-01–02, P5-SEC-07–08, P5-FINAL-01–05, P5-FINAL-13
+- **Notes / Risks**: Nilai tetap synthetic untuk development/demo. Development Cloud kini berisi 33 observasi synthetic dan 8 snapshot current published; satu snapshot `insufficient_data` lama dipertahankan sebagai superseded history untuk audit.

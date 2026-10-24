@@ -34,7 +34,7 @@ Implemented:
 
 - A fresh Convex deployment still starts with an empty WPI catalog and no
   published snapshots. The configured development deployment has now been
-  populated with the complete synthetic fixture and seven published snapshots
+  populated with the complete synthetic fixture and eight published snapshots
   for verification; production deployments must be seeded through an explicit,
   approved data process.
 - The synthetic fixture is for development/demo verification only. Its values
