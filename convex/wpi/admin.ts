@@ -8,8 +8,10 @@ import {
 import { requirePlatformAdmin } from "./authorization"
 import { writeAuditLog } from "../auth/authorization"
 import { reviewTransition } from "./workflow"
-import { materials as seedMaterials } from "../../modules/wpi/data/materials"
-import { regions as seedRegions } from "../../modules/wpi/data/regions"
+import {
+  ensureMasterData,
+  seedSimulationData as seedSimulationFixture,
+} from "./simulation"
 
 const decision = v.union(
   v.literal("approve"),
@@ -197,45 +199,22 @@ export const seedMasterData = mutation({
   args: {},
   handler: async (ctx) => {
     const admin = await requirePlatformAdmin(ctx)
-    if (await ctx.db.query("wpiMaterials").first())
-      return { seeded: false, reason: "already-seeded" }
-    for (const [sortOrder, material] of seedMaterials.entries()) {
-      const materialId = await ctx.db.insert("wpiMaterials", {
-        code: material.slug.toUpperCase(),
-        slug: material.slug,
-        nameId: material.name.ID,
-        nameEn: material.name.EN,
-        categoryId: material.category.ID,
-        categoryEn: material.category.EN,
-        descriptionId: material.description.ID,
-        descriptionEn: material.description.EN,
-        isActive: true,
-        sortOrder,
-      })
-      for (const grade of material.grades)
-        await ctx.db.insert("wpiMaterialGrades", {
-          materialId,
-          code: grade.code,
-          nameId: grade.name.ID,
-          nameEn: grade.name.EN,
-          descriptionId: grade.description.ID,
-          descriptionEn: grade.description.EN,
-          isActive: true,
-        })
-    }
-    for (const region of seedRegions)
-      await ctx.db.insert("wpiRegions", {
-        code: region.code,
-        nameId: region.name.ID,
-        nameEn: region.name.EN,
-        isActive: true,
-      })
+    const result = await ensureMasterData(ctx)
+    if (!result.created) return { seeded: false, reason: "already-seeded" }
     await writeAuditLog(ctx, {
       actorUserId: admin._id,
       action: "wpi.master-data.seeded",
       targetType: "wpiCatalog",
     })
     return { seeded: true }
+  },
+})
+
+export const seedSimulationData = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const admin = await requirePlatformAdmin(ctx)
+    return seedSimulationFixture(ctx, admin._id)
   },
 })
 

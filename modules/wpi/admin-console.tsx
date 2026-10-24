@@ -122,6 +122,7 @@ export function AdminWpiConsole() {
   const publishSnapshot = useMutation(api.wpi.snapshots.publish)
   const updateMaterial = useMutation(api.wpi.admin.updateMaterial)
   const seedMasterData = useMutation(api.wpi.admin.seedMasterData)
+  const seedSimulationData = useMutation(api.wpi.admin.seedSimulationData)
   const [statusFilter, setStatusFilter] = useState("all")
   const [sourceTypeFilter, setSourceTypeFilter] = useState("all")
   const [materialFilter, setMaterialFilter] = useState("all")
@@ -983,6 +984,34 @@ export function AdminWpiConsole() {
                 </CardContent>
               </Card>
             </div>
+            <Card className="border-dashed border-primary/40 bg-primary/5">
+              <CardHeader>
+                <CardTitle>Simulation fixture</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Buat data sintetis yang ditandai jelas untuk demo dan
+                  verifikasi alur WPI. Data ini bukan data pasar produksi.
+                </p>
+              </CardHeader>
+              <CardContent className="flex flex-wrap items-center justify-between gap-4">
+                <p className="max-w-2xl text-sm text-muted-foreground">
+                  Fixture berisi transaksi PET, HDPE, dan kardus serta satu
+                  harga referensi. Observasi dibuat melalui state submitted lalu
+                  di-approve sebagai eligible agar tetap mengikuti workflow.
+                </p>
+                <Button
+                  disabled={busy}
+                  onClick={() =>
+                    void perform(
+                      () => seedSimulationData({}),
+                      "Data simulasi berhasil dibuat sebagai observasi eligible. Jalankan kalkulasi lalu publish candidate."
+                    )
+                  }
+                  variant="outline"
+                >
+                  <Database /> Seed simulation data
+                </Button>
+              </CardContent>
+            </Card>
             <Card>
               <CardHeader>
                 <CardTitle>Price sources</CardTitle>
