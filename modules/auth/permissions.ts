@@ -12,6 +12,7 @@ export const permissions = {
   marketDataRead: "market-data:read",
   marketDataExport: "market-data:export",
   demandCreate: "demand:create",
+  wpiObservationSubmit: "wpi:observation-submit",
 } as const
 
 export type Permission = (typeof permissions)[keyof typeof permissions]
@@ -26,6 +27,7 @@ export const rolePermissions: Readonly<Record<OrganizationRole, readonly Permiss
     permissions.batchesCreate,
     permissions.batchesSell,
     permissions.marketDataRead,
+    permissions.wpiObservationSubmit,
   ],
   aggregator: [
     permissions.organizationRead,
@@ -33,6 +35,7 @@ export const rolePermissions: Readonly<Record<OrganizationRole, readonly Permiss
     permissions.batchesCreate,
     permissions.batchesSell,
     permissions.marketDataRead,
+    permissions.wpiObservationSubmit,
   ],
   buyer: [permissions.organizationRead, permissions.marketDataRead, permissions.demandCreate],
   data_viewer: [permissions.organizationRead, permissions.marketDataRead, permissions.marketDataExport],

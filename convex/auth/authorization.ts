@@ -2,7 +2,7 @@ import type { Doc, Id } from "../_generated/dataModel"
 import type { MutationCtx, QueryCtx } from "../_generated/server"
 import { hasPermission, type Permission } from "../../modules/auth/permissions"
 
-type AuthCtx = QueryCtx | MutationCtx
+export type AuthCtx = QueryCtx | MutationCtx
 
 export async function getCurrentUser(ctx: AuthCtx) {
   const identity = await ctx.auth.getUserIdentity()
