@@ -4,7 +4,7 @@
 
 The existing `users`, `organizations`, `memberships`, and `auditLogs` tables remain the identity, tenant, and audit foundation. WPI adds only domain-specific tables: `wpiMaterials`, `wpiMaterialGrades`, `wpiRegions`, `wpiPriceSources`, `wpiObservations`, `wpiCalculationPolicies`, `wpiCalculationRuns`, `wpiCalculationInputs`, `wpiCalculationExclusions`, and `wpiSnapshots`.
 
-The prototype constants in `modules/wpi/data/materials.ts` and `regions.ts` are the seed source for master data. `observations.ts` is not migrated because it fabricates historical observations.
+The constants in `modules/wpi/data/materials.ts` and `regions.ts` remain the seed source for master data and an emergency label fallback only. The former `observations.ts` mock source was removed because it fabricated historical observations.
 
 ## Entity relationships
 
@@ -55,8 +55,8 @@ Review and publication states are server-controlled. Rejected/quarantined observ
 
 ## Master data and migration
 
-`convex/wpi/seed.ts` provides an internal idempotent seed for the six existing materials, three draft grades, and six regions. It never seeds price observations. Existing public pages continue using local data until Phase 5 switches them to published queries.
+`convex/wpi/seed.ts` provides an internal idempotent seed for the six existing materials, three draft grades, and six regions. It never seeds price observations. Public pages now use `api.wpi.snapshots.publicData`; local constants are used only when the catalog is unavailable or not seeded, never for public prices.
 
 ## Backward compatibility
 
-The current `WpiRow`/`WpiSeries` types remain an adapter boundary. Phase 5 can map public-safe snapshots into those props and remove the local observation reader only after published data exists.
+The current `WpiRow`/`WpiSeries` types remain the adapter boundary. `modules/wpi/data/published.ts` maps public-safe snapshots into those props and preserves explicit empty, unavailable, stale, and reference-only states.

@@ -2,11 +2,17 @@
 
 All authorization below is enforced inside Convex functions, not only in routes or components.
 
+## `api.wpi.snapshots.publicData`
+
+**Args:** optional public catalog filters `materialSlug`, `gradeCode`, and `regionCode`.
+**Returns:** `{ materials, regions, snapshots }`. The snapshot projection exposes only material/grade/region labels, current price when available, price classification, currency/unit, movement when valid, publication status, observation window, freshness timestamps, coverage counts, data quality, and methodology version.
+**Authorization:** unauthenticated read. Only active catalog records and `published`/`superseded` snapshots are considered; candidate snapshots, raw observations, source identity, organization identity, evidence, reviewer, and calculation run IDs are excluded.
+
 ## `api.wpi.snapshots.published`
 
-**Args:** optional `materialId`, `gradeId`, `regionId`.  
-**Returns:** public-safe published snapshot records with prices, movement, quality, coverage, window, and publication metadata.  
-**Authorization:** unauthenticated read; query filters to `status = published` and omits private evidence/review/organization fields.
+**Args:** optional internal catalog IDs `materialId`, `gradeId`, and `regionId`.
+**Returns:** the same safe snapshot projection as `publicData`, limited to currently `published` records.
+**Authorization:** unauthenticated read; IDs are used only as server-side filters and never returned in the projection.
 
 ## `api.wpi.observations.submit`
 

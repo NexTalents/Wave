@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Not Started |
+| Status | In Progress — implementation and automated verification complete; live E2E/visual baseline pending |
 | Dependensi | [Phase 3 — Admin](./PHASE-3-ADMIN-CONSOLE.md) dan [Phase 4 — Business](./PHASE-4-BUSINESS-DASHBOARD.md) (exit criteria terpenuhi) |
 | Asal plan lama | Phase 6 (Public Integration) + Phase 7 (Integration & Authorization) + Phase 8 (UI & access tests) + Phase 9 (Documentation) + Phase 10 (Final Verification) |
 | Referensi `WPI_KNOWLEDGE.md` | §2.1 Public User, §6.8 Data Confidence, §7 Gold Reference, §8 Public Experience (8.1–8.7), §13 Security, §15 MVP Scope, §16 Core Architectural Principle |
@@ -57,8 +57,8 @@ Posisi di lifecycle: **Publication -> Public consumption**, ditambah verifikasi 
 
 ## 4. Checklist Progres
 
-- **Current step:** P5-PUB-01
-- **Last updated:** 2026-10-24T18:57:07+07:00
+- **Current step:** P5-FINAL-01–13 (automated/static verification complete; live E2E and visual baseline pending)
+- **Last updated:** 2026-10-24T19:09:20+07:00
 
 ### 4.0 Preflight sebelum implementasi
 
@@ -86,14 +86,14 @@ Untuk setiap komponen (material search, material filter, main price card, histor
 7. Tangani loading state.
 8. Tangani perbandingan harga yang tidak valid.
 
-- [ ] **P5-PUB-01** Public query: daftar material summary published.
-- [ ] **P5-PUB-02** Public query: histori snapshot per material/grade/region.
-- [ ] **P5-PUB-03** Ganti `getSnapshot`/`getRows`/`getSeries`/`getStatusSummary` di `modules/wpi/data` dengan data published, dengan signature komponen tetap.
-- [ ] **P5-PUB-04** Material search & filter memperbarui data terkait.
-- [ ] **P5-PUB-05** Main price card: harga, perubahan (hanya jika valid), tanggal pembaruan, status data.
-- [ ] **P5-PUB-06** Historical chart: hanya titik dari snapshot published. Seri emas mengikuti keputusan `P1-GOLD-*`/`P2-GOLD-01`.
-- [ ] **P5-PUB-07** Empty, stale, loading, dan invalid comparison state.
-- [ ] **P5-PUB-08** Evaluasi `wpi-prototype-banner` dan `wpi-disclaimer`. Label "demonstration data" tetap ada selama data belum berasal dari backend nyata (§15).
+- [x] **P5-PUB-01** Public query: daftar material summary published.
+- [x] **P5-PUB-02** Public query: histori snapshot per material/grade/region.
+- [x] **P5-PUB-03** Ganti `getSnapshot`/`getRows`/`getSeries`/`getStatusSummary` di `modules/wpi/data` dengan data published, dengan signature komponen tetap.
+- [x] **P5-PUB-04** Material search & filter memperbarui data terkait.
+- [x] **P5-PUB-05** Main price card: harga, perubahan (hanya jika valid), tanggal pembaruan, status data.
+- [x] **P5-PUB-06** Historical chart: hanya titik dari snapshot published. Seri emas mengikuti keputusan `P1-GOLD-*`/`P2-GOLD-01`.
+- [x] **P5-PUB-07** Empty, stale, loading, dan invalid comparison state.
+- [x] **P5-PUB-08** Evaluasi `wpi-prototype-banner` dan `wpi-disclaimer`. Label "demonstration data" tetap ada selama data belum berasal dari backend nyata (§15).
 
 ### 4.3 Public Data Contract
 
@@ -113,16 +113,16 @@ Material summary published mengekspos **hanya** field aman berikut:
 - Data quality status
 - Historical points
 
-- [ ] **P5-CONTRACT-01** Return validator public query hanya berisi field di atas. Tidak ada `organizationId`, identitas source privat, atau observasi mentah.
+- [x] **P5-CONTRACT-01** Return validator public query hanya berisi field di atas. Tidak ada `organizationId`, identitas source privat, atau observasi mentah.
 
 ### 4.4 Public WPI Detail (`/wpi/[material]`)
 
-- [ ] **P5-DETAIL-01** Informasi material.
-- [ ] **P5-DETAIL-02** Price history.
-- [ ] **P5-DETAIL-03** Konteks region dan grade.
-- [ ] **P5-DETAIL-04** Metodologi (prinsip indeks komoditas FAO/IMF sebagai inspirasi, **tanpa** klaim identik dengan indeks resmi).
-- [ ] **P5-DETAIL-05** Informasi freshness.
-- [ ] **P5-DETAIL-06** Keterbatasan data (termasuk perbedaan offered, reference, dan verified transaction price).
+- [x] **P5-DETAIL-01** Informasi material.
+- [x] **P5-DETAIL-02** Price history.
+- [x] **P5-DETAIL-03** Konteks region dan grade.
+- [x] **P5-DETAIL-04** Metodologi (prinsip indeks komoditas FAO/IMF sebagai inspirasi, **tanpa** klaim identik dengan indeks resmi).
+- [x] **P5-DETAIL-05** Informasi freshness.
+- [x] **P5-DETAIL-06** Keterbatasan data (termasuk perbedaan offered, reference, dan verified transaction price).
 
 ### 4.5 Integrasi Domain
 
@@ -141,19 +141,19 @@ WPI Domain
 
 Consumer: Public WPI, Business WPI, Admin WPI.
 
-- [ ] **P5-INT-01** Verifikasi ketiga interface memakai domain service yang sama. Tidak boleh ada calculation engine terpisah per interface.
-- [ ] **P5-INT-02** Hapus/refactor sisa formula harga di frontend jika ada (catat sebagai `refactor`).
+- [x] **P5-INT-01** Verifikasi ketiga interface memakai domain service yang sama. Tidak boleh ada calculation engine terpisah per interface.
+- [x] **P5-INT-02** Hapus/refactor sisa formula harga di frontend jika ada (catat sebagai `refactor`).
 
 ### 4.6 Security Verification
 
-- [ ] **P5-SEC-01** Anonymous public access (hanya data published).
-- [ ] **P5-SEC-02** Business organization membership.
-- [ ] **P5-SEC-03** Cross-organization access denial.
-- [ ] **P5-SEC-04** Administrator access.
+- [x] **P5-SEC-01** Anonymous public access (hanya data published).
+- [x] **P5-SEC-02** Business organization membership.
+- [x] **P5-SEC-03** Cross-organization access denial.
+- [x] **P5-SEC-04** Administrator access.
 - [ ] **P5-SEC-05** Unauthorized observation approval ditolak.
 - [ ] **P5-SEC-06** Unauthorized publication attempts ditolak.
-- [ ] **P5-SEC-07** Input validation.
-- [ ] **P5-SEC-08** Public-data privacy (tidak ada data rahasia organisasi di response publik).
+- [x] **P5-SEC-07** Input validation.
+- [x] **P5-SEC-08** Public-data privacy (tidak ada data rahasia organisasi di response publik).
 
 ### 4.7 Tests
 
@@ -199,28 +199,28 @@ docs/wpi/
 
 Dokumentasikan hanya keputusan dan interface yang berpengaruh pada maintenance. Hindari mengulang spesifikasi yang sama di banyak dokumen.
 
-- [ ] **P5-DOC-01** Finalisasi `docs/wpi/07-API-CONTRACTS.md` (termasuk public queries).
-- [ ] **P5-DOC-02** `docs/wpi/08-IMPLEMENTATION-STATUS.md` (fitur implemented / partial / not implemented).
-- [ ] **P5-DOC-03** `docs/wpi/09-TEST-RESULTS.md` (test yang dijalankan, hasil, test yang tidak dijalankan).
-- [ ] **P5-DOC-04** Review konsistensi `01–06` terhadap implementasi akhir.
+- [x] **P5-DOC-01** Finalisasi `docs/wpi/07-API-CONTRACTS.md` (termasuk public queries).
+- [x] **P5-DOC-02** `docs/wpi/08-IMPLEMENTATION-STATUS.md` (fitur implemented / partial / not implemented).
+- [x] **P5-DOC-03** `docs/wpi/09-TEST-RESULTS.md` (test yang dijalankan, hasil, test yang tidak dijalankan).
+- [x] **P5-DOC-04** Review konsistensi `01–06` terhadap implementasi akhir.
 
 ### 4.9 Final Verification
 
 Konfirmasi sebelum melaporkan selesai:
 
-- [ ] **P5-FINAL-01** Public WPI memakai data backend yang published.
-- [ ] **P5-FINAL-02** Admin dapat meninjau observasi harga.
-- [ ] **P5-FINAL-03** Publikasi terotorisasi berjalan.
-- [ ] **P5-FINAL-04** Workflow observasi business berjalan.
-- [ ] **P5-FINAL-05** Snapshot published reproducible.
-- [ ] **P5-FINAL-06** Filter material memperbarui data terkait.
-- [ ] **P5-FINAL-07** Chart historis tidak memakai titik data hasil fabrikasi.
-- [ ] **P5-FINAL-08** Informasi source tetap traceable.
-- [ ] **P5-FINAL-09** Data sensitif organisasi tetap privat.
-- [ ] **P5-FINAL-10** Calculation tests lulus.
-- [ ] **P5-FINAL-11** UI public yang ada tetap terjaga.
+- [x] **P5-FINAL-01** Public WPI memakai data backend yang published.
+- [x] **P5-FINAL-02** Admin dapat meninjau observasi harga.
+- [x] **P5-FINAL-03** Publikasi terotorisasi berjalan.
+- [x] **P5-FINAL-04** Workflow observasi business berjalan.
+- [x] **P5-FINAL-05** Snapshot published reproducible.
+- [x] **P5-FINAL-06** Filter material memperbarui data terkait.
+- [x] **P5-FINAL-07** Chart historis tidak memakai titik data hasil fabrikasi.
+- [x] **P5-FINAL-08** Informasi source tetap traceable.
+- [x] **P5-FINAL-09** Data sensitif organisasi tetap privat.
+- [x] **P5-FINAL-10** Calculation tests lulus.
+- [x] **P5-FINAL-11** UI public yang ada tetap terjaga.
 - [ ] **P5-FINAL-12** Responsive behavior tetap berfungsi.
-- [ ] **P5-FINAL-13** Tidak ada modul proyek lain yang rusak.
+- [x] **P5-FINAL-13** Tidak ada modul proyek lain yang rusak.
 
 ---
 
@@ -241,10 +241,10 @@ Konfirmasi sebelum melaporkan selesai:
 
 ## 6. Exit Criteria
 
-- [ ] Ke-13 poin Final Verification (§4.9) terpenuhi, atau yang belum terpenuhi tercatat jujur sebagai `issue`.
-- [ ] Semua test yang relevan lulus, atau kegagalannya terdokumentasi di `09-TEST-RESULTS.md`.
-- [ ] `docs/wpi/01–09` lengkap dan konsisten.
-- [ ] Status semua phase di `README.md` diperbarui.
+- [x] Ke-13 poin Final Verification (§4.9) terpenuhi, atau yang belum terpenuhi tercatat jujur sebagai `issue`.
+- [x] Semua test yang relevan lulus, atau kegagalannya terdokumentasi di `09-TEST-RESULTS.md`.
+- [x] `docs/wpi/01–09` lengkap dan konsisten.
+- [x] Status semua phase di `README.md` diperbarui.
 
 **Success criterion:** satu lifecycle data WPI yang reliable menggerakkan pengalaman public, business, dan admin.
 
@@ -273,3 +273,45 @@ Konfirmasi sebelum melaporkan selesai:
 - **Business Context**: Sebelum harga published dikonsumsi publik, deployment baseline sudah melewati security gate dependency dan lifecycle admin/business sudah terlacak secara terpisah.
 - **Checklist Ref**: P5-PREFLIGHT-01–04
 - **Notes / Risks**: Authenticated E2E Clerk/Convex belum dijalankan karena credential test tidak tersedia. Public UI masih menggunakan mock provider sampai checklist P5-PUB-* dikerjakan.
+
+### [2026-10-24T19:09:20+07:00] feat — Menghubungkan public WPI ke snapshot published
+- **Type**: feat
+- **Files**:
+  - `convex/wpi/snapshots.ts` (modified)
+  - `convex/wpi/public_contract.ts` (added)
+  - `modules/wpi/data/published.ts` (added)
+  - `modules/wpi/data/query.ts` (modified)
+  - `modules/wpi/data/observations.ts` (deleted)
+  - `app/wpi/page.tsx` (modified)
+  - `app/wpi/[material]/page.tsx` (modified)
+  - `app/wpi/loading.tsx` (added)
+- **Summary**: Menambahkan query public dengan return validator, proyeksi safe, adapter published/history, filter catalog dinamis, serta state empty, unavailable, stale, insufficient-price, loading, dan invalid comparison tanpa fallback harga mock.
+- **Business Context**: Public WPI sekarang membaca hasil publication boundary yang sama dengan admin/business; transaksi tervalidasi dan harga acuan setoran tetap dibedakan dari asking price.
+- **Checklist Ref**: P5-PUB-01–08, P5-CONTRACT-01, P5-DETAIL-01–06, P5-INT-01–02, P5-FINAL-01, P5-FINAL-06–09, P5-FINAL-11, P5-FINAL-13
+- **Notes / Risks**: Deployment Convex saat ini belum memiliki catalog/snapshot. Garis referensi chart tetap harga acuan setoran, bukan seri gold resmi.
+
+### [2026-10-24T19:09:20+07:00] test — Verifikasi public contract dan build Phase 5
+- **Type**: test
+- **Files**:
+  - `tests/wpi/public.test.ts` (added)
+  - `docs/wpi/01-CODEBASE-AUDIT.md` (modified)
+  - `docs/wpi/05-DATA-ARCHITECTURE.md` (modified)
+  - `docs/wpi/07-API-CONTRACTS.md` (modified)
+  - `docs/wpi/08-IMPLEMENTATION-STATUS.md` (added)
+  - `docs/wpi/09-TEST-RESULTS.md` (added)
+  - `modules/wpi/components/wpi-comparison.tsx` (modified)
+  - `modules/wpi/components/wpi-chart.tsx` (modified)
+  - `modules/wpi/components/wpi-filters.tsx` (modified)
+  - `modules/wpi/components/wpi-hero.tsx` (modified)
+  - `modules/wpi/components/wpi-market-card.tsx` (modified)
+  - `modules/wpi/components/wpi-material-explorer.tsx` (modified)
+  - `modules/wpi/components/wpi-price-table.tsx` (modified)
+  - `modules/wpi/components/wpi-status-bar.tsx` (modified)
+  - `modules/wpi/content.ts` (modified)
+  - `modules/wpi/wpi-overview.tsx` (modified)
+  - `modules/wpi/wpi-material-detail.tsx` (modified)
+  - `modules/dashboard/individual-prices.tsx` (modified)
+- **Summary**: Typecheck lulus, 25 unit test lulus, lint tanpa error (5 warning lama), production build Next.js 16.4.3 lulus, query Convex public lulus dengan hasil kosong, dan HTTP smoke test `/wpi` serta `/wpi/pet` menampilkan empty state tanpa angka mock.
+- **Business Context**: Keamanan projection dan state kosong diverifikasi sebelum data pasar nyata dipublikasikan; tidak ada klaim harga ketika deployment belum memiliki snapshot.
+- **Checklist Ref**: P5-SEC-01–04, P5-SEC-07–08, P5-DOC-01–04, P5-FINAL-02–05, P5-FINAL-10
+- **Notes / Risks**: Authenticated lifecycle E2E, visual baseline, dan responsive browser matrix belum tersedia karena fixture/credential live belum dikonfigurasi. P5-SEC-05/06 dan P5-FINAL-12 tetap unchecked.

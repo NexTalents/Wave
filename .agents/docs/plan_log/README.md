@@ -35,7 +35,7 @@ Update kolom **Status** setiap kali phase berpindah state (`Not Started` / `In P
 | 2 | Data Architecture & Calculation Engine | [PHASE-2-DATA-CALCULATION.md](./PHASE-2-DATA-CALCULATION.md) | Phase 2 + 3 (+ calc tests dari 8) | Done |
 | 3 | Admin WPI Console | [PHASE-3-ADMIN-CONSOLE.md](./PHASE-3-ADMIN-CONSOLE.md) | Phase 4 (+ admin workflow tests) | Done |
 | 4 | Business WPI Dashboard | [PHASE-4-BUSINESS-DASHBOARD.md](./PHASE-4-BUSINESS-DASHBOARD.md) | Phase 5 (+ org isolation tests) | Done |
-| 5 | Public Integration, Security & Final Verification | [PHASE-5-PUBLIC-INTEGRATION-VERIFICATION.md](./PHASE-5-PUBLIC-INTEGRATION-VERIFICATION.md) | Phase 6 + 7 + 8 + 9 + 10 | Not Started |
+| 5 | Public Integration, Security & Final Verification | [PHASE-5-PUBLIC-INTEGRATION-VERIFICATION.md](./PHASE-5-PUBLIC-INTEGRATION-VERIFICATION.md) | Phase 6 + 7 + 8 + 9 + 10 | In Progress |
 
 **Phase aktif saat ini:** Phase 5
 
@@ -258,3 +258,34 @@ Aturan:
 - **Business Context**: Baseline Phase 5 aman untuk mulai menghubungkan public WPI ke snapshot published tanpa mencampur pekerjaan public dengan branch admin/business.
 - **Checklist Ref**: P5-PREFLIGHT-01–04
 - **Notes / Risks**: Public UI masih memakai mock data; ini adalah scope utama Phase 5.
+
+### [2026-10-24T19:09:20+07:00] feat — Menghubungkan public WPI ke snapshot published
+- **Type**: feat
+- **Files**:
+  - `convex/wpi/snapshots.ts` (modified)
+  - `convex/wpi/public_contract.ts` (added)
+  - `modules/wpi/data/published.ts` (added)
+  - `modules/wpi/data/query.ts` (modified)
+  - `modules/wpi/data/observations.ts` (deleted)
+  - `app/wpi/page.tsx` (modified)
+  - `app/wpi/[material]/page.tsx` (modified)
+  - `app/wpi/loading.tsx` (added)
+- **Summary**: Menambahkan public query dengan return validator dan proyeksi safe, memetakan snapshot/history ke API komponen WPI yang sudah ada, menghapus provider observasi mock, serta menambahkan state empty/unavailable/stale/reference-only tanpa memfabrikasi harga.
+- **Business Context**: Publik hanya melihat angka yang sudah melalui kalkulasi dan publication boundary; harga transaksi, harga referensi, dan harga penawaran tetap dibedakan.
+- **Checklist Ref**: P5-PUB-01–08, P5-CONTRACT-01, P5-DETAIL-01–06, P5-INT-01–02, P5-FINAL-01, P5-FINAL-06–09, P5-FINAL-11, P5-FINAL-13
+- **Notes / Risks**: Deployment Convex saat ini belum memiliki catalog/snapshot, sehingga smoke test publik memverifikasi empty state. Seri emas resmi tetap belum ditetapkan; garis referensi memakai harga acuan setoran.
+
+### [2026-10-24T19:09:20+07:00] test — Verifikasi Phase 5 public contract dan build
+- **Type**: test
+- **Files**:
+  - `tests/wpi/public.test.ts` (added)
+  - `docs/wpi/01-CODEBASE-AUDIT.md` (modified)
+  - `docs/wpi/05-DATA-ARCHITECTURE.md` (modified)
+  - `docs/wpi/07-API-CONTRACTS.md` (modified)
+  - `docs/wpi/08-IMPLEMENTATION-STATUS.md` (added)
+  - `docs/wpi/09-TEST-RESULTS.md` (added)
+  - `.agents/docs/plan_log/PHASE-5-PUBLIC-INTEGRATION-VERIFICATION.md` (modified)
+- **Summary**: Menambahkan test projection privacy/reference-only, menjalankan typecheck, 25 unit test, lint tanpa error, production build Next.js 16.4.3, Convex public query smoke test, dan HTTP smoke test `/wpi` serta `/wpi/pet` pada empty deployment.
+- **Business Context**: Validasi memastikan data publik tetap aman dan jujur ketika belum ada snapshot published, tanpa mengubah keadaan menjadi angka demo.
+- **Checklist Ref**: P5-SEC-01–04, P5-SEC-07–08, P5-DOC-01–04, P5-FINAL-02–05, P5-FINAL-10
+- **Notes / Risks**: Authenticated lifecycle E2E, visual baseline, dan responsive browser matrix belum dijalankan karena fixture/credential live belum tersedia; dicatat di `docs/wpi/09-TEST-RESULTS.md`.
