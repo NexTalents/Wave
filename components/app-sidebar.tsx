@@ -60,7 +60,7 @@ export function AppSidebar({ navGroups = defaultNavGroups }: { navGroups?: Sideb
 				<div className="flex items-center pt-4 pb-2">
 					<ThemeSwitcher />
 					<Button className="text-muted-foreground" size="icon-sm" variant="ghost" render={<a aria-label="Settings" href="#" />} nativeButton={false}><SettingsIcon
-                    							/></Button>
+							/></Button>
 				</div>
 			</SidebarFooter>
 			<SidebarRail />
