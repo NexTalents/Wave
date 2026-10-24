@@ -31,7 +31,7 @@ export function SiteFooter() {
         <div className="grid gap-12 desktop:grid-cols-[1.2fr_1fr_1fr]">
           <div className="space-y-6">
             <BrandLogo className="h-[90px] w-[90px]" inverse />
-            
+
             <div className="space-y-1 text-sm text-white/75">
               <p>
                 Telepon: <span className="text-white">{site.contact.call}</span>
