@@ -18,6 +18,7 @@ import type * as wpi_business from "../wpi/business.js";
 import type * as wpi_calculation from "../wpi/calculation.js";
 import type * as wpi_catalog from "../wpi/catalog.js";
 import type * as wpi_observations from "../wpi/observations.js";
+import type * as wpi_public_contract from "../wpi/public_contract.js";
 import type * as wpi_seed from "../wpi/seed.js";
 import type * as wpi_snapshots from "../wpi/snapshots.js";
 import type * as wpi_workflow from "../wpi/workflow.js";
@@ -39,6 +40,7 @@ declare const fullApi: ApiFromModules<{
   "wpi/calculation": typeof wpi_calculation;
   "wpi/catalog": typeof wpi_catalog;
   "wpi/observations": typeof wpi_observations;
+  "wpi/public_contract": typeof wpi_public_contract;
   "wpi/seed": typeof wpi_seed;
   "wpi/snapshots": typeof wpi_snapshots;
   "wpi/workflow": typeof wpi_workflow;
