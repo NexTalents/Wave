@@ -994,21 +994,23 @@ export function AdminWpiConsole() {
               </CardHeader>
               <CardContent className="flex flex-wrap items-center justify-between gap-4">
                 <p className="max-w-2xl text-sm text-muted-foreground">
-                  Fixture berisi transaksi PET, HDPE, dan kardus serta satu
-                  harga referensi. Observasi dibuat melalui state submitted lalu
-                  di-approve sebagai eligible agar tetap mengikuti workflow.
+                  Fixture lengkap berisi dua organisasi synthetic, beberapa tipe
+                  source, transaksi eligible, antrean submitted/validated,
+                  rejected, quarantined, satu outlier, dan reference-only.
+                  Setelah seed, jalankan kalkulasi lalu review candidate sebelum
+                  publish.
                 </p>
                 <Button
                   disabled={busy}
                   onClick={() =>
                     void perform(
                       () => seedSimulationData({}),
-                      "Data simulasi berhasil dibuat sebagai observasi eligible. Jalankan kalkulasi lalu publish candidate."
+                      "Data demo lengkap berhasil dibuat. Review antrean, jalankan kalkulasi, lalu publish candidate."
                     )
                   }
                   variant="outline"
                 >
-                  <Database /> Seed simulation data
+                  <Database /> Seed complete demo
                 </Button>
               </CardContent>
             </Card>

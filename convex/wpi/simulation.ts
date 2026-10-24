@@ -13,9 +13,26 @@ const DAY_MS = 24 * 60 * 60 * 1000
 const MIDDAY_MS = 12 * 60 * 60 * 1000
 
 export const SIMULATION_MARKER = "SIMULATION_WPI_SEED:v1"
+export const DEMO_MARKER = "SIMULATION_WPI_DEMO:v1"
 export const SIMULATION_ORGANIZATION_NAME = "WAVE Demo Recyclers (Synthetic)"
+export const DEMO_BANK_ORGANIZATION_NAME = "WAVE Demo Bank Sampah (Synthetic)"
 
-type SimulationSourceCode = "SIM-WPI-TRANSACTION" | "SIM-WPI-REFERENCE"
+type SimulationSourceCode =
+  | "SIM-WPI-TRANSACTION"
+  | "SIM-WPI-REFERENCE"
+  | "SIM-WPI-DEMO-OFFER"
+  | "SIM-WPI-DEMO-SUSPENDED"
+  | "SIM-WPI-DEMO-BANK-TRANSACTION"
+  | "SIM-WPI-DEMO-BANK-OFFER"
+  | "SIM-WPI-DEMO-EXTERNAL"
+
+type SimulationSourceType =
+  "TRANSACTION" | "OFFER" | "REFERENCE" | "EXTERNAL_DATA"
+
+type SimulationOrganizationKey = "primary" | "bank"
+
+type SimulationReviewStatus =
+  "submitted" | "validated" | "rejected" | "quarantined" | "eligible"
 
 type SimulationRow = {
   key: string
@@ -26,6 +43,10 @@ type SimulationRow = {
   pricePerKgIdr: number
   quantityGrams?: number
   daysAgo: number
+  organizationKey?: SimulationOrganizationKey
+  finalStatus?: SimulationReviewStatus
+  reviewReason?: string
+  suspiciousReason?: string
 }
 
 const simulationRows: readonly SimulationRow[] = [
@@ -140,6 +161,166 @@ const simulationRows: readonly SimulationRow[] = [
   },
 ]
 
+const completeDemoRows: readonly SimulationRow[] = [
+  {
+    key: "demo-pp-jawa-barat-a-01",
+    materialSlug: "pp",
+    gradeCode: "A",
+    regionCode: "jawa-barat",
+    sourceCode: "SIM-WPI-TRANSACTION",
+    pricePerKgIdr: 9100,
+    quantityGrams: 280_000,
+    daysAgo: 2,
+    finalStatus: "eligible",
+  },
+  {
+    key: "demo-pp-jawa-barat-a-02",
+    materialSlug: "pp",
+    gradeCode: "A",
+    regionCode: "jawa-barat",
+    sourceCode: "SIM-WPI-TRANSACTION",
+    pricePerKgIdr: 9250,
+    quantityGrams: 320_000,
+    daysAgo: 6,
+    finalStatus: "eligible",
+  },
+  {
+    key: "demo-pp-jawa-barat-a-03",
+    materialSlug: "pp",
+    gradeCode: "A",
+    regionCode: "jawa-barat",
+    sourceCode: "SIM-WPI-TRANSACTION",
+    pricePerKgIdr: 9150,
+    quantityGrams: 300_000,
+    daysAgo: 9,
+    finalStatus: "eligible",
+  },
+  {
+    key: "demo-pp-jawa-barat-a-04",
+    materialSlug: "pp",
+    gradeCode: "A",
+    regionCode: "jawa-barat",
+    sourceCode: "SIM-WPI-TRANSACTION",
+    pricePerKgIdr: 9300,
+    quantityGrams: 250_000,
+    daysAgo: 14,
+    finalStatus: "eligible",
+  },
+  {
+    key: "demo-pp-jawa-barat-a-outlier",
+    materialSlug: "pp",
+    gradeCode: "A",
+    regionCode: "jawa-barat",
+    sourceCode: "SIM-WPI-TRANSACTION",
+    pricePerKgIdr: 30_000,
+    quantityGrams: 150_000,
+    daysAgo: 4,
+    finalStatus: "eligible",
+  },
+  {
+    key: "demo-pp-jawa-barat-a-pending-offer",
+    materialSlug: "pp",
+    gradeCode: "A",
+    regionCode: "jawa-barat",
+    sourceCode: "SIM-WPI-DEMO-OFFER",
+    pricePerKgIdr: 9050,
+    daysAgo: 3,
+    finalStatus: "submitted",
+  },
+  {
+    key: "demo-pp-jawa-barat-a-validated-offer",
+    materialSlug: "pp",
+    gradeCode: "A",
+    regionCode: "jawa-barat",
+    sourceCode: "SIM-WPI-DEMO-OFFER",
+    pricePerKgIdr: 9000,
+    daysAgo: 8,
+    finalStatus: "validated",
+  },
+  {
+    key: "demo-pp-jawa-barat-a-rejected-offer",
+    materialSlug: "pp",
+    gradeCode: "A",
+    regionCode: "jawa-barat",
+    sourceCode: "SIM-WPI-DEMO-OFFER",
+    pricePerKgIdr: 1200,
+    daysAgo: 12,
+    finalStatus: "rejected",
+    reviewReason:
+      "Harga penawaran tidak didukung bukti transaksi yang memadai.",
+  },
+  {
+    key: "demo-pp-jawa-barat-a-quarantined",
+    materialSlug: "pp",
+    gradeCode: "A",
+    regionCode: "jawa-barat",
+    sourceCode: "SIM-WPI-DEMO-SUSPENDED",
+    pricePerKgIdr: 9400,
+    daysAgo: 5,
+    finalStatus: "quarantined",
+    reviewReason: "Source sedang ditangguhkan untuk pemeriksaan kualitas.",
+    suspiciousReason: "Source verification status suspended.",
+  },
+  {
+    key: "demo-besi-jawa-timur-b-01",
+    materialSlug: "besi",
+    gradeCode: "B",
+    regionCode: "jawa-timur",
+    sourceCode: "SIM-WPI-DEMO-BANK-TRANSACTION",
+    pricePerKgIdr: 5200,
+    quantityGrams: 400_000,
+    daysAgo: 3,
+    organizationKey: "bank",
+    finalStatus: "eligible",
+  },
+  {
+    key: "demo-besi-jawa-timur-b-02",
+    materialSlug: "besi",
+    gradeCode: "B",
+    regionCode: "jawa-timur",
+    sourceCode: "SIM-WPI-DEMO-BANK-TRANSACTION",
+    pricePerKgIdr: 5350,
+    quantityGrams: 350_000,
+    daysAgo: 8,
+    organizationKey: "bank",
+    finalStatus: "eligible",
+  },
+  {
+    key: "demo-besi-jawa-timur-b-03",
+    materialSlug: "besi",
+    gradeCode: "B",
+    regionCode: "jawa-timur",
+    sourceCode: "SIM-WPI-DEMO-BANK-TRANSACTION",
+    pricePerKgIdr: 5280,
+    quantityGrams: 450_000,
+    daysAgo: 13,
+    organizationKey: "bank",
+    finalStatus: "eligible",
+  },
+  {
+    key: "demo-kardus-jawa-barat-a-reference",
+    materialSlug: "kardus",
+    gradeCode: "A",
+    regionCode: "jawa-barat",
+    sourceCode: "SIM-WPI-DEMO-EXTERNAL",
+    pricePerKgIdr: 3200,
+    daysAgo: 6,
+    organizationKey: "bank",
+    finalStatus: "eligible",
+  },
+  {
+    key: "demo-besi-jawa-timur-b-pending-offer",
+    materialSlug: "besi",
+    gradeCode: "B",
+    regionCode: "jawa-timur",
+    sourceCode: "SIM-WPI-DEMO-BANK-OFFER",
+    pricePerKgIdr: 5300,
+    daysAgo: 4,
+    organizationKey: "bank",
+    finalStatus: "submitted",
+  },
+]
+
 type MasterData = {
   materialIds: Record<string, Id<"wpiMaterials">>
   gradeIds: Record<string, Id<"wpiMaterialGrades">>
@@ -218,13 +399,19 @@ export async function ensureMasterData(ctx: MutationCtx): Promise<MasterData> {
   return { materialIds, gradeIds, regionIds, created }
 }
 
-async function ensureSimulationOrganization(
+async function ensureFixtureOrganization(
   ctx: MutationCtx,
-  adminId: Id<"users">
+  adminId: Id<"users">,
+  options: {
+    name: string
+    type: "bank_sampah" | "recycler"
+    anchorSourceCode: SimulationSourceCode
+    marker: string
+  }
 ) {
   const existingSource = await ctx.db
     .query("wpiPriceSources")
-    .withIndex("by_code", (query) => query.eq("code", "SIM-WPI-TRANSACTION"))
+    .withIndex("by_code", (query) => query.eq("code", options.anchorSourceCode))
     .first()
   let organization = existingSource?.organizationId
     ? await ctx.db.get(existingSource.organizationId)
@@ -233,14 +420,14 @@ async function ensureSimulationOrganization(
   if (!organization) {
     organization =
       (await ctx.db.query("organizations").take(100)).find(
-        (item) => item.name === SIMULATION_ORGANIZATION_NAME
+        (item) => item.name === options.name
       ) ?? null
   }
 
   if (!organization) {
     const organizationId = await ctx.db.insert("organizations", {
-      name: SIMULATION_ORGANIZATION_NAME,
-      type: "recycler",
+      name: options.name,
+      type: options.type,
       verificationStatus: "verified",
       createdBy: adminId,
     })
@@ -253,16 +440,18 @@ async function ensureSimulationOrganization(
       action: "wpi.simulation.organization.created",
       targetType: "organization",
       targetId: organizationId,
-      metadata: { fixture: SIMULATION_MARKER },
+      metadata: { fixture: options.marker },
     })
   } else if (organization.verificationStatus !== "verified") {
     await ctx.db.patch(organization._id, { verificationStatus: "verified" })
   }
 
+  if (!organization) throw new Error("Simulation organization is unavailable")
+
   const membership = await ctx.db
     .query("memberships")
     .withIndex("by_user_and_organization", (query) =>
-      query.eq("userId", adminId).eq("organizationId", organization!._id)
+      query.eq("userId", adminId).eq("organizationId", organization._id)
     )
     .first()
   if (!membership) {
@@ -279,13 +468,39 @@ async function ensureSimulationOrganization(
   return organization
 }
 
+async function ensureSimulationOrganization(
+  ctx: MutationCtx,
+  adminId: Id<"users">
+) {
+  return ensureFixtureOrganization(ctx, adminId, {
+    name: SIMULATION_ORGANIZATION_NAME,
+    type: "recycler",
+    anchorSourceCode: "SIM-WPI-TRANSACTION",
+    marker: SIMULATION_MARKER,
+  })
+}
+
+async function ensureDemoBankOrganization(
+  ctx: MutationCtx,
+  adminId: Id<"users">
+) {
+  return ensureFixtureOrganization(ctx, adminId, {
+    name: DEMO_BANK_ORGANIZATION_NAME,
+    type: "bank_sampah",
+    anchorSourceCode: "SIM-WPI-DEMO-BANK-TRANSACTION",
+    marker: DEMO_MARKER,
+  })
+}
+
 async function ensureSimulationSource(
   ctx: MutationCtx,
   actorUserId: Id<"users">,
   organizationId: Id<"organizations">,
   code: SimulationSourceCode,
   name: string,
-  sourceType: "TRANSACTION" | "REFERENCE"
+  sourceType: SimulationSourceType,
+  verificationStatus: "pending" | "verified" | "suspended" = "verified",
+  marker = DEMO_MARKER
 ) {
   const existing = await ctx.db
     .query("wpiPriceSources")
@@ -297,12 +512,12 @@ async function ensureSimulationSource(
         `Simulation source ${code} belongs to another organization`
       )
     if (
-      existing.verificationStatus !== "verified" ||
+      existing.verificationStatus !== verificationStatus ||
       existing.sourceType !== sourceType
     )
       await ctx.db.patch(existing._id, {
         sourceType,
-        verificationStatus: "verified",
+        verificationStatus,
         reliabilityNotes:
           "Synthetic development fixture; not real market data.",
       })
@@ -314,7 +529,7 @@ async function ensureSimulationSource(
     name,
     sourceType,
     organizationId,
-    verificationStatus: "verified",
+    verificationStatus,
     reliabilityNotes: "Synthetic development fixture; not real market data.",
   })
   await writeAuditLog(ctx, {
@@ -323,9 +538,168 @@ async function ensureSimulationSource(
     action: "wpi.simulation.source.created",
     targetType: "wpiPriceSource",
     targetId: sourceId,
-    metadata: { fixture: SIMULATION_MARKER },
+    metadata: { fixture: marker },
   })
   return sourceId
+}
+
+type SeedRowsArgs = {
+  ctx: MutationCtx
+  createdBy: Id<"users">
+  masterData: MasterData
+  rows: readonly SimulationRow[]
+  evidenceMarker: string
+  sourceIds: Record<SimulationSourceCode, Id<"wpiPriceSources">>
+  sourceTypes: Record<SimulationSourceCode, SimulationSourceType>
+  organizationIds: Record<SimulationOrganizationKey, Id<"organizations">>
+  existingByEvidence: Map<string, Id<"wpiObservations">>
+  now: number
+  dayStart: number
+}
+
+async function seedObservationRows(args: SeedRowsArgs) {
+  let createdObservationCount = 0
+  const observationIds: Id<"wpiObservations">[] = []
+
+  for (const row of args.rows) {
+    const evidenceReference = `${args.evidenceMarker}:${row.key}`
+    const existingId = args.existingByEvidence.get(evidenceReference)
+    if (existingId) {
+      observationIds.push(existingId)
+      continue
+    }
+
+    const materialId = args.masterData.materialIds[row.materialSlug]
+    const gradeId =
+      args.masterData.gradeIds[`${row.materialSlug}:${row.gradeCode}`]
+    const regionId = args.masterData.regionIds[row.regionCode]
+    const organizationId =
+      args.organizationIds[row.organizationKey ?? "primary"]
+    const sourceId = args.sourceIds[row.sourceCode]
+    const sourceType = args.sourceTypes[row.sourceCode]
+    if (!materialId || !gradeId || !regionId || !organizationId || !sourceId)
+      throw new Error(`Simulation catalog mapping is missing for ${row.key}`)
+
+    const observedAt = args.dayStart + MIDDAY_MS - row.daysAgo * DAY_MS
+    const fingerprint = buildObservationFingerprint({
+      organizationId,
+      sourceId,
+      materialId,
+      gradeId,
+      regionId,
+      observedAt,
+      pricePerKgIdr: row.pricePerKgIdr,
+      ...(row.quantityGrams === undefined
+        ? {}
+        : { quantityGrams: row.quantityGrams }),
+    })
+    const duplicate = await args.ctx.db
+      .query("wpiObservations")
+      .withIndex("by_fingerprint", (query) =>
+        query.eq("fingerprint", fingerprint)
+      )
+      .first()
+    if (duplicate) {
+      observationIds.push(duplicate._id)
+      continue
+    }
+
+    const observationId = await args.ctx.db.insert("wpiObservations", {
+      fingerprint,
+      sourceId,
+      sourceType,
+      organizationId,
+      materialId,
+      gradeId,
+      regionId,
+      observedAt,
+      submittedAt: args.now,
+      pricePerKgIdr: row.pricePerKgIdr,
+      ...(row.quantityGrams === undefined
+        ? {}
+        : { quantityGrams: row.quantityGrams }),
+      currency: "IDR",
+      status: "submitted",
+      validationStatus: "pending",
+      evidenceReference,
+      createdBy: args.createdBy,
+    })
+    await writeAuditLog(args.ctx, {
+      actorUserId: args.createdBy,
+      organizationId,
+      action: "wpi.observation.submitted",
+      targetType: "wpiObservation",
+      targetId: observationId,
+      metadata: { fixture: args.evidenceMarker },
+    })
+
+    const finalStatus = row.finalStatus ?? "eligible"
+    if (finalStatus === "submitted") {
+      observationIds.push(observationId)
+      createdObservationCount += 1
+      continue
+    }
+
+    if (finalStatus === "validated") {
+      await args.ctx.db.patch(observationId, {
+        status: "validated",
+        validationStatus: "passed",
+      })
+      await writeAuditLog(args.ctx, {
+        actorUserId: args.createdBy,
+        organizationId,
+        action: "wpi.observation.validated",
+        targetType: "wpiObservation",
+        targetId: observationId,
+        metadata: { fixture: args.evidenceMarker },
+      })
+    } else {
+      const decision =
+        finalStatus === "eligible"
+          ? "approve"
+          : finalStatus === "rejected"
+            ? "reject"
+            : "quarantine"
+      const transition = reviewTransition(
+        "submitted",
+        decision,
+        row.reviewReason
+      )
+      await args.ctx.db.patch(observationId, {
+        status: transition.status,
+        validationStatus: finalStatus === "eligible" ? "passed" : "failed",
+        ...(finalStatus === "eligible"
+          ? { reviewedBy: args.createdBy, reviewedAt: args.now }
+          : {
+              rejectionReason: transition.reason,
+              ...(finalStatus === "quarantined"
+                ? {
+                    suspiciousReason: row.suspiciousReason ?? transition.reason,
+                  }
+                : {}),
+            }),
+        ...(finalStatus === "eligible"
+          ? {}
+          : { reviewedBy: args.createdBy, reviewedAt: args.now }),
+      })
+      await writeAuditLog(args.ctx, {
+        actorUserId: args.createdBy,
+        organizationId,
+        action: `wpi.observation.${decision}`,
+        targetType: "wpiObservation",
+        targetId: observationId,
+        metadata: {
+          fixture: args.evidenceMarker,
+          ...(transition.reason ? { reason: transition.reason } : {}),
+        },
+      })
+    }
+
+    observationIds.push(observationId)
+    createdObservationCount += 1
+  }
+
+  return { observationIds, createdObservationCount }
 }
 
 export async function seedSimulationData(
@@ -348,14 +722,19 @@ export async function seedSimulationData(
       targetType: "wpiCatalog",
       metadata: { fixture: SIMULATION_MARKER },
     })
+
   const organization = await ensureSimulationOrganization(ctx, createdBy)
+  const bankOrganization = await ensureDemoBankOrganization(ctx, createdBy)
+
   const transactionSourceId = await ensureSimulationSource(
     ctx,
     createdBy,
     organization._id,
     "SIM-WPI-TRANSACTION",
     "Synthetic transaction observations",
-    "TRANSACTION"
+    "TRANSACTION",
+    "verified",
+    SIMULATION_MARKER
   )
   const referenceSourceId = await ensureSimulationSource(
     ctx,
@@ -363,11 +742,69 @@ export async function seedSimulationData(
     organization._id,
     "SIM-WPI-REFERENCE",
     "Synthetic reference observations",
-    "REFERENCE"
+    "REFERENCE",
+    "verified",
+    SIMULATION_MARKER
+  )
+  const offerSourceId = await ensureSimulationSource(
+    ctx,
+    createdBy,
+    organization._id,
+    "SIM-WPI-DEMO-OFFER",
+    "Synthetic recycler offer feed",
+    "OFFER"
+  )
+  const suspendedSourceId = await ensureSimulationSource(
+    ctx,
+    createdBy,
+    organization._id,
+    "SIM-WPI-DEMO-SUSPENDED",
+    "Synthetic suspended source",
+    "TRANSACTION",
+    "suspended"
+  )
+  const bankTransactionSourceId = await ensureSimulationSource(
+    ctx,
+    createdBy,
+    bankOrganization._id,
+    "SIM-WPI-DEMO-BANK-TRANSACTION",
+    "Synthetic bank sampah transaction feed",
+    "TRANSACTION"
+  )
+  const bankOfferSourceId = await ensureSimulationSource(
+    ctx,
+    createdBy,
+    bankOrganization._id,
+    "SIM-WPI-DEMO-BANK-OFFER",
+    "Synthetic bank sampah offer feed",
+    "OFFER",
+    "pending"
+  )
+  const externalSourceId = await ensureSimulationSource(
+    ctx,
+    createdBy,
+    bankOrganization._id,
+    "SIM-WPI-DEMO-EXTERNAL",
+    "Synthetic external market reference",
+    "EXTERNAL_DATA"
   )
   const sourceIds: Record<SimulationSourceCode, Id<"wpiPriceSources">> = {
     "SIM-WPI-TRANSACTION": transactionSourceId,
     "SIM-WPI-REFERENCE": referenceSourceId,
+    "SIM-WPI-DEMO-OFFER": offerSourceId,
+    "SIM-WPI-DEMO-SUSPENDED": suspendedSourceId,
+    "SIM-WPI-DEMO-BANK-TRANSACTION": bankTransactionSourceId,
+    "SIM-WPI-DEMO-BANK-OFFER": bankOfferSourceId,
+    "SIM-WPI-DEMO-EXTERNAL": externalSourceId,
+  }
+  const sourceTypes: Record<SimulationSourceCode, SimulationSourceType> = {
+    "SIM-WPI-TRANSACTION": "TRANSACTION",
+    "SIM-WPI-REFERENCE": "REFERENCE",
+    "SIM-WPI-DEMO-OFFER": "OFFER",
+    "SIM-WPI-DEMO-SUSPENDED": "TRANSACTION",
+    "SIM-WPI-DEMO-BANK-TRANSACTION": "TRANSACTION",
+    "SIM-WPI-DEMO-BANK-OFFER": "OFFER",
+    "SIM-WPI-DEMO-EXTERNAL": "EXTERNAL_DATA",
   }
 
   const existingByEvidence = new Map<string, Id<"wpiObservations">>()
@@ -377,111 +814,59 @@ export async function seedSimulationData(
       .withIndex("by_source", (query) => query.eq("sourceId", sourceId))
       .take(100)
     for (const observation of observations) {
-      if (observation.evidenceReference?.startsWith(SIMULATION_MARKER))
+      if (
+        observation.evidenceReference?.startsWith(`${SIMULATION_MARKER}:`) ||
+        observation.evidenceReference?.startsWith(`${DEMO_MARKER}:`)
+      )
         existingByEvidence.set(observation.evidenceReference, observation._id)
     }
   }
 
   const now = Date.now()
   const dayStart = Math.floor(now / DAY_MS) * DAY_MS
-  let createdObservationCount = 0
-  const observationIds: Id<"wpiObservations">[] = []
-
-  for (const row of simulationRows) {
-    const evidenceReference = `${SIMULATION_MARKER}:${row.key}`
-    const existingId = existingByEvidence.get(evidenceReference)
-    if (existingId) {
-      observationIds.push(existingId)
-      continue
-    }
-
-    const materialId = masterData.materialIds[row.materialSlug]
-    const gradeId = masterData.gradeIds[`${row.materialSlug}:${row.gradeCode}`]
-    const regionId = masterData.regionIds[row.regionCode]
-    if (!materialId || !gradeId || !regionId)
-      throw new Error(`Simulation catalog mapping is missing for ${row.key}`)
-
-    const sourceId = sourceIds[row.sourceCode]
-    const observedAt = dayStart + MIDDAY_MS - row.daysAgo * DAY_MS
-    const fingerprint = buildObservationFingerprint({
-      organizationId: organization._id,
-      sourceId,
-      materialId,
-      gradeId,
-      regionId,
-      observedAt,
-      pricePerKgIdr: row.pricePerKgIdr,
-      ...(row.quantityGrams === undefined
-        ? {}
-        : { quantityGrams: row.quantityGrams }),
-    })
-    const duplicate = await ctx.db
-      .query("wpiObservations")
-      .withIndex("by_fingerprint", (query) =>
-        query.eq("fingerprint", fingerprint)
-      )
-      .first()
-    if (duplicate) {
-      observationIds.push(duplicate._id)
-      continue
-    }
-
-    const observationId = await ctx.db.insert("wpiObservations", {
-      fingerprint,
-      sourceId,
-      sourceType:
-        row.sourceCode === "SIM-WPI-REFERENCE" ? "REFERENCE" : "TRANSACTION",
-      organizationId: organization._id,
-      materialId,
-      gradeId,
-      regionId,
-      observedAt,
-      submittedAt: now,
-      pricePerKgIdr: row.pricePerKgIdr,
-      ...(row.quantityGrams === undefined
-        ? {}
-        : { quantityGrams: row.quantityGrams }),
-      currency: "IDR",
-      status: "submitted",
-      validationStatus: "pending",
-      evidenceReference,
-      createdBy,
-    })
-    await writeAuditLog(ctx, {
-      actorUserId: createdBy,
-      organizationId: organization._id,
-      action: "wpi.observation.submitted",
-      targetType: "wpiObservation",
-      targetId: observationId,
-      metadata: { fixture: SIMULATION_MARKER },
-    })
-
-    const transition = reviewTransition("submitted", "approve")
-    await ctx.db.patch(observationId, {
-      status: transition.status,
-      validationStatus: "passed",
-      reviewedBy: createdBy,
-      reviewedAt: now,
-    })
-    await writeAuditLog(ctx, {
-      actorUserId: createdBy,
-      organizationId: organization._id,
-      action: "wpi.observation.approve",
-      targetType: "wpiObservation",
-      targetId: observationId,
-      metadata: { fixture: SIMULATION_MARKER },
-    })
-    observationIds.push(observationId)
-    createdObservationCount += 1
+  const seedArgs = {
+    ctx,
+    createdBy,
+    masterData,
+    sourceIds,
+    sourceTypes,
+    organizationIds: {
+      primary: organization._id,
+      bank: bankOrganization._id,
+    },
+    existingByEvidence,
+    now,
+    dayStart,
   }
+  const baseResult = await seedObservationRows({
+    ...seedArgs,
+    rows: simulationRows,
+    evidenceMarker: SIMULATION_MARKER,
+  })
+  const demoResult = await seedObservationRows({
+    ...seedArgs,
+    rows: completeDemoRows,
+    evidenceMarker: DEMO_MARKER,
+  })
+  const observationIds = Array.from(
+    new Set([...baseResult.observationIds, ...demoResult.observationIds])
+  )
+  const createdObservationCount =
+    baseResult.createdObservationCount + demoResult.createdObservationCount
 
   return {
     seeded: createdObservationCount > 0 || masterData.created,
     masterSeeded: masterData.created,
     organizationId: organization._id,
+    organizationIds: {
+      primary: organization._id,
+      bank: bankOrganization._id,
+    },
     sourceCount: Object.keys(sourceIds).length,
     observationCount: observationIds.length,
     createdObservationCount,
     simulationMarker: SIMULATION_MARKER,
+    demoMarker: DEMO_MARKER,
+    completeDemo: true,
   }
 }
