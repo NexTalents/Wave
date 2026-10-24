@@ -2,13 +2,16 @@
 
 import { useUser } from "@clerk/nextjs"
 import { useSignIn, useSignUp } from "@clerk/nextjs/legacy"
-import { useMutation } from "convex/react"
+import { LoaderCircle, ShieldCheck } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
-import { api } from "@/convex/_generated/api"
-import { AuthBackLink, AuthInput, AuthShell } from "./auth-shell"
+import {
+  AuthBackLink,
+  AuthInput,
+  AuthShell,
+  authPrimaryButtonClass,
+} from "./auth-shell"
 import { getAuthError } from "./errors"
-import type { AccountType, OrganizationType } from "./types"
 
 type VerificationMode = "login" | "signup" | "setup"
 type SecondFactor = "totp" | "backup_code" | "email_code"
@@ -22,7 +25,6 @@ export function VerificationForm({ mode }: { mode: VerificationMode }) {
 function SignupVerification() {
   const router = useRouter()
   const { isLoaded, setActive, signUp } = useSignUp()
-  const ensureCurrent = useMutation(api.auth.users.ensureCurrent)
   const [code, setCode] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -44,16 +46,6 @@ function SignupVerification() {
       }
 
       await setActive({ session: result.createdSessionId })
-      const metadata = result.unsafeMetadata as {
-        accountType?: AccountType
-        organizationName?: string
-        organizationType?: OrganizationType
-      }
-      await ensureCurrent({
-        accountType: metadata.accountType,
-        organizationName: metadata.organizationName,
-        organizationType: metadata.organizationType,
-      })
       router.push("/verify?mode=setup")
     } catch (value) {
       setError(getAuthError(value))
@@ -65,7 +57,6 @@ function SignupVerification() {
   return (
     <AuthShell
       description="Kami mengirim kode 6 digit ke email yang kamu daftarkan."
-      mode="dark"
       step={2}
       title="Verifikasi email kamu"
     >
@@ -82,17 +73,20 @@ function SignupVerification() {
           />
           {error ? (
             <p
-              className="rounded-xl bg-red-500/15 px-4 py-3 text-sm text-red-200"
+              aria-live="polite"
+              className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive"
               role="alert"
             >
               {error}
             </p>
           ) : null}
           <button
-            className="h-12 w-full rounded-xl bg-[#6d2d87] px-5 text-sm font-semibold text-white transition hover:bg-[#803c99] disabled:cursor-not-allowed disabled:opacity-50"
+            aria-busy={loading}
+            className={authPrimaryButtonClass}
             disabled={!isLoaded || loading}
             type="submit"
           >
+            {loading ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : null}
             {loading ? "Memverifikasi..." : "Verifikasi dan buat akun"}
           </button>
         </form>
@@ -133,7 +127,7 @@ function AuthenticatorSetup() {
   }, [isLoaded, isSignedIn, totp, user])
 
   useEffect(() => {
-    if (isLoaded && isSignedIn && user?.twoFactorEnabled) router.push("/")
+    if (isLoaded && isSignedIn && user?.twoFactorEnabled) router.push("/dashboard")
   }, [isLoaded, isSignedIn, router, user])
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -144,7 +138,7 @@ function AuthenticatorSetup() {
     setLoading(true)
     try {
       await user.verifyTOTP({ code })
-      router.push("/")
+      router.push("/dashboard")
     } catch (value) {
       setError(getAuthError(value))
     } finally {
@@ -157,33 +151,32 @@ function AuthenticatorSetup() {
   return (
     <AuthShell
       description="Tambahkan lapisan keamanan ekstra sebelum mulai menggunakan WAVE."
-      mode="dark"
       step={3}
       title="Aktifkan authenticator app"
     >
       <div className="mx-auto max-w-[460px]">
-        <div className="mb-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-center">
-          <div className="mx-auto mb-4 grid size-20 place-items-center rounded-3xl bg-[#c7a7d5]/20 text-3xl">
-            ▣
+        <div className="mb-6 rounded-2xl border border-brand-100 bg-brand-50 p-5 text-center">
+          <div className="mx-auto mb-4 grid size-20 place-items-center rounded-3xl bg-brand-50 text-brand-500">
+            <ShieldCheck aria-hidden="true" className="size-9" />
           </div>
-          <p className="text-sm leading-6 text-white/65">
+          <p className="text-sm leading-6 text-brand-700">
             Buka aplikasi authenticator, tambahkan akun WAVE, lalu masukkan kode
             6 digit yang muncul.
           </p>
           {totp?.secret ? (
-            <code className="mt-4 block rounded-xl bg-black/20 px-4 py-3 text-xs break-all text-[#e3b8ee]">
+            <code className="mt-4 block rounded-2xl bg-brand-50 px-4 py-3 text-xs break-all text-brand-600">
               {totp.secret}
             </code>
           ) : null}
         </div>
         <form className="space-y-5" onSubmit={submit}>
           <label className="block text-left">
-            <span className="mb-2 block text-xs font-medium text-white/65">
+            <span className="mb-2 block text-xs font-medium text-brand-700">
               Masukkan kode 6 digit
             </span>
             <input
               autoComplete="one-time-code"
-              className="h-16 w-full rounded-2xl border border-white/20 bg-transparent px-5 text-center text-3xl tracking-[0.55em] text-white transition outline-none focus:border-[#c889df] focus:ring-3 focus:ring-[#7f3b99]/20"
+              className="h-16 w-full rounded-2xl border border-brand-100 bg-brand-50/45 px-5 text-center text-3xl tracking-[0.55em] text-ink transition outline-none focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-500/10"
               inputMode="numeric"
               maxLength={6}
               onChange={(event) =>
@@ -195,28 +188,31 @@ function AuthenticatorSetup() {
             />
           </label>
           {totp?.uri ? (
-            <p className="text-xs break-all text-white/40">
+            <p className="text-xs break-all text-brand-700">
               Jika aplikasi tidak mendukung scan, gunakan URI: {totp.uri}
             </p>
           ) : null}
           {error ? (
             <p
-              className="rounded-xl bg-red-500/15 px-4 py-3 text-sm text-red-200"
+              aria-live="polite"
+              className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive"
               role="alert"
             >
               {error}
             </p>
           ) : null}
           <button
-            className="h-12 w-full rounded-xl bg-[#6d2d87] px-5 text-sm font-semibold text-white transition hover:bg-[#803c99] disabled:cursor-not-allowed disabled:opacity-50"
+            aria-busy={loading}
+            className={authPrimaryButtonClass}
             disabled={!isLoaded || !isSignedIn || !totp || loading}
             type="submit"
           >
+            {loading ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : null}
             {loading ? "Mengaktifkan..." : "Aktifkan authenticator"}
           </button>
           <button
-            className="w-full text-sm text-white/55 hover:text-white"
-            onClick={() => router.push("/")}
+            className="min-h-10 w-full rounded-full text-sm font-semibold text-brand-600 transition-colors hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+            onClick={() => router.push("/dashboard")}
             type="button"
           >
             Lewati untuk sekarang
@@ -271,7 +267,7 @@ function LoginVerification() {
       }
 
       await setActive({ session: result.createdSessionId })
-      router.push("/")
+      router.push("/dashboard")
     } catch (value) {
       setError(getAuthError(value))
     } finally {
@@ -289,11 +285,11 @@ function LoginVerification() {
       title="Verifikasi keamanan"
     >
       <div className="mx-auto max-w-[440px]">
-        <div className="mb-6 rounded-2xl bg-[#56256d]/8 p-5 text-center">
-          <div className="mx-auto mb-4 grid size-16 place-items-center rounded-2xl bg-[#56256d] text-2xl font-semibold text-white">
-            {factor === "totp" ? "•••" : "✓"}
+          <div className="mb-6 rounded-2xl bg-brand-500/10 p-5 text-center">
+          <div className="mx-auto mb-4 grid size-16 place-items-center rounded-2xl bg-brand-600 text-2xl font-semibold text-white">
+            {factor === "totp" ? <ShieldCheck aria-hidden="true" className="size-7" /> : "✓"}
           </div>
-          <p className="text-sm leading-6 text-black/55">
+          <p className="text-sm leading-6 text-brand-700">
             {factor === "backup_code"
               ? "Gunakan salah satu backup code yang pernah kamu simpan."
               : "Kode hanya dapat digunakan satu kali untuk sesi ini."}
@@ -311,17 +307,20 @@ function LoginVerification() {
           />
           {error ? (
             <p
-              className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700"
+              aria-live="polite"
+              className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive"
               role="alert"
             >
               {error}
             </p>
           ) : null}
           <button
-            className="h-12 w-full rounded-xl bg-[#56256d] px-5 text-sm font-semibold text-white transition hover:bg-[#432052] disabled:cursor-not-allowed disabled:opacity-50"
+            aria-busy={loading}
+            className={authPrimaryButtonClass}
             disabled={!isLoaded || loading}
             type="submit"
           >
+            {loading ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : null}
             {loading ? "Memverifikasi..." : "Verifikasi dan masuk"}
           </button>
         </form>

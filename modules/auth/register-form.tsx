@@ -1,9 +1,14 @@
 "use client"
 
 import { useSignUp } from "@clerk/nextjs/legacy"
+import { LoaderCircle } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
-import { AuthInput, AuthShell } from "./auth-shell"
+import {
+  AuthInput,
+  AuthShell,
+  authPrimaryButtonClass,
+} from "./auth-shell"
 import { getAuthError } from "./errors"
 import {
   accountTypes,
@@ -56,7 +61,7 @@ export function RegisterForm() {
 
       if (result.status === "complete" && result.createdSessionId) {
         await setActive({ session: result.createdSessionId })
-        router.push("/")
+        router.push("/dashboard")
         return
       }
 
@@ -72,7 +77,6 @@ export function RegisterForm() {
   return (
     <AuthShell
       description="Buat akun WAVE untuk menghubungkan transaksi, data harga, dan peluang ekonomi sirkular."
-      mode="dark"
       step={1}
       title="Buat akun WAVE"
     >
@@ -82,19 +86,20 @@ export function RegisterForm() {
             const selected = accountType === type
             return (
               <button
+                aria-pressed={selected}
                 className={
                   selected
-                    ? "rounded-2xl border border-[#b872d0] bg-[#6d2d87]/25 p-4 text-left ring-2 ring-[#6d2d87]/30"
-                    : "rounded-2xl border border-white/12 bg-white/[0.04] p-4 text-left transition hover:border-white/30"
+                    ? "rounded-2xl border border-brand-400 bg-brand-50 p-4 text-left ring-2 ring-brand-500/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                    : "rounded-2xl border border-brand-100 bg-white p-4 text-left transition-[background-color,border-color,box-shadow] hover:border-brand-300 hover:bg-brand-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
                 }
                 key={type}
                 onClick={() => setAccountType(type)}
                 type="button"
               >
-                <span className="block text-sm font-semibold">
+                <span className="block text-sm font-semibold text-brand-800">
                   {type === "business" ? "Bisnis / organisasi" : "Individu"}
                 </span>
-                <span className="mt-1 block text-xs leading-5 text-white/55">
+                <span className="mt-1 block text-xs leading-5 text-brand-700">
                   {type === "business"
                     ? "Pembeli, bank sampah, agregator, atau mitra organisasi."
                     : "Pemulung, pekerja lapangan, atau masyarakat umum."}
@@ -105,7 +110,7 @@ export function RegisterForm() {
         </div>
 
         {accountType === "business" ? (
-          <div className="grid gap-4 border-t border-white/10 pt-5 sm:grid-cols-2">
+          <div className="grid gap-4 border-t border-border pt-5 sm:grid-cols-2">
             <AuthInput
               label="Nama bisnis / organisasi"
               name="organizationName"
@@ -114,11 +119,11 @@ export function RegisterForm() {
               value={organizationName}
             />
             <label className="block text-left">
-              <span className="mb-2 block text-xs font-medium text-white/65">
+              <span className="mb-2 block text-xs font-medium text-brand-700">
                 Jenis organisasi
               </span>
               <select
-                className="h-12 w-full rounded-xl border border-white/15 bg-[#111315] px-4 text-sm text-white outline-none focus:border-[#7f3b99]"
+                className="h-12 w-full rounded-2xl border border-brand-100 bg-brand-50/45 px-4 text-sm text-ink outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-500/10"
                 onChange={(event) =>
                   setOrganizationType(event.target.value as OrganizationType)
                 }
@@ -134,7 +139,7 @@ export function RegisterForm() {
           </div>
         ) : null}
 
-        <div className="grid gap-4 border-t border-white/10 pt-5 sm:grid-cols-2">
+        <div className="grid gap-4 border-t border-border pt-5 sm:grid-cols-2">
           <AuthInput
             autoComplete="given-name"
             label="Nama depan"
@@ -182,31 +187,34 @@ export function RegisterForm() {
             value={confirmPassword}
           />
         </div>
-        <p className="text-xs text-white/45">
+        <p className="text-xs text-brand-700">
           Dengan mendaftar, kamu menyetujui proses verifikasi email untuk
           menjaga keamanan akun.
         </p>
         {error ? (
           <p
-            className="rounded-xl bg-red-500/15 px-4 py-3 text-sm text-red-200"
+            aria-live="polite"
+            className="rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive"
             role="alert"
           >
             {error}
           </p>
         ) : null}
         <button
-          className="h-12 w-full rounded-xl bg-[#6d2d87] px-5 text-sm font-semibold text-white transition hover:bg-[#803c99] disabled:cursor-not-allowed disabled:opacity-50"
+          aria-busy={loading}
+          className={authPrimaryButtonClass}
           disabled={!isLoaded || loading}
           type="submit"
         >
+          {loading ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : null}
           {loading
             ? "Menyiapkan verifikasi..."
             : "Konfirmasi email dan lanjutkan"}
         </button>
-        <p className="text-center text-sm text-white/60">
+        <p className="text-center text-sm text-brand-700">
           Sudah punya akun?{" "}
           <Link
-            className="font-semibold text-[#d99be9] hover:underline"
+            className="font-semibold text-brand-600 underline-offset-4 hover:underline"
             href="/login"
           >
             Masuk di sini

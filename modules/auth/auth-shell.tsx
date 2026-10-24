@@ -4,12 +4,16 @@ import {
   ArrowLeft,
   Building2,
   Check,
-  Moon,
+  Eye,
+  EyeOff,
+  LockKeyhole,
   ShieldCheck,
   UserRound,
 } from "lucide-react"
 import Link from "next/link"
-import type { ReactNode } from "react"
+import { useId, useState, type ReactNode } from "react"
+import { cn } from "@/modules/landing-page/utils"
+import { BrandLogo } from "@/modules/landing-page/components/brand-logo"
 
 type AuthStep = { label: string; detail: string }
 
@@ -19,102 +23,96 @@ const registerSteps: AuthStep[] = [
   { label: "Selesai", detail: "Mulai bersama WAVE" },
 ]
 
+export const authPrimaryButtonClass =
+  "inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-brand-500 px-5 text-sm font-semibold text-white transition-[background-color,transform,box-shadow] duration-200 hover:bg-brand-600 hover:shadow-[0_8px_20px_rgb(16_40_21_/.18)] active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
+
+export const authSocialButtonClass =
+  "inline-flex h-12 w-full items-center justify-center gap-3 rounded-full border border-brand-100 bg-white px-5 text-sm font-semibold text-brand-800 transition-[background-color,border-color,box-shadow,transform] duration-200 hover:border-brand-200 hover:bg-brand-50 hover:shadow-[0_8px_20px_rgb(16_40_21_/.08)] active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
+
 export function AuthShell({
   children,
   description,
-  mode = "light",
   step,
   title,
 }: {
   children: ReactNode
   description: string
-  mode?: "dark" | "light"
   step?: 1 | 2 | 3
   title: string
 }) {
-  const dark = mode === "dark"
-
   return (
-    <main
-      className={
-        dark
-          ? "min-h-screen bg-[#202226] text-white"
-          : "min-h-screen bg-[#f7f7f5] text-[#26252a]"
-      }
-    >
-      <div className="mx-auto flex min-h-screen w-full max-w-[1320px] flex-col px-5 py-6 sm:px-8 lg:px-12">
-        <header className="flex items-center justify-between gap-4">
+    <main className="wave-auth min-h-screen bg-white text-ink">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1280px] flex-col px-4 py-5 sm:px-6 lg:px-8">
+        <header className="flex items-center justify-between gap-4 py-3 sm:py-5">
           <Link
             className="flex items-center gap-3"
             href="/"
             aria-label="WAVE, ke beranda"
           >
-            <span
-              className={
-                dark
-                  ? "grid size-10 place-items-center rounded-xl bg-white text-sm font-black text-[#212328]"
-                  : "grid size-10 place-items-center rounded-xl bg-[#56256d] text-sm font-black text-white"
-              }
-            >
-              W
-            </span>
-            <span className="text-xl font-semibold tracking-[-0.04em]">
-              WAVE
-            </span>
+            <BrandLogo className="h-[100px] w-[100px]" />
           </Link>
-          <button
-            aria-label="Ganti tema"
-            className="rounded-full p-2 opacity-70 transition hover:opacity-100"
-            type="button"
+          <Link
+            className="inline-flex min-h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold text-brand-600 transition-colors hover:bg-white hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 sm:px-4"
+            href="/"
           >
-            <Moon aria-hidden="true" className="size-5" />
-          </button>
+            <ArrowLeft aria-hidden="true" className="size-4" />
+            <span className="hidden sm:inline">Kembali ke WAVE</span>
+            <span className="sm:hidden">Beranda</span>
+          </Link>
         </header>
 
-        <section
-          className={
-            dark
-              ? "my-8 flex flex-1 flex-col rounded-[24px] border border-white/15 bg-[#111315] p-5 sm:p-8 lg:my-10 lg:p-12"
-              : "my-8 flex flex-1 flex-col justify-center lg:my-10"
-          }
-        >
-          {step ? <RegisterProgress activeStep={step} /> : null}
-          <div
-            className={
-              dark
-                ? "mx-auto w-full max-w-[1080px]"
-                : "mx-auto w-full max-w-[440px]"
-            }
-          >
+        <div className="grid flex-1 items-stretch gap-4 py-4 lg:grid-cols-[minmax(280px,0.72fr)_minmax(0,1.28fr)] lg:gap-5 lg:py-6">
+          <aside className="relative min-h-[250px] overflow-hidden rounded-[28px] bg-brand-800 p-7 text-white sm:p-10 lg:min-h-[620px] lg:p-12">
             <div
-              className={
-                dark
-                  ? "mx-auto mb-8 max-w-[620px] text-center"
-                  : "mb-8 text-center"
-              }
-            >
-              <h1
-                className={
-                  dark
-                    ? "text-3xl font-semibold tracking-[-0.04em] sm:text-4xl"
-                    : "text-4xl font-bold tracking-[-0.06em]"
-                }
-              >
-                {title}
-              </h1>
-              <p
-                className={
-                  dark
-                    ? "mx-auto mt-3 max-w-[560px] text-sm leading-6 text-white/65 sm:text-base"
-                    : "mt-3 text-sm leading-6 text-black/55"
-                }
-              >
-                {description}
-              </p>
+              aria-hidden="true"
+              className="absolute -top-24 -right-24 size-72 rounded-full border border-white/10"
+            />
+            <div
+              aria-hidden="true"
+              className="absolute -bottom-36 -left-24 size-80 rounded-full border border-gold/20"
+            />
+            <div className="relative z-10 flex h-full flex-col justify-between gap-12">
+              <div>
+                <h2 className="wave-page-title max-w-[480px]">
+                  Harga lebih jelas, keputusan lebih adil.
+                </h2>
+                <p className="wave-body mt-6 max-w-[420px] text-white/75">
+                  WAVE menyatukan data transaksi dan harga acuan untuk ekosistem
+                  limbah Indonesia.
+                </p>
+              </div>
+              <div className="flex items-end justify-between gap-4 border-t border-white/15 pt-5">
+                <div>
+                  <p className="wave-caption font-semibold tracking-[0.16em] text-white/65 uppercase">
+                    Fokus WAVE
+                  </p>
+                  <p className="wave-body-sm mt-2 text-white/85">
+                    Data yang bisa dibaca, nilai yang bisa dibagi.
+                  </p>
+                </div>
+                <div
+                  aria-hidden="true"
+                  className="hidden size-14 place-items-center rounded-full border border-gold/50 text-gold sm:grid"
+                >
+                  <LockKeyhole className="size-5" />
+                </div>
+              </div>
             </div>
-            {children}
-          </div>
-        </section>
+          </aside>
+
+          <section className="flex min-w-0 flex-col justify-center rounded-[32px] border border-brand-100 bg-white px-5 py-8 shadow-[0_18px_60px_rgb(16_40_21_/.08)] sm:px-10 sm:py-12 lg:px-16 lg:py-14">
+            {step ? <RegisterProgress activeStep={step} /> : null}
+            <div className="mx-auto w-full max-w-[760px]">
+              <div className="mb-8 max-w-[620px]">
+                <h1 className="wave-page-title text-brand-800">{title}</h1>
+                <p className="wave-body-sm mt-3 max-w-[560px] text-brand-700">
+                  {description}
+                </p>
+              </div>
+              {children}
+            </div>
+          </section>
+        </div>
       </div>
     </main>
   )
@@ -124,7 +122,10 @@ function RegisterProgress({ activeStep }: { activeStep: 1 | 2 | 3 }) {
   const icons = [UserRound, ShieldCheck, Building2]
 
   return (
-    <div className="mx-auto mb-10 flex w-full max-w-[840px] items-start justify-center">
+    <div
+      aria-label="Progress pendaftaran"
+      className="mx-auto mb-10 flex w-full max-w-[760px] items-start"
+    >
       {registerSteps.map((item, index) => {
         const current = index + 1 === activeStep
         const complete = index + 1 < activeStep
@@ -134,11 +135,12 @@ function RegisterProgress({ activeStep }: { activeStep: 1 | 2 | 3 }) {
           <div className="flex min-w-0 flex-1 items-start" key={item.label}>
             <div className="flex min-w-0 items-center gap-3">
               <span
-                className={
+                className={cn(
+                  "grid size-10 shrink-0 place-items-center rounded-full border text-brand-600 transition-colors sm:size-11",
                   current || complete
-                    ? "grid size-11 shrink-0 place-items-center rounded-full bg-[#6d2d87] text-white"
-                    : "grid size-11 shrink-0 place-items-center rounded-full border border-white/15 text-white/40"
-                }
+                    ? "border-brand-500 bg-brand-500 text-white"
+                    : "border-brand-100 bg-brand-50 text-brand-700"
+                )}
               >
                 {complete ? (
                   <Check className="size-5" />
@@ -148,27 +150,25 @@ function RegisterProgress({ activeStep }: { activeStep: 1 | 2 | 3 }) {
               </span>
               <span className="hidden min-w-0 sm:block">
                 <span
-                  className={
-                    current
-                      ? "block text-[10px] font-semibold tracking-[0.16em] text-[#c889df] uppercase"
-                      : "block text-[10px] font-semibold tracking-[0.16em] text-white/40 uppercase"
-                  }
+                  className={cn(
+                    "wave-caption block tracking-[0.16em] uppercase",
+                    current || complete ? "text-brand-500" : "text-brand-700"
+                  )}
                 >
                   Step {index + 1}
                 </span>
                 <span
-                  className={
-                    current
-                      ? "block truncate text-sm font-medium text-[#d99be9]"
-                      : "block truncate text-sm text-white/50"
-                  }
+                  className={cn(
+                    "wave-body-sm block truncate",
+                    current ? "font-semibold text-brand-800" : "text-brand-700"
+                  )}
                 >
                   {item.label}
                 </span>
               </span>
             </div>
             {index < registerSteps.length - 1 ? (
-              <span className="mx-3 mt-5 h-px flex-1 bg-white/12 sm:mx-6" />
+              <span className="mx-3 mt-5 h-px flex-1 bg-brand-100 sm:mx-6" />
             ) : null}
           </div>
         )
@@ -196,22 +196,70 @@ export function AuthInput({
   type?: string
   value: string
 }) {
+  const id = useId()
+  const [visible, setVisible] = useState(false)
+  const password = type === "password"
+
   return (
-    <label className="block text-left">
-      <span className="mb-2 block text-xs font-medium text-current/65">
+    <label className="block text-left" htmlFor={id}>
+      <span className="wave-label mb-2 block font-semibold text-brand-800">
         {label}
       </span>
-      <input
-        autoComplete={autoComplete}
-        className="h-12 w-full rounded-xl border border-current/15 bg-transparent px-4 text-sm text-current transition outline-none placeholder:text-current/35 focus:border-[#7f3b99] focus:ring-3 focus:ring-[#7f3b99]/15"
-        name={name}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        required={required}
-        type={type}
-        value={value}
-      />
+      <span className="relative block">
+        <input
+          aria-required={required}
+          autoComplete={autoComplete}
+          className={cn(
+            "h-12 w-full rounded-2xl border border-brand-100 bg-brand-50/45 px-4 text-sm text-ink transition-[background-color,border-color,box-shadow] outline-none placeholder:text-brand-700/70 focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-500/10",
+            password && "pr-12"
+          )}
+          id={id}
+          name={name}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          required={required}
+          type={password && visible ? "text" : type}
+          value={value}
+        />
+        {password ? (
+          <button
+            aria-label={visible ? "Sembunyikan password" : "Tampilkan password"}
+            className="absolute inset-y-0 right-0 grid w-12 place-items-center text-brand-700 transition-colors hover:text-brand-600 focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-brand-500"
+            onClick={() => setVisible((current) => !current)}
+            type="button"
+          >
+            {visible ? (
+              <EyeOff aria-hidden="true" className="size-4" />
+            ) : (
+              <Eye aria-hidden="true" className="size-4" />
+            )}
+          </button>
+        ) : null}
+      </span>
     </label>
+  )
+}
+
+export function GoogleMark() {
+  return (
+    <svg aria-hidden="true" className="size-5" viewBox="0 0 24 24">
+      <path
+        d="M21.35 12.23c0-.79-.07-1.55-.2-2.27H12v4.3h5.22a4.46 4.46 0 0 1-1.94 2.93v2.43h3.14c1.84-1.7 2.93-4.2 2.93-7.39Z"
+        fill="#4285F4"
+      />
+      <path
+        d="M12 21.7c2.63 0 4.84-.87 6.45-2.35l-3.14-2.43c-.87.58-1.98.92-3.31.92-2.54 0-4.7-1.72-5.47-4.03H3.28v2.51A9.73 9.73 0 0 0 12 21.7Z"
+        fill="#34A853"
+      />
+      <path
+        d="M6.53 13.81a5.85 5.85 0 0 1 0-3.62V7.68H3.28a9.73 9.73 0 0 0 0 8.64l3.25-2.51Z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M12 6.16c1.43 0 2.71.49 3.72 1.46l2.79-2.79C16.84 3.27 14.63 2.3 12 2.3a9.73 9.73 0 0 0-8.72 5.38l3.25 2.51C7.3 7.88 9.46 6.16 12 6.16Z"
+        fill="#EA4335"
+      />
+    </svg>
   )
 }
 
@@ -224,7 +272,7 @@ export function AuthBackLink({
 }) {
   return (
     <Link
-      className="inline-flex items-center gap-2 text-sm text-current/60 transition hover:text-current"
+      className="inline-flex min-h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold text-brand-600 transition-colors hover:bg-brand-50 hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
       href={href}
     >
       <ArrowLeft aria-hidden="true" className="size-4" />

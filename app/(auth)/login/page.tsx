@@ -1,5 +1,6 @@
+import { SignedOutOnly } from "@/modules/auth"
 import { LoginForm } from "@/modules/auth/login-form"
 
 export default function LoginPage() {
-  return <LoginForm />
+  return <SignedOutOnly><LoginForm /></SignedOutOnly>
 }

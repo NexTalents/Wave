@@ -13,7 +13,9 @@ NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 
 Set `CLERK_JWT_ISSUER_DOMAIN` in the Convex deployment environment. The value is the Clerk Frontend API URL used by the Convex integration.
 
-Enable email/password and email verification in Clerk. Google and Apple buttons are available on `/login` when those social connections are enabled in the Clerk Dashboard.
+Enable Clerk's Convex integration or create a Clerk JWT template named `convex`. `ConvexProviderWithClerk` requests that token template when the integration is not active; without it, Clerk can show a signed-in session while Convex still sees the request as unauthenticated.
+
+Enable email/password in Clerk. Email verification may remain enabled for production, but can be disabled in the Development instance for local end-to-end tests. Google and Apple buttons are available on `/login` when those social connections are enabled in the Clerk Dashboard.
 
 Routes:
 
@@ -22,7 +24,7 @@ Routes:
 - `/verify` — email verification and MFA verification
 - `/sso-callback` — Clerk OAuth callback without a visible Clerk UI
 
-Business registration stores the account type and creates a pending Convex organization with the registering user as owner after email verification. Individual registration creates only the user profile.
+Business registration stores the account type and creates a pending Convex organization with the registering user as owner. Individual registration creates only the user profile.
 
 ## Use in an authenticated area
 
