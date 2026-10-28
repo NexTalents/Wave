@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { createMarketFeed } from "./market-feed"
 import type { MarketFeed, MarketFeedConfig } from "./market-feed"
+import { useMediaQuery } from "./use-media-query"
 import type {
   Candle,
   MarketFeedStatus,
@@ -33,25 +34,19 @@ export function useMarketFeed({
   basePrice,
   feedFactory = createMarketFeed,
 }: UseMarketFeedOptions): UseMarketFeedResult {
-  const [reducedMotion, setReducedMotion] = useState(false)
+  const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)")
   const [snapshot, setSnapshot] = useState<MarketSnapshot | null>(null)
   const [status, setStatus] = useState<MarketFeedStatus>("simulated")
 
   // Keep the factory in a ref so an inline `feedFactory` does not thrash the
   // creation effect. Feed swaps happen via materialSlug/basePrice or a remount.
   const factoryRef = useRef(feedFactory)
-  factoryRef.current = feedFactory
   const feedRef = useRef<MarketFeed | null>(null)
 
+  // Refs are written in an effect (never during render) per react-hooks/refs.
   useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)")
-    setReducedMotion(media.matches)
-    const onChange = (event: MediaQueryListEvent) =>
-      setReducedMotion(event.matches)
-    media.addEventListener("change", onChange)
-    return () => media.removeEventListener("change", onChange)
-  }, [])
+    factoryRef.current = feedFactory
+  }, [feedFactory])
 
   useEffect(() => {
     let feed: MarketFeed
@@ -65,22 +60,29 @@ export function useMarketFeed({
     } catch (error) {
       if (process.env.NODE_ENV !== "production")
         console.error("[wpi-market] feed creation failed", error)
-      setStatus("error")
+      // Defer so the setState is not synchronous within the effect body
+      // (react-hooks/set-state-in-effect).
+      queueMicrotask(() => setStatus("error"))
       return
     }
     feedRef.current = feed
-    setStatus(feed.status())
+    // subscribe() synchronously replays the current snapshot to the listener,
+    // so status/snapshot are seeded through the callback rather than a direct
+    // setState in the effect body.
+    let unsubscribe: () => void
     try {
-      setSnapshot(feed.getSnapshot())
+      unsubscribe = feed.subscribe((next) => {
+        setSnapshot(next)
+        setStatus(feed.status())
+      })
     } catch (error) {
       if (process.env.NODE_ENV !== "production")
-        console.error("[wpi-market] initial snapshot failed", error)
-      setStatus("error")
+        console.error("[wpi-market] feed subscription failed", error)
+      queueMicrotask(() => setStatus("error"))
+      feed.dispose()
+      feedRef.current = null
+      return
     }
-    const unsubscribe = feed.subscribe((next) => {
-      setSnapshot(next)
-      setStatus(feed.status())
-    })
     return () => {
       unsubscribe()
       feed.dispose()

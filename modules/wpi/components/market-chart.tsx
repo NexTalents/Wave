@@ -11,12 +11,13 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo } from "react"
 import {
   MARKET_TIMEFRAMES,
   formatAxisTime,
   formatPercent,
   formatRupiah,
+  useMediaQuery,
 } from "@/modules/wpi/data"
 import type { Language } from "@/modules/landing-page/config"
 import type { Candle, MarketTimeframe } from "@/modules/wpi/data"
@@ -158,15 +159,7 @@ export function MarketChart({
   const market = copy.market
   // Below the desktop breakpoint, candles get too thin to read — force the line
   // view for legibility while keeping the user's toggle intact above 1200px.
-  const [isNarrow, setIsNarrow] = useState(false)
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return
-    const media = window.matchMedia("(max-width: 1199px)")
-    setIsNarrow(media.matches)
-    const onChange = (event: MediaQueryListEvent) => setIsNarrow(event.matches)
-    media.addEventListener("change", onChange)
-    return () => media.removeEventListener("change", onChange)
-  }, [])
+  const isNarrow = useMediaQuery("(max-width: 1199px)")
   const effectiveView: ChartView = isNarrow ? "line" : view
 
   const data = useMemo<CandleDatum[]>(
