@@ -98,7 +98,7 @@ function TradingView({
   const [timeframe, setTimeframe] = useState<MarketTimeframe>(initialTimeframe)
   const [view, setView] = useState<ChartView>("candlestick")
 
-  const { candles, orderBook, ticker, status } = useMarketFeed({
+  const { candles, orderBook, ticker, status, reducedMotion } = useMarketFeed({
     materialSlug: selected,
     timeframe,
     basePrice,
@@ -116,7 +116,7 @@ function TradingView({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
         <button
-          className="wave-button hover:border-brand-300 inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-white px-4 py-2 text-brand-700 transition hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+          className="wave-button hover:border-brand-300 inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-brand-200 bg-white px-4 py-2 text-brand-700 transition hover:text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
           onClick={onBack}
           type="button"
         >
@@ -135,7 +135,7 @@ function TradingView({
           return (
             <button
               aria-pressed={active}
-              className={`wave-body-sm rounded-full border px-3.5 py-1.5 font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 ${
+              className={`wave-body-sm cursor-pointer rounded-full border px-3.5 py-1.5 font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 ${
                 active
                   ? "border-brand-500 bg-brand-500 text-white"
                   : "hover:border-brand-300 border-brand-200 bg-white text-brand-700 hover:text-brand-800"
@@ -162,13 +162,14 @@ function TradingView({
           {copy.market.dataUnavailable}
         </p>
       ) : (
-        <div className="grid gap-6 desktop:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="grid items-start gap-6 desktop:grid-cols-[minmax(0,1fr)_380px]">
           <MarketChart
             candles={candles}
             copy={copy}
             language={language}
             onTimeframeChange={changeTimeframe}
             onViewChange={setView}
+            reducedMotion={reducedMotion}
             timeframe={timeframe}
             view={view}
           />

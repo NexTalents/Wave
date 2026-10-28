@@ -117,6 +117,11 @@ export const wpiContentByLanguage = {
       backToMarket: "Kembali ke pasar",
       pairSelector: "Pilih pasangan",
       pairLabel: "Pasangan",
+      zoomIn: "Perbesar",
+      zoomOut: "Perkecil",
+      resetZoom: "Atur ulang zoom",
+      zoomControls: "Kontrol zoom grafik",
+      zoomHint: "Gulir untuk zoom, seret untuk geser grafik.",
     },
   },
   EN: {
@@ -235,6 +240,11 @@ export const wpiContentByLanguage = {
       backToMarket: "Back to market",
       pairSelector: "Select pair",
       pairLabel: "Pair",
+      zoomIn: "Zoom in",
+      zoomOut: "Zoom out",
+      resetZoom: "Reset zoom",
+      zoomControls: "Chart zoom controls",
+      zoomHint: "Scroll to zoom, drag to pan the chart.",
     },
   },
 } as const

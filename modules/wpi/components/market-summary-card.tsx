@@ -40,7 +40,7 @@ export function MarketSummaryCard({
   return (
     <button
       aria-label={`${item.material[language]} — ${copy.market.pairLabel}`}
-      className="group w-full rounded-2xl border border-brand-100 bg-white p-5 text-left shadow-[0_8px_24px_rgb(16_40_21_/.06)] transition hover:border-brand-200 hover:shadow-[0_12px_32px_rgb(16_40_21_/.1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+      className="group w-full cursor-pointer rounded-2xl border border-brand-100 bg-white p-5 text-left shadow-[0_8px_24px_rgb(16_40_21_/.06)] transition hover:border-brand-200 hover:shadow-[0_12px_32px_rgb(16_40_21_/.1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
       onClick={() => onSelect(item.materialSlug)}
       type="button"
     >
