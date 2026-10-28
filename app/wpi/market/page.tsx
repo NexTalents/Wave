@@ -3,6 +3,7 @@ import { WpiMarket } from "@/modules/wpi"
 import {
   MARKET_TIMEFRAMES,
   getSnapshot,
+  materials,
   materialSlugs,
   valid,
 } from "@/modules/wpi/data"
@@ -24,8 +25,10 @@ const first = (value: string | string[] | undefined) =>
 export function parseMarketParams(
   searchParams: Record<string, string | string[] | undefined>
 ) {
+  const raw = first(searchParams.material)
+  const material = raw && materialSlugs.includes(raw) ? raw : null
   return {
-    material: valid(first(searchParams.material), materialSlugs, "pet"),
+    material,
     tf: valid(first(searchParams.tf), MARKET_TIMEFRAMES, "1m"),
   }
 }
@@ -36,15 +39,23 @@ export default async function Page({
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
   const { material, tf } = parseMarketParams(await searchParams)
-  const seed = getSnapshot().find(
-    (snapshot) => snapshot.materialSlug === material
-  )?.index
-  const basePrice = seed && seed > 0 ? seed : 5000
+  const snapshot = getSnapshot()
+  const basePriceByMaterial = Object.fromEntries(
+    snapshot.map((item) => [
+      item.materialSlug,
+      item.index > 0 ? item.index : 5000,
+    ])
+  )
+  const summary = snapshot.map((item) => {
+    const entry = materials.find((m) => m.slug === item.materialSlug)
+    return { ...item, category: entry?.category ?? { ID: "", EN: "" } }
+  })
   return (
     <WpiMarket
-      basePrice={basePrice}
+      basePriceByMaterial={basePriceByMaterial}
       initialMaterial={material}
       initialTimeframe={tf}
+      summary={summary}
     />
   )
 }

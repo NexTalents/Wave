@@ -111,6 +111,12 @@ export const wpiContentByLanguage = {
       dataUnavailable: "Data simulasi tidak tersedia.",
       srChartSummary:
         "Harga terakhir {last}, perubahan 24 jam {change}, rentang {low} hingga {high}, rentang waktu {timeframe}.",
+      summaryHeading: "Pasangan pasar",
+      summarySubtitle: "Pilih material untuk membuka grafik dan order book.",
+      selectPairHint: "Pilih pasangan untuk melihat grafik.",
+      backToMarket: "Kembali ke pasar",
+      pairSelector: "Pilih pasangan",
+      pairLabel: "Pasangan",
     },
   },
   EN: {
@@ -223,6 +229,12 @@ export const wpiContentByLanguage = {
       dataUnavailable: "Simulated data unavailable.",
       srChartSummary:
         "Last price {last}, 24-hour change {change}, range {low} to {high}, timeframe {timeframe}.",
+      summaryHeading: "Market pairs",
+      summarySubtitle: "Select a material to open its chart and order book.",
+      selectPairHint: "Select a pair to view its chart.",
+      backToMarket: "Back to market",
+      pairSelector: "Select pair",
+      pairLabel: "Pair",
     },
   },
 } as const
