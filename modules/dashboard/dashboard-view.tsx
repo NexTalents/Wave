@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useCurrentUser } from "@/modules/auth"
-import { businessNavGroups, navGroups } from "@/components/app-shared"
+import { getBusinessNavGroups, navGroups } from "@/components/app-shared"
 import { dashboardRoleLabels, type DashboardRole } from "./types"
 import { AccountTypeSetup } from "./account-type-setup"
 import { IndividualDashboard } from "./individual-dashboard"
@@ -28,7 +28,15 @@ const roleRoutes: Record<DashboardRole, string> = {
   admin: "/dashboard/admin",
 }
 
-export function DashboardView({ expectedRole, previewRole }: { expectedRole?: DashboardRole; previewRole?: DashboardRole }) {
+export function DashboardView({
+  expectedRole,
+  previewRole,
+  children,
+}: {
+  expectedRole?: DashboardRole
+  previewRole?: DashboardRole
+  children?: React.ReactNode
+}) {
   const pathname = usePathname()
   const router = useRouter()
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth()
@@ -44,7 +52,7 @@ export function DashboardView({ expectedRole, previewRole }: { expectedRole?: Da
       router.replace(targetRoute)
       return
     }
-    if (!expectedRole && pathname !== targetRoute) router.replace(targetRoute)
+    if (!expectedRole && !pathname.startsWith(targetRoute)) router.replace(targetRoute)
   }, [expectedRole, isAuthenticated, pathname, previewRole, router, targetRoute, user, userRole])
 
   if (authLoading || (isAuthenticated && user === undefined)) {
@@ -71,15 +79,17 @@ export function DashboardView({ expectedRole, previewRole }: { expectedRole?: Da
     )
   }
 
-  if (!previewRole && (pathname !== targetRoute || (expectedRole && expectedRole !== userRole))) return null
+  if (!previewRole && (!pathname.startsWith(targetRoute) || (expectedRole && expectedRole !== userRole))) return null
 
   if (role === "individual") {
     return <IndividualDashboard name={user?.name} />
   }
 
+  const currentNavGroups = role === "business" ? getBusinessNavGroups(pathname) : navGroups
+
   return (
-    <AppShell navGroups={role === "business" ? businessNavGroups : navGroups}>
-      {role === "business" ? <BusinessDashboard /> : <div className="flex flex-col gap-6">
+    <AppShell navGroups={currentNavGroups}>
+      {role === "business" ? (children ?? <BusinessDashboard />) : <div className="flex flex-col gap-6">
         <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">Dashboard WAVE</h1>
@@ -100,3 +110,4 @@ export function DashboardView({ expectedRole, previewRole }: { expectedRole?: Da
     </AppShell>
   )
 }
+

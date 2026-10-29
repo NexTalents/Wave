@@ -1,70 +1,337 @@
+"use client"
+
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { ArrowDownToLine, ArrowUpRight, BarChart3, ChevronRight, CircleDollarSign, PackageSearch, Plus, ReceiptText, UsersRound } from "lucide-react"
+import {
+  ArrowDownToLine,
+  ArrowUpRight,
+  BarChart3,
+  ChevronRight,
+  CircleDollarSign,
+  PackageSearch,
+  Plus,
+  ReceiptText,
+  UsersRound,
+} from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-
-const recentTransactions = [
-  { id: "TRX-2401", supplier: "Bank Sampah Bersama", material: "PET · Grade A", weight: "128 kg", status: "Menunggu verifikasi" },
-  { id: "TRX-2400", supplier: "Koperasi Hijau Mandiri", material: "Kardus · Grade B", weight: "86 kg", status: "Selesai" },
-  { id: "TRX-2399", supplier: "Komunitas Bersih Kota", material: "Aluminium", weight: "42 kg", status: "Selesai" },
-] as const
+import { getStoredTransactions, MATERIAL_PRICES } from "@/lib/transactions/store"
+import type { TransactionRecord } from "@/lib/transactions/types"
 
 export function BusinessDashboard() {
+  const [transactions, setTransactions] = useState<TransactionRecord[]>([])
+
+  useEffect(() => {
+    setTransactions(getStoredTransactions())
+    const handleUpdate = () => setTransactions(getStoredTransactions())
+    window.addEventListener("wave_transactions_updated", handleUpdate)
+    return () => window.removeEventListener("wave_transactions_updated", handleUpdate)
+  }, [])
+
+  const confirmedTx = useMemo(
+    () => transactions.filter((tx) => tx.status === "confirmed"),
+    [transactions]
+  )
+
+  const totalNominal = useMemo(
+    () => confirmedTx.reduce((sum, tx) => sum + tx.grossValue, 0),
+    [confirmedTx]
+  )
+
+  const totalWeight = useMemo(
+    () => Math.round(confirmedTx.reduce((sum, tx) => sum + tx.weightKg, 0) * 10) / 10,
+    [confirmedTx]
+  )
+
+  const recentTransactions = useMemo(
+    () => transactions.slice(0, 4),
+    [transactions]
+  )
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <section id="overview" className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <p className="text-sm font-medium text-primary">Workspace bisnis</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">Overview operasional</h1>
-          <p className="mt-2 max-w-2xl text-muted-foreground">Pantau aliran material, partner pemasok, dan keputusan pembelian di satu tempat.</p>
+          <p className="text-sm font-semibold text-primary uppercase tracking-wider">Workspace Bisnis</p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight text-foreground">Overview Operasional</h1>
+          <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
+            Pantau arus material daur ulang, riwayat transaksi, dan performa pasokan dari seluruh mitra pemulung.
+          </p>
         </div>
-        <Link className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring" href="#intake"><Plus aria-hidden="true" className="size-4" /> Catat setoran masuk</Link>
+        <div className="flex items-center gap-2.5">
+          <Link
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            href="/dashboard/business/intake"
+          >
+            <Plus aria-hidden="true" className="size-4" /> Catat Setoran Masuk
+          </Link>
+          <Link
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition hover:bg-muted"
+            href="/dashboard/business/transactions"
+          >
+            <ReceiptText aria-hidden="true" className="size-4" /> Buka Transaksi
+          </Link>
+        </div>
       </section>
 
+      {/* KPI Metrics */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Ringkasan bisnis">
-        <MetricCard icon={CircleDollarSign} label="Nilai pembelian bulan ini" value="Rp 0" note="Belum ada transaksi terverifikasi" />
-        <MetricCard icon={ArrowDownToLine} label="Setoran masuk" value="0 kg" note="Bulan berjalan" />
-        <MetricCard icon={UsersRound} label="Partner aktif" value="0" note="Siap dihubungkan" />
-        <MetricCard icon={ReceiptText} label="Perlu ditinjau" value="0" note="Tidak ada antrian baru" />
+        <MetricCard
+          icon={CircleDollarSign}
+          label="Nilai Pembelian Bulan Ini"
+          value={`Rp ${totalNominal.toLocaleString("id-ID")}`}
+          note={`${confirmedTx.length} transaksi terverifikasi`}
+        />
+        <MetricCard
+          icon={ArrowDownToLine}
+          label="Volume Setoran Masuk"
+          value={`${totalWeight.toLocaleString("id-ID")} kg`}
+          note="Total timbangan material terverifikasi"
+        />
+        <MetricCard
+          icon={UsersRound}
+          label="Partner Aktif"
+          value="5 Mitra"
+          note="Anggota pemulung terdaftar WAVE"
+        />
+        <MetricCard
+          icon={ReceiptText}
+          label="Status Operasional"
+          value="Aktif Normal"
+          note="Gradio AI 56.10.12.62 terhubung"
+        />
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[1.35fr_1fr]">
-        <Card id="transactions">
-          <CardHeader className="flex flex-row items-start justify-between gap-4 border-b">
-            <div><CardTitle>Transaksi terbaru</CardTitle><p className="mt-1 text-sm text-muted-foreground">Aktivitas material dari partner bisnis kamu.</p></div>
-            <Link className="text-sm font-semibold text-primary hover:underline" href="#reports">Lihat laporan</Link>
+      {/* Main Grid: Recent Transactions & Materials */}
+      <section className="grid gap-6 xl:grid-cols-[1.35fr_1fr]">
+        {/* Recent Transactions Card */}
+        <Card id="transactions" className="border-border shadow-xs">
+          <CardHeader className="flex flex-row items-center justify-between gap-4 border-b bg-muted/20 py-4 px-5">
+            <div>
+              <CardTitle className="text-base font-bold">Transaksi Terbaru</CardTitle>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Setoran material terakhir yang masuk dari mitra operasional.
+              </p>
+            </div>
+            <Link
+              className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+              href="/dashboard/business/transactions"
+            >
+              Lihat semua <ArrowUpRight className="size-3.5" />
+            </Link>
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-border">
-              {recentTransactions.map((transaction) => <div className="grid gap-3 px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center" key={transaction.id}><div className="flex min-w-0 items-start gap-3"><span className="grid size-9 shrink-0 place-items-center rounded-lg bg-secondary text-primary"><ReceiptText aria-hidden="true" className="size-4" /></span><div className="min-w-0"><p className="truncate font-medium text-foreground">{transaction.supplier}</p><p className="mt-1 text-xs text-muted-foreground">{transaction.id} · {transaction.material}</p></div></div><div className="flex items-center justify-between gap-3 pl-12 sm:block sm:pl-0 sm:text-right"><p className="font-semibold text-foreground">{transaction.weight}</p><Badge variant={transaction.status === "Selesai" ? "secondary" : "outline"}>{transaction.status}</Badge></div></div>)}
+              {recentTransactions.map((tx) => (
+                <div
+                  className="grid gap-3 px-5 py-3.5 sm:grid-cols-[1fr_auto] sm:items-center hover:bg-muted/30 transition"
+                  key={tx.id}
+                >
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                      <ReceiptText aria-hidden="true" className="size-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate font-semibold text-foreground text-sm">
+                          {tx.picker.name}
+                        </p>
+                        <span className="inline-flex items-center justify-center size-4 rounded bg-primary text-[10px] font-bold text-primary-foreground">
+                          {tx.finalGrade}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {tx.id} · {tx.material} · {tx.dateFormatted}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 pl-12 sm:block sm:pl-0 sm:text-right">
+                    <p className="font-bold text-foreground text-sm">{tx.weightKg} kg</p>
+                    <p className="text-xs font-semibold text-primary">
+                      Rp {tx.grossValue.toLocaleString("id-ID")}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <Link className="flex items-center justify-center gap-2 border-t border-border p-4 text-sm font-semibold text-primary hover:bg-muted" href="#transactions">Buka semua transaksi <ArrowUpRight aria-hidden="true" className="size-4" /></Link>
+            <Link
+              className="flex items-center justify-center gap-2 border-t border-border p-3.5 text-xs font-semibold text-primary hover:bg-muted/50 transition"
+              href="/dashboard/business/transactions"
+            >
+              Buka Semua Daftar Transaksi & Audit Log <ArrowUpRight aria-hidden="true" className="size-4" />
+            </Link>
           </CardContent>
         </Card>
 
-        <Card id="materials">
-          <CardHeader><CardTitle>Material & harga</CardTitle><p className="mt-1 text-sm text-muted-foreground">Referensi untuk keputusan pembelian.</p></CardHeader>
-          <CardContent className="space-y-3">
-            {[{ name: "PET", value: "Rp 4.800/kg", change: "+4,2%" }, { name: "Kardus", value: "Rp 2.300/kg", change: "+1,8%" }, { name: "Aluminium", value: "Rp 18.500/kg", change: "-0,6%" }].map((item) => <Link className="flex items-center gap-3 rounded-xl border border-border p-3 transition hover:bg-muted" href={`/wpi?material=${item.name.toLowerCase()}`} key={item.name}><span className="grid size-9 place-items-center rounded-lg bg-secondary text-primary"><BarChart3 aria-hidden="true" className="size-4" /></span><span className="flex-1"><span className="block font-medium text-foreground">{item.name}</span><span className="block text-xs text-muted-foreground">Indeks transaksi WAVE</span></span><span className="text-right"><span className="block text-sm font-semibold text-foreground">{item.value}</span><span className={item.change.startsWith("-") ? "text-xs text-destructive" : "text-xs text-primary"}>{item.change}</span></span><ChevronRight aria-hidden="true" className="size-4 text-muted-foreground" /></Link>)}
+        {/* Materials & Reference Prices */}
+        <Card id="materials" className="border-border shadow-xs">
+          <CardHeader className="border-b bg-muted/20 py-4 px-5">
+            <CardTitle className="text-base font-bold">Indeks Material & Harga WPI</CardTitle>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Standar harga acuan WAVE untuk evaluasi setoran masuk.
+            </p>
+          </CardHeader>
+          <CardContent className="p-4 space-y-2.5">
+            {[
+              {
+                name: "PET",
+                desc: "Botol Plastik Bening",
+                gradeA: "Rp 4.800/kg",
+                gradeB: "Rp 3.900/kg",
+                change: "+4,2%",
+              },
+              {
+                name: "Kardus",
+                desc: "Karton Gelombang Kering",
+                gradeA: "Rp 2.700/kg",
+                gradeB: "Rp 2.300/kg",
+                change: "+1,8%",
+              },
+              {
+                name: "Aluminium",
+                desc: "Kaleng Minuman Bersih",
+                gradeA: "Rp 18.500/kg",
+                gradeB: "Rp 15.000/kg",
+                change: "-0,6%",
+              },
+              {
+                name: "Kertas",
+                desc: "Kertas Putih HVS / Arsip",
+                gradeA: "Rp 2.200/kg",
+                gradeB: "Rp 1.800/kg",
+                change: "+0,5%",
+              },
+            ].map((item) => (
+              <Link
+                className="flex items-center gap-3 rounded-xl border border-border p-3 transition hover:bg-muted/50"
+                href={`/wpi?material=${item.name.toLowerCase()}`}
+                key={item.name}
+              >
+                <span className="grid size-9 place-items-center rounded-lg bg-secondary text-primary shrink-0">
+                  <BarChart3 aria-hidden="true" className="size-4" />
+                </span>
+                <span className="flex-1 min-w-0">
+                  <span className="block font-semibold text-foreground text-sm">{item.name}</span>
+                  <span className="block text-xs text-muted-foreground truncate">{item.desc}</span>
+                </span>
+                <span className="text-right">
+                  <span className="block text-xs font-bold text-foreground">Grade A: {item.gradeA}</span>
+                  <span className="block text-[11px] text-muted-foreground">Grade B: {item.gradeB}</span>
+                </span>
+                <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground shrink-0" />
+              </Link>
+            ))}
           </CardContent>
         </Card>
       </section>
 
+      {/* Action Navigation Cards */}
       <section className="grid gap-4 md:grid-cols-3">
-        <ActionCard id="intake" icon={ArrowDownToLine} title="Setoran masuk" description="Tinjau dan validasi material yang dikirim partner." action="Kelola setoran" />
-        <ActionCard id="partners" icon={UsersRound} title="Partner pemasok" description="Bangun jaringan pemasok yang lebih transparan." action="Kelola partner" />
-        <ActionCard id="payouts" icon={PackageSearch} title="Pembayaran" description="Pantau nilai yang perlu dibayar dan riwayatnya." action="Buka pembayaran" />
+        <ActionCard
+          id="intake-card"
+          icon={ArrowDownToLine}
+          title="Setoran Masuk (Kamera Langsung)"
+          description="Alur timbang material, ambil foto sampah via kamera smartphone, evaluasi inferensi AI Gradio, dan kirim struk."
+          actionText="Buka Setoran Masuk"
+          href="/dashboard/business/intake"
+        />
+        <ActionCard
+          id="transactions-card"
+          icon={ReceiptText}
+          title="Buku Transaksi & Audit"
+          description="Filter dan telusuri seluruh riwayat transaksi, periksa keputusan grade operator, dan kelola pembatalan (void)."
+          actionText="Buka Daftar Transaksi"
+          href="/dashboard/business/transactions"
+        />
+        <ActionCard
+          id="payouts-card"
+          icon={PackageSearch}
+          title="Titip Stok & Pencairan"
+          description="Pantau pencairan tunai harian serta pengelolaan lot material 30 hari untuk potensi kenaikan harga WPI."
+          actionText="Kelola Pembayaran"
+          href="/dashboard/business#payouts"
+        />
       </section>
 
-      <Card id="reports" className="border-primary/20 bg-primary/5"><CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between"><div><p className="font-semibold text-foreground">Laporan periode ini siap ditinjau</p><p className="mt-1 text-sm text-muted-foreground">Gunakan ringkasan transaksi untuk melihat volume, nilai, dan partner paling aktif.</p></div><Link className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-primary/30 bg-card px-4 text-sm font-semibold text-primary hover:bg-secondary" href="#reports">Buka laporan <ArrowUpRight aria-hidden="true" className="size-4" /></Link></CardContent></Card>
+      {/* Reports Callout */}
+      <Card id="reports" className="border-primary/20 bg-primary/5">
+        <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="font-bold text-foreground text-base">Laporan Periode Operasional Siap Ditinjau</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Analisis pergerakan volume setoran, efektivitas klasifikasi AI Gradio, dan total pencairan dana kepada mitra pemulung.
+            </p>
+          </div>
+          <Link
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-primary/30 bg-card px-4 text-sm font-semibold text-primary hover:bg-secondary transition shrink-0"
+            href="/dashboard/business/transactions"
+          >
+            Lihat Laporan Transaksi <ArrowUpRight aria-hidden="true" className="size-4" />
+          </Link>
+        </CardContent>
+      </Card>
     </div>
   )
 }
 
-function MetricCard({ icon: Icon, label, value, note }: { icon: typeof CircleDollarSign; label: string; value: string; note: string }) {
-  return <Card><CardContent className="p-5"><div className="flex items-start justify-between gap-3"><p className="text-sm text-muted-foreground">{label}</p><Icon aria-hidden="true" className="size-5 text-primary" /></div><p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">{value}</p><p className="mt-1 text-xs text-muted-foreground">{note}</p></CardContent></Card>
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  note,
+}: {
+  icon: typeof CircleDollarSign
+  label: string
+  value: string
+  note: string
+}) {
+  return (
+    <Card className="border-border">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-xs font-medium text-muted-foreground">{label}</p>
+          <Icon aria-hidden="true" className="size-5 text-primary" />
+        </div>
+        <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{value}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{note}</p>
+      </CardContent>
+    </Card>
+  )
 }
 
-function ActionCard({ id, icon: Icon, title, description, action }: { id: string; icon: typeof ArrowDownToLine; title: string; description: string; action: string }) {
-  return <Card id={id} className="transition hover:-translate-y-0.5 hover:shadow-md"><CardContent className="p-5"><span className="grid size-10 place-items-center rounded-xl bg-secondary text-primary"><Icon aria-hidden="true" className="size-5" /></span><p className="mt-4 font-semibold text-foreground">{title}</p><p className="mt-1 min-h-10 text-sm leading-5 text-muted-foreground">{description}</p><a className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline" href={`#${id}`}>{action}<ChevronRight aria-hidden="true" className="size-4" /></a></CardContent></Card>
+function ActionCard({
+  id,
+  icon: Icon,
+  title,
+  description,
+  actionText,
+  href,
+}: {
+  id: string
+  icon: typeof ArrowDownToLine
+  title: string
+  description: string
+  actionText: string
+  href: string
+}) {
+  return (
+    <Card id={id} className="transition hover:-translate-y-0.5 hover:shadow-md border-border">
+      <CardContent className="p-5 flex flex-col justify-between h-full">
+        <div>
+          <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+            <Icon aria-hidden="true" className="size-5" />
+          </span>
+          <p className="mt-4 font-bold text-foreground text-base">{title}</p>
+          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{description}</p>
+        </div>
+        <Link
+          className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+          href={href}
+        >
+          {actionText} <ChevronRight aria-hidden="true" className="size-3.5" />
+        </Link>
+      </CardContent>
+    </Card>
+  )
 }

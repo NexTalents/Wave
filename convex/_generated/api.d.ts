@@ -12,6 +12,9 @@ import type * as auth_authorization from "../auth/authorization.js";
 import type * as auth_memberships from "../auth/memberships.js";
 import type * as auth_organizations from "../auth/organizations.js";
 import type * as auth_users from "../auth/users.js";
+import type * as http from "../http.js";
+import type * as transactions from "../transactions.js";
+import type * as whatsapp from "../whatsapp.js";
 
 import type {
   ApiFromModules,
@@ -24,6 +27,9 @@ declare const fullApi: ApiFromModules<{
   "auth/memberships": typeof auth_memberships;
   "auth/organizations": typeof auth_organizations;
   "auth/users": typeof auth_users;
+  http: typeof http;
+  transactions: typeof transactions;
+  whatsapp: typeof whatsapp;
 }>;
 
 /**
