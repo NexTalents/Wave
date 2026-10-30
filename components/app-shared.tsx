@@ -13,7 +13,6 @@ import {
   BarChart3Icon,
   HandshakeIcon,
   ReceiptTextIcon,
-  WalletCardsIcon,
 } from "lucide-react"
 
 export type SidebarNavItem = {
@@ -127,22 +126,22 @@ export function getBusinessNavGroups(pathname?: string): SidebarNavGroup[] {
           icon: <ArrowDownToLineIcon />,
           isActive: current.startsWith("/dashboard/business/intake"),
         },
+        {
+          title: "Harga",
+          path: "/dashboard/business/harga",
+          icon: <BarChart3Icon />,
+          isActive: current.startsWith("/dashboard/business/harga"),
+        },
       ],
     },
     {
       label: "Jaringan WAVE",
       items: [
-        { title: "Material & harga", path: "/wpi", icon: <BarChart3Icon /> },
         {
           title: "Partner pemasok",
           path: "/dashboard/business/partners",
           icon: <HandshakeIcon />,
           isActive: current.startsWith("/dashboard/business/partners"),
-        },
-        {
-          title: "Pembayaran",
-          path: "/dashboard/business#payouts",
-          icon: <WalletCardsIcon />,
         },
       ],
     },
