@@ -277,7 +277,8 @@ export default defineSchema({
     expiresAt: v.number(),
   })
     .index("by_phone", ["phone"])
-    .index("by_token", ["inviteToken"]),
+    .index("by_token", ["inviteToken"])
+    .index("by_code", ["code"]),
 
   pickerSessions: defineTable({
     pickerId: v.id("wastePickers"),

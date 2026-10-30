@@ -1,11 +1,15 @@
 "use client"
 
 import { useClerk } from "@clerk/nextjs"
+import { useRouter } from "next/navigation"
 import { useCallback, useState } from "react"
 import { getAuthError } from "./errors"
+import { clearLapakSessionToken } from "./lapak-session"
+import { clearPickerSessionToken } from "./picker-session"
 
 export function useSignOut() {
   const { signOut: clerkSignOut } = useClerk()
+  const router = useRouter()
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [error, setError] = useState("")
 
@@ -15,13 +19,19 @@ export function useSignOut() {
     setError("")
     setIsSigningOut(true)
     try {
-      await clerkSignOut({ redirectUrl: "/login" })
+      clearPickerSessionToken()
+      clearLapakSessionToken()
+      try {
+        await clerkSignOut({ redirectUrl: "/login" })
+      } catch {
+        router.push("/login")
+      }
     } catch (value) {
       setError(getAuthError(value))
     } finally {
       setIsSigningOut(false)
     }
-  }, [clerkSignOut, isSigningOut])
+  }, [clerkSignOut, isSigningOut, router])
 
   return { error, isSigningOut, signOut }
 }

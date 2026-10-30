@@ -15,34 +15,32 @@ import {
   UsersRound,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getStoredTransactions } from "@/lib/transactions/store"
+import { api } from "@/convex/_generated/api"
+import { useBusinessTransactions } from "./use-business-transactions"
 import type { TransactionRecord } from "@/lib/transactions/types"
 import { formatPercent, formatRupiah, getSnapshot } from "@/modules/wpi/data"
 
 export function BusinessDashboard() {
-  const [transactions, setTransactions] = useState<TransactionRecord[]>([])
-
-  useEffect(() => {
-    setTransactions(getStoredTransactions())
-    const handleUpdate = () => setTransactions(getStoredTransactions())
-    window.addEventListener("wave_transactions_updated", handleUpdate)
-    return () =>
-      window.removeEventListener("wave_transactions_updated", handleUpdate)
-  }, [])
+  const { organization, transactions: loadedTransactions } = useBusinessTransactions()
+  const transactions = useMemo(() => loadedTransactions ?? [], [loadedTransactions])
+  const pickers = useQuery(
+    api.wastePickers.list,
+    organization ? { organizationId: organization._id } : "skip"
+  )
 
   const confirmedTx = useMemo(
-    () => transactions.filter((tx) => tx.status === "confirmed"),
+    () => transactions.filter((tx: TransactionRecord) => tx.status === "confirmed"),
     [transactions]
   )
 
   const totalNominal = useMemo(
-    () => confirmedTx.reduce((sum, tx) => sum + tx.grossValue, 0),
+    () => confirmedTx.reduce((sum: number, tx: TransactionRecord) => sum + tx.grossValue, 0),
     [confirmedTx]
   )
 
   const totalWeight = useMemo(
     () =>
-      Math.round(confirmedTx.reduce((sum, tx) => sum + tx.weightKg, 0) * 10) /
+      Math.round(confirmedTx.reduce((sum: number, tx: TransactionRecord) => sum + tx.weightKg, 0) * 10) /
       10,
     [confirmedTx]
   )
@@ -149,7 +147,7 @@ export function BusinessDashboard() {
                     : "Belum ada setoran. Catat setoran pertama dari menu Setoran Masuk."}
                 </p>
               ) : null}
-              {recentTransactions.map((tx) => (
+              {recentTransactions.map((tx: TransactionRecord) => (
                 <div
                   className="grid gap-3 px-5 py-3.5 transition hover:bg-muted/30 sm:grid-cols-[1fr_auto] sm:items-center"
                   key={tx.id}

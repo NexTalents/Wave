@@ -39,7 +39,7 @@ export const requestOtp = mutation({
     memberCode: v.string(),
   }),
   handler: async (ctx, args) => {
-    const cleanPhone = normalizePhone(args.phone)
+    let cleanPhone = args.phone ? normalizePhone(args.phone) : ""
     if (!cleanPhone || cleanPhone.length < 10) {
       throw new Error("Nomor telepon tidak valid")
     }
@@ -142,14 +142,26 @@ export const verifyOtp = mutation({
     }),
   }),
   handler: async (ctx, args) => {
-    const cleanPhone = normalizePhone(args.phone)
+    let cleanPhone = args.phone ? normalizePhone(args.phone) : ""
     const inputCode = args.code.trim()
 
-    // Find OTP
-    const otpRecord = await ctx.db
-      .query("pickerOtps")
-      .withIndex("by_phone", (q) => q.eq("phone", cleanPhone))
-      .first()
+    // Find OTP by phone or by code (for 1-click WhatsApp dynamic link)
+    let otpRecord = null
+    if (cleanPhone) {
+      otpRecord = await ctx.db
+        .query("pickerOtps")
+        .withIndex("by_phone", (q) => q.eq("phone", cleanPhone))
+        .first()
+    }
+    if (!otpRecord) {
+      otpRecord = await ctx.db
+        .query("pickerOtps")
+        .withIndex("by_code", (q) => q.eq("code", inputCode))
+        .first()
+      if (otpRecord && !cleanPhone) {
+        cleanPhone = otpRecord.phone
+      }
+    }
 
     const isMasterCode = inputCode === "123456" || inputCode === "424242"
     const isValidCode = otpRecord && otpRecord.code === inputCode && otpRecord.expiresAt > Date.now()

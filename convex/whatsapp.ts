@@ -204,3 +204,85 @@ export const updateDeliveryStatus = internalMutation({
     return null
   },
 })
+
+
+export const getLatestOtpForPhone = internalQuery({
+  args: { phone: v.string() },
+  returns: v.union(
+    v.null(),
+    v.object({
+      code: v.string(),
+      expiresAt: v.number(),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const item = await ctx.db
+      .query("pickerOtps")
+      .withIndex("by_phone", (q) => q.eq("phone", args.phone))
+      .order("desc")
+      .first()
+
+    if (!item) return null
+    return {
+      code: item.code,
+      expiresAt: item.expiresAt,
+    }
+  },
+})
+
+export const handleIncomingMessage = internalAction({
+  args: {
+    from: v.string(),
+    text: v.string(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    let cleanPhone = args.from.replace(/\D/g, "")
+    if (cleanPhone.startsWith("0")) {
+      cleanPhone = "62" + cleanPhone.slice(1)
+    } else if (!cleanPhone.startsWith("62")) {
+      cleanPhone = "62" + cleanPhone
+    }
+
+    const accessToken = process.env.WHATSAPP_ACCESS_TOKEN
+    const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
+    if (!accessToken || !phoneNumberId) return null
+
+    // Check if there is an active OTP in pickerOtps for this phone
+    const latestOtp = await ctx.runQuery(internal.whatsapp.getLatestOtpForPhone, {
+      phone: cleanPhone,
+    })
+
+    let replyText = ""
+    if (latestOtp && latestOtp.expiresAt > Date.now()) {
+      replyText = `🔐 *KODE VERIFIKASI MASUK WAVE*\n\nHalo Mitra Pemulung,\nKode verifikasi akun WAVE Anda adalah:\n\n*${latestOtp.code}*\n\nKode berlaku selama 10 menit. Masukkan kode ini pada halaman login untuk masuk ke dashboard Anda.\n\n_WAVE - Transparansi Sirkular Indonesia_`
+    } else {
+      replyText = `🌿 Halo dari *WAVE*!\n\nNomor ini adalah bot resmi WAVE untuk pengiriman kode verifikasi dan struk timbangan digital.\n\nUntuk masuk ke akun pemulung Anda, silakan minta kode OTP di halaman login WAVE, dan kami akan mengirimkannya ke chat ini.\n\n_WAVE - Transparansi Sirkular Indonesia_`
+    }
+
+    try {
+      await fetch(
+        `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: cleanPhone,
+            type: "text",
+            text: { preview_url: false, body: replyText },
+          }),
+        }
+      )
+      console.log(`[WhatsApp Webhook] Sent auto-reply to ${cleanPhone}`)
+    } catch (err) {
+      console.error("[WhatsApp Bot] Failed to send reply:", err)
+    }
+
+    return null
+  },
+})

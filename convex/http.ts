@@ -84,6 +84,22 @@ http.route({
         }
       }
 
+      // Process incoming messages (e.g. user sends 'Halo' or replies to bot)
+      if (Array.isArray(change?.messages)) {
+        for (const msg of change.messages) {
+          const from = msg.from
+          if (from) {
+            console.log(
+              `[WhatsApp Webhook] Incoming message from ${from}: ${msg.text?.body || msg.type}`
+            )
+            await ctx.runAction(internal.whatsapp.handleIncomingMessage, {
+              from,
+              text: msg.text?.body || "",
+            })
+          }
+        }
+      }
+
       return new Response("EVENT_RECEIVED", { status: 200 })
     } catch (error: unknown) {
       console.error(

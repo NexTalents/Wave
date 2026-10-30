@@ -9,7 +9,6 @@ const isProtectedPage = createRouteMatcher([
 ])
 const isProtectedApi = createRouteMatcher([
   "/api/analyze-waste(.*)",
-  "/api/whatsapp(.*)",
 ])
 
 export default clerkMiddleware(async (auth, request) => {
@@ -22,10 +21,42 @@ export default clerkMiddleware(async (auth, request) => {
   }
   if (!isProtectedPage(request)) return
 
+  const { pathname, search } = request.nextUrl
+  const hasPickerSession = Boolean(request.cookies.get("wave_picker_session")?.value)
+  const hasLapakSession = Boolean(request.cookies.get("wave_lapak_session")?.value)
+
+  // Redirect /dashboard root based on active session cookies
+  if (pathname === "/dashboard") {
+    if (hasPickerSession) {
+      return NextResponse.redirect(new URL("/dashboard/individual", request.url))
+    }
+    if (hasLapakSession) {
+      return NextResponse.redirect(new URL("/dashboard/business", request.url))
+    }
+  }
+
+  // Mitra Pemulung dashboard: authorized via picker session cookie
+  if (pathname.startsWith("/dashboard/individual")) {
+    if (hasPickerSession) {
+      return
+    }
+    const signInUrl = new URL("/login", request.url)
+    signInUrl.searchParams.set("redirect_url", `${pathname}${search}`)
+    return NextResponse.redirect(signInUrl)
+  }
+
+  // Lapak Mitra dashboard: allow direct access if lapak session cookie is present
+  if (pathname.startsWith("/dashboard/business")) {
+    if (hasLapakSession) {
+      return
+    }
+  }
+
+  // Other protected routes (Admin, Clerk enterprise/agregator sessions)
   const signInUrl = new URL("/login", request.url)
   signInUrl.searchParams.set(
     "redirect_url",
-    `${request.nextUrl.pathname}${request.nextUrl.search}`
+    `${pathname}${search}`
   )
   await auth.protect({ unauthenticatedUrl: signInUrl.toString() })
 })
