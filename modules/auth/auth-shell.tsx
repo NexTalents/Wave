@@ -62,14 +62,14 @@ export function AuthShell({
         </header>
 
         <div className="grid flex-1 items-stretch gap-4 py-4 lg:grid-cols-[minmax(280px,0.72fr)_minmax(0,1.28fr)] lg:gap-5 lg:py-6">
-          <aside className="relative min-h-[250px] overflow-hidden rounded-[28px] bg-gradient-to-b from-brand-800 to-brand-900 p-7 text-white sm:p-10 lg:min-h-[620px] lg:p-12 shadow-xl border border-brand-700/50">
+          <aside className="relative min-h-[250px] overflow-hidden rounded-[28px] bg-brand-800 p-7 text-white sm:p-10 lg:min-h-[620px] lg:p-12">
             <div
               aria-hidden="true"
-              className="absolute -top-24 -right-24 size-72 rounded-full border border-white/10 bg-emerald-500/5 blur-2xl"
+              className="absolute -top-24 -right-24 size-72 rounded-full border border-white/10"
             />
             <div
               aria-hidden="true"
-              className="absolute -bottom-36 -left-24 size-80 rounded-full border border-gold/20 bg-emerald-400/5 blur-2xl"
+              className="absolute -bottom-36 -left-24 size-80 rounded-full border border-gold/20"
             />
             {asideContent ?? (
               <div className="relative z-10 flex h-full flex-col justify-between gap-12">

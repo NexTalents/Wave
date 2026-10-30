@@ -1,9 +1,10 @@
 "use client"
 
 import { CircleUserRound, ShieldCheck, UsersRound } from "lucide-react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { useQuery } from "convex/react"
+import { LoadingScreen } from "@/components/loading-screen"
 import { AppShell } from "@/components/app-shell"
 import { Dashboard } from "@/components/dashboard"
 import { Badge } from "@/components/ui/badge"
@@ -31,6 +32,7 @@ export function DashboardView({
   expectedRole?: DashboardRole
 }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [lapakToken, setLapakToken] = useState<string | null>(null)
   const [pickerToken, setPickerToken] = useState<string | null>(null)
 
@@ -49,6 +51,16 @@ export function DashboardView({
   )
 
   const authState = useAuthState()
+
+  useEffect(() => {
+    if (!pickerSession && !lapakSession && authState.status === "signedOut") {
+      router.replace(`/login?redirect_url=${encodeURIComponent(pathname)}`)
+    }
+  }, [authState.status, lapakSession, pathname, pickerSession, router])
+
+  if (!pickerSession && !lapakSession && authState.status === "signedOut") {
+    return <LoadingScreen description="Mengarahkan ke halaman masuk WAVE." title="Login diperlukan…" />
+  }
 
   // Determine role
   let role: DashboardRole = "individual"

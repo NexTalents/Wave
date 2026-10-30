@@ -6,8 +6,8 @@ import { useEffect, useState } from "react"
 import { api } from "@/convex/_generated/api"
 import type { Id } from "@/convex/_generated/dataModel"
 import type { DashboardRole } from "@/modules/dashboard/types"
-import { getLapakSessionToken } from "./lapak-session"
-import { getPickerSessionToken } from "./picker-session"
+import { clearLapakSessionToken, getLapakSessionToken } from "./lapak-session"
+import { clearPickerSessionToken, getPickerSessionToken } from "./picker-session"
 import { useAuthSyncStatus } from "./provider"
 import type { AccountType, OrganizationType } from "./types"
 
@@ -44,10 +44,34 @@ export type AuthState =
 export function useAuthState(): AuthState {
   const [pickerToken, setPickerToken] = useState<string | null>(null)
   const [lapakToken, setLapakToken] = useState<string | null>(null)
+  const [storageChecked, setStorageChecked] = useState(false)
 
   useEffect(() => {
-    setPickerToken(getPickerSessionToken())
-    setLapakToken(getLapakSessionToken())
+    function syncTokens() {
+      const pToken = getPickerSessionToken()
+      const lToken = getLapakSessionToken()
+      setPickerToken(pToken)
+      setLapakToken(lToken)
+      setStorageChecked(true)
+
+      if (typeof document !== "undefined") {
+        if (pToken && !document.cookie.includes("wave_picker_session=")) {
+          document.cookie = `wave_picker_session=${encodeURIComponent(pToken)}; path=/; max-age=2592000; SameSite=Lax`
+        }
+        if (lToken && !document.cookie.includes("wave_lapak_session=")) {
+          document.cookie = `wave_lapak_session=${encodeURIComponent(lToken)}; path=/; max-age=2592000; SameSite=Lax`
+        }
+      }
+    }
+
+    syncTokens()
+
+    window.addEventListener("storage", syncTokens)
+    window.addEventListener("wave_session_updated", syncTokens)
+    return () => {
+      window.removeEventListener("storage", syncTokens)
+      window.removeEventListener("wave_session_updated", syncTokens)
+    }
   }, [])
 
   const pickerSession = useQuery(
@@ -66,6 +90,25 @@ export function useAuthState(): AuthState {
     api.auth.users.me,
     clerkLoaded && isSignedIn && !convexLoading && isAuthenticated ? {} : "skip",
   )
+
+  // Clean up invalid/expired picker token
+  useEffect(() => {
+    if (pickerToken && pickerSession === null) {
+      clearPickerSessionToken()
+    }
+  }, [pickerToken, pickerSession])
+
+  // Clean up invalid/expired lapak token
+  useEffect(() => {
+    if (lapakToken && lapakSession === null) {
+      clearLapakSessionToken()
+    }
+  }, [lapakToken, lapakSession])
+
+  // Wait until local storage is checked
+  if (!storageChecked) {
+    return { status: "loading" }
+  }
 
   // 1. Check Picker Session (Mitra Pemulung)
   if (pickerToken) {

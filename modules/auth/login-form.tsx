@@ -18,6 +18,7 @@ import {
   Star,
   Store,
   User,
+  ExternalLink,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
@@ -156,12 +157,13 @@ export function LoginForm({
   const [pickerStep, setPickerStep] = useState<"phone" | "otp">("phone")
   const [pickerLoading, setPickerLoading] = useState(false)
   const [pickerError, setPickerError] = useState("")
-  const [pickerDevCode, setPickerDevCode] = useState<string | null>(null)
   const [pickerName, setPickerName] = useState<string | null>(null)
+  const [waDirectUrl, setWaDirectUrl] = useState<string | null>(null)
+  const [devCode, setDevCode] = useState<string | null>(null)
 
   // AUTO-DETECT DYNAMIC LINK CODE FROM WHATSAPP (e.g., /login?code=123456)
   useEffect(() => {
-    const codeParam = searchParams?.get("code")
+    const codeParam = searchParams?.get("code") || searchParams?.get("otp")
     const phoneParam = searchParams?.get("phone")
     if (codeParam) {
       setLoginRole("pemulung")
@@ -218,7 +220,7 @@ export function LoginForm({
         password: lapakPassword,
       })
       setLapakSessionToken(result.sessionToken)
-      router.push("/dashboard/business")
+      window.location.href = targetRedirect && targetRedirect !== "/dashboard" ? targetRedirect : "/dashboard/business"
     } catch (value) {
       setLapakError(
         value instanceof Error ? value.message : "Username atau password lapak salah."
@@ -234,13 +236,26 @@ export function LoginForm({
     if (!pickerPhone.trim()) return
     setPickerLoading(true)
     setPickerError("")
-    setPickerDevCode(null)
+
+    // Normalize phone number to standard format (+62...)
+    const cleanPhone = (() => {
+      let cleaned = pickerPhone.replace(/\D/g, "")
+      if (cleaned.startsWith("0")) {
+        return "62" + cleaned.slice(1)
+      } else if (cleaned.startsWith("62")) {
+        return cleaned
+      }
+      return "62" + cleaned
+    })()
 
     try {
       const res = await requestPickerOtp({
         inviteToken: "LOGIN",
-        phone: pickerPhone.trim(),
+        phone: cleanPhone,
       })
+
+      setPickerName(res.pickerName)
+      setPickerStep("otp")
 
       // Dispatch WhatsApp message via API
       try {
@@ -254,15 +269,18 @@ export function LoginForm({
           }),
         })
         const waData = await waRes.json()
-        if (waData.code || waData.simulated) {
-          setPickerDevCode(res.code)
+        if (waData?.waDirectUrl) {
+          setWaDirectUrl(waData.waDirectUrl)
         }
-      } catch {
-        setPickerDevCode(res.code)
+        if (waData?.code) {
+          setDevCode(waData.code)
+        }
+        if (!waRes.ok && waData?.error) {
+          console.warn("[WhatsApp Dispatch Warning]:", waData.error)
+        }
+      } catch (waErr) {
+        console.warn("[WhatsApp Dispatch Network Error]:", waErr)
       }
-
-      setPickerName(res.pickerName)
-      setPickerStep("otp")
     } catch (err) {
       setPickerError(
         err instanceof Error ? err.message : "Gagal mengirim kode verifikasi ke WhatsApp."
@@ -278,15 +296,25 @@ export function LoginForm({
     setPickerLoading(true)
     setPickerError("")
 
+    const cleanPhone = (() => {
+      let cleaned = pickerPhone.replace(/\D/g, "")
+      if (cleaned.startsWith("0")) {
+        return "62" + cleaned.slice(1)
+      } else if (cleaned.startsWith("62")) {
+        return cleaned
+      }
+      return "62" + cleaned
+    })()
+
     try {
       const res = await verifyPickerOtp({
         inviteToken: "LOGIN",
-        phone: pickerPhone.trim(),
+        phone: cleanPhone,
         code: pickerOtp.trim(),
       })
 
       setPickerSessionToken(res.sessionToken)
-      router.push("/dashboard/individual")
+      window.location.href = targetRedirect && targetRedirect !== "/dashboard" ? targetRedirect : "/dashboard/individual"
     } catch (err) {
       setPickerError(err instanceof Error ? err.message : "Kode verifikasi salah.")
     } finally {
@@ -351,18 +379,16 @@ export function LoginForm({
                 setLoginRole("clerk")
                 setError("")
               }}
-              className={`flex flex-col items-center justify-center gap-1.5 rounded-xl py-3 px-2 text-center transition-all duration-200 ${
-                loginRole === "clerk"
+              className={`flex flex-col items-center justify-center gap-1.5 rounded-xl py-3 px-2 text-center transition-all duration-200 ${loginRole === "clerk"
                   ? "bg-white text-brand-900 shadow-sm font-bold border border-brand-200/80 ring-2 ring-brand-500/20"
                   : "text-brand-700 hover:text-brand-900 font-medium hover:bg-white/50"
-              }`}
+                }`}
             >
               <div
-                className={`grid size-8 place-items-center rounded-lg transition ${
-                  loginRole === "clerk"
+                className={`grid size-8 place-items-center rounded-lg transition ${loginRole === "clerk"
                     ? "bg-brand-500 text-white"
                     : "bg-brand-100 text-brand-700"
-                }`}
+                  }`}
               >
                 <Building2 className="size-4" />
               </div>
@@ -379,18 +405,16 @@ export function LoginForm({
                 setLoginRole("lapak")
                 setLapakError("")
               }}
-              className={`flex flex-col items-center justify-center gap-1.5 rounded-xl py-3 px-2 text-center transition-all duration-200 ${
-                loginRole === "lapak"
+              className={`flex flex-col items-center justify-center gap-1.5 rounded-xl py-3 px-2 text-center transition-all duration-200 ${loginRole === "lapak"
                   ? "bg-white text-brand-900 shadow-sm font-bold border border-brand-200/80 ring-2 ring-brand-500/20"
                   : "text-brand-700 hover:text-brand-900 font-medium hover:bg-white/50"
-              }`}
+                }`}
             >
               <div
-                className={`grid size-8 place-items-center rounded-lg transition ${
-                  loginRole === "lapak"
+                className={`grid size-8 place-items-center rounded-lg transition ${loginRole === "lapak"
                     ? "bg-brand-500 text-white"
                     : "bg-brand-100 text-brand-700"
-                }`}
+                  }`}
               >
                 <Store className="size-4" />
               </div>
@@ -407,18 +431,16 @@ export function LoginForm({
                 setLoginRole("pemulung")
                 setPickerError("")
               }}
-              className={`flex flex-col items-center justify-center gap-1.5 rounded-xl py-3 px-2 text-center transition-all duration-200 ${
-                loginRole === "pemulung"
+              className={`flex flex-col items-center justify-center gap-1.5 rounded-xl py-3 px-2 text-center transition-all duration-200 ${loginRole === "pemulung"
                   ? "bg-white text-emerald-900 shadow-sm font-bold border border-emerald-300 ring-2 ring-emerald-500/20"
                   : "text-brand-700 hover:text-brand-900 font-medium hover:bg-white/50"
-              }`}
+                }`}
             >
               <div
-                className={`grid size-8 place-items-center rounded-lg transition ${
-                  loginRole === "pemulung"
+                className={`grid size-8 place-items-center rounded-lg transition ${loginRole === "pemulung"
                     ? "bg-emerald-600 text-white"
                     : "bg-emerald-100 text-emerald-700"
-                }`}
+                  }`}
               >
                 <User className="size-4" />
               </div>
@@ -688,19 +710,46 @@ export function LoginForm({
                     placeholder="123456"
                     className="w-full rounded-2xl border-2 border-emerald-300 bg-white px-4 py-3 text-center text-2xl font-black tracking-widest text-emerald-950 focus:border-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-500/20"
                   />
+                  {(searchParams?.get("code") || searchParams?.get("otp")) ? (
+                    <div className="rounded-lg bg-emerald-100/90 border border-emerald-300 px-3 py-1.5 text-xs text-emerald-900 flex items-center gap-1.5 font-medium">
+                      <Sparkles className="size-3.5 text-emerald-700 shrink-0" />
+                      Kode otomatis terisi dari tautan WhatsApp
+                    </div>
+                  ) : null}
                 </div>
 
-                {pickerDevCode && (
-                  <div className="rounded-xl border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900">
-                    <p className="font-semibold">Kode OTP Verifikasi:</p>
-                    <p className="text-lg font-black tracking-wider text-amber-700">
-                      {pickerDevCode}
-                    </p>
-                    <p className="text-[10px] text-amber-700 mt-0.5">
-                      (Bisa juga gunakan kode master: <strong>123456</strong>)
-                    </p>
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3.5 text-xs text-emerald-950 flex flex-col gap-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <MessageSquare className="size-4 text-emerald-700 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="font-semibold text-emerald-900">
+                        Kode OTP Terkirim ke WhatsApp
+                      </p>
+                      <p className="opacity-90 leading-relaxed text-[11px] text-emerald-800">
+                        Silakan periksa pesan chat WhatsApp pada nomor <strong>{pickerPhone}</strong>. Masukkan 6 angka kode OTP untuk masuk ke akun Anda.
+                      </p>
+                    </div>
                   </div>
-                )}
+
+                  {devCode ? (
+                    <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-1.5 text-xs text-amber-900 flex items-center justify-between font-mono">
+                      <span>Kode Verifikasi (Dev):</span>
+                      <strong className="text-sm font-bold tracking-wider">{devCode}</strong>
+                    </div>
+                  ) : null}
+
+                  <div className="pt-1 border-t border-emerald-200/60 flex items-center justify-between">
+                    <span className="text-[11px] text-emerald-800">Pesan belum masuk?</span>
+                    <a
+                      href={waDirectUrl || "https://wa.me/628112002026?text=Halo%20WAVE,%20saya%20minta%20kode%20OTP"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 hover:text-emerald-900 underline"
+                    >
+                      Buka Chat Bot WhatsApp <ExternalLink className="size-3" />
+                    </a>
+                  </div>
+                </div>
 
                 {pickerError ? (
                   <p
