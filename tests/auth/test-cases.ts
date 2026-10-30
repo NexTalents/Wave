@@ -22,12 +22,21 @@ export const authUsers: AuthUser[] = [
   },
 ]
 
+export const adminUser = {
+  email: process.env.WAVE_TEST_ADMIN_EMAIL ?? "",
+  password: process.env.WAVE_TEST_ADMIN_PASSWORD ?? "",
+}
+
 export function hasTestUsers() {
   return authUsers.every((user) => user.email && user.password)
 }
 
 export function hasRegistrationPasswords() {
   return authUsers.every((user) => user.password.length >= 15)
+}
+
+export function hasAdminUser() {
+  return Boolean(adminUser.email && adminUser.password)
 }
 
 export function uniqueRegistrationEmail(
@@ -55,7 +64,7 @@ export async function expectDashboard(
 ) {
   await expect(
     page.getByRole("heading", {
-      name: accountType === "individual" ? /Halo,/ : /Overview operasional/,
+      name: accountType === "individual" ? /Halo,/i : /Overview operasional/i,
     })
   ).toBeVisible()
 }

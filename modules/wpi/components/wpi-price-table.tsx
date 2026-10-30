@@ -58,7 +58,9 @@ export function WpiPriceTable({
                   {formatRupiah(row.price)}
                 </td>
                 <td className="px-4 py-4 text-right whitespace-nowrap">
-                  {row.change > 0 ? (
+                  {row.changeAvailable === false ? (
+                    "—"
+                  ) : row.change > 0 ? (
                     <ArrowUpRight
                       aria-label="up"
                       className="inline"
@@ -116,7 +118,11 @@ export function WpiPriceTable({
                 ? copy.index
                 : copy.reference}{" "}
               ·{" "}
-              <span className="tabular-nums">{formatPercent(row.change)}</span>
+              <span className="tabular-nums">
+                {row.changeAvailable === false
+                  ? "—"
+                  : formatPercent(row.change)}
+              </span>
             </p>
             <dl className="grid grid-cols-2 gap-3">
               <div>

@@ -29,6 +29,11 @@ export function calculateTransaction(input: {
   }
 }
 
+export function formatTransactionCode(id: string, createdAt: number) {
+  const date = new Date(createdAt).toISOString().slice(0, 10).replace(/-/g, "")
+  return `TRX-${date}-${id.slice(-6).toUpperCase()}`
+}
+
 export function canConfirmPrice(finalPricePerKg: number, minimumPricePerKg: number) {
   return Number.isFinite(finalPricePerKg) && finalPricePerKg >= minimumPricePerKg
 }

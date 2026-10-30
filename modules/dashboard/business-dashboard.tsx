@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useQuery } from "convex/react"
+import { useMemo } from "react"
 import Link from "next/link"
 import {
   ArrowDownToLine,
@@ -13,20 +14,17 @@ import {
   ReceiptText,
   UsersRound,
 } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getStoredTransactions, MATERIAL_PRICES } from "@/lib/transactions/store"
-import type { TransactionRecord } from "@/lib/transactions/types"
+import { api } from "@/convex/_generated/api"
+import { useBusinessTransactions } from "./use-business-transactions"
 
 export function BusinessDashboard() {
-  const [transactions, setTransactions] = useState<TransactionRecord[]>([])
-
-  useEffect(() => {
-    setTransactions(getStoredTransactions())
-    const handleUpdate = () => setTransactions(getStoredTransactions())
-    window.addEventListener("wave_transactions_updated", handleUpdate)
-    return () => window.removeEventListener("wave_transactions_updated", handleUpdate)
-  }, [])
+  const { organization, transactions: loadedTransactions } = useBusinessTransactions()
+  const pickers = useQuery(
+    api.wastePickers.list,
+    organization ? { organizationId: organization._id } : "skip"
+  )
+  const transactions = useMemo(() => loadedTransactions ?? [], [loadedTransactions])
 
   const confirmedTx = useMemo(
     () => transactions.filter((tx) => tx.status === "confirmed"),
@@ -92,7 +90,7 @@ export function BusinessDashboard() {
         <MetricCard
           icon={UsersRound}
           label="Partner Aktif"
-          value="5 Mitra"
+          value={pickers === undefined ? "…" : `${pickers.length} Mitra`}
           note="Anggota pemulung terdaftar WAVE"
         />
         <MetricCard
@@ -123,6 +121,13 @@ export function BusinessDashboard() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-border">
+              {recentTransactions.length === 0 ? (
+                <p className="px-5 py-6 text-sm text-muted-foreground">
+                  {loadedTransactions === undefined
+                    ? "Memuat transaksi…"
+                    : "Belum ada setoran. Catat setoran pertama dari menu Setoran Masuk."}
+                </p>
+              ) : null}
               {recentTransactions.map((tx) => (
                 <div
                   className="grid gap-3 px-5 py-3.5 sm:grid-cols-[1fr_auto] sm:items-center hover:bg-muted/30 transition"

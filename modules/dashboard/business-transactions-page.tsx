@@ -1,19 +1,15 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import {
   AlertCircle,
-  AlertTriangle,
   ArrowDownToLine,
   Ban,
   CheckCircle2,
-  ChevronRight,
   Clock,
-  Download,
   ExternalLink,
   Eye,
-  Filter,
   Package,
   Plus,
   Receipt,
@@ -21,23 +17,25 @@ import {
   Send,
   ShieldAlert,
   Sparkles,
-  User,
   Wallet,
   X,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import {
-  getStoredTransactions,
-  voidStoredTransaction,
-} from "@/lib/transactions/store"
-import type { TransactionRecord, WasteGrade } from "@/lib/transactions/types"
+import { useMutation } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import type { Id } from "@/convex/_generated/dataModel"
+import { getAuthError } from "@/modules/auth/errors"
+import type { TransactionRecord } from "@/lib/transactions/types"
+import { useBusinessTransactions } from "./use-business-transactions"
 
 export function BusinessTransactionsPage() {
-  const [transactions, setTransactions] = useState<TransactionRecord[]>([])
+  const { organization, transactions: loadedTransactions } = useBusinessTransactions()
+  const voidTransaction = useMutation(api.transactions.voidTransaction)
+  const transactions = useMemo(() => loadedTransactions ?? [], [loadedTransactions])
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedMaterial, setSelectedMaterial] = useState("all")
   const [selectedGrade, setSelectedGrade] = useState("all")
@@ -51,18 +49,7 @@ export function BusinessTransactionsPage() {
   const [voidingTx, setVoidingTx] = useState<TransactionRecord | null>(null)
   const [voidReason, setVoidReason] = useState("")
   const [isVoiding, setIsVoiding] = useState(false)
-
-  // Load Transactions
-  const reloadData = () => {
-    setTransactions(getStoredTransactions())
-  }
-
-  useEffect(() => {
-    reloadData()
-    const handleUpdate = () => reloadData()
-    window.addEventListener("wave_transactions_updated", handleUpdate)
-    return () => window.removeEventListener("wave_transactions_updated", handleUpdate)
-  }, [])
+  const [voidError, setVoidError] = useState("")
 
   // Filtered List
   const filteredTransactions = useMemo(() => {
@@ -121,14 +108,20 @@ export function BusinessTransactionsPage() {
   }, [transactions])
 
   // Execute Void
-  const handleConfirmVoid = () => {
-    if (!voidingTx || !voidReason.trim()) return
+  const handleConfirmVoid = async () => {
+    if (!organization || !voidingTx || !voidReason.trim()) return
     setIsVoiding(true)
+    setVoidError("")
     try {
-      voidStoredTransaction(voidingTx.id, voidReason.trim())
+      await voidTransaction({
+        organizationId: organization._id,
+        transactionId: voidingTx.recordId as Id<"transactions">,
+        reason: voidReason.trim(),
+      })
       setVoidingTx(null)
       setVoidReason("")
-      reloadData()
+    } catch (error) {
+      setVoidError(getAuthError(error))
     } finally {
       setIsVoiding(false)
     }
@@ -645,7 +638,7 @@ export function BusinessTransactionsPage() {
                       </Badge>
                     </div>
                     <p className="text-muted-foreground mt-0.5">
-                      Terkirim ke <strong>{activeTx.whatsappDelivery.recipient}</strong> pada {activeTx.whatsappDelivery.sentAt} (ID: {activeTx.whatsappDelivery.messageId || "1379578261903928"})
+                      Terkirim ke <strong>{activeTx.whatsappDelivery.recipient}</strong> pada {activeTx.whatsappDelivery.sentAt} (ID: {activeTx.whatsappDelivery.messageId || "-"})
                     </p>
                   </div>
                 </div>
@@ -731,6 +724,11 @@ export function BusinessTransactionsPage() {
                   placeholder="Contoh: Kesalahan timbangan manual, sampah ditarik kembali oleh mitra pemulung..."
                   className="w-full rounded-xl border border-input bg-background p-3 text-xs focus:border-destructive focus:outline-none focus:ring-2 focus:ring-destructive/20"
                 />
+                {voidError ? (
+                  <p aria-live="polite" className="mt-2 text-xs text-destructive" role="alert">
+                    {voidError}
+                  </p>
+                ) : null}
               </div>
 
               <div className="flex gap-2 justify-end pt-2">
@@ -745,7 +743,7 @@ export function BusinessTransactionsPage() {
                   variant="destructive"
                   size="sm"
                   disabled={!voidReason.trim() || isVoiding}
-                  onClick={handleConfirmVoid}
+                  onClick={() => void handleConfirmVoid()}
                 >
                   {isVoiding ? "Membatalkan..." : "Konfirmasi Void Transaksi"}
                 </Button>

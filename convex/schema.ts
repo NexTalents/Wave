@@ -31,8 +31,11 @@ export default defineSchema({
     accountType: v.optional(
       v.union(v.literal("individual"), v.literal("business"))
     ),
+    platformRole: v.optional(v.literal("admin")),
     status: v.union(v.literal("active"), v.literal("suspended")),
-  }).index("by_token_identifier", ["tokenIdentifier"]),
+  })
+    .index("by_token_identifier", ["tokenIdentifier"])
+    .index("by_email", ["email"]),
 
   organizations: defineTable({
     name: v.string(),
@@ -71,6 +74,162 @@ export default defineSchema({
   })
     .index("by_actor", ["actorUserId"])
     .index("by_organization", ["organizationId"]),
+
+  wpiMaterials: defineTable({
+    code: v.string(),
+    slug: v.string(),
+    nameId: v.string(),
+    nameEn: v.string(),
+    categoryId: v.string(),
+    categoryEn: v.string(),
+    descriptionId: v.string(),
+    descriptionEn: v.string(),
+    isActive: v.boolean(),
+    sortOrder: v.number(),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_active_and_sort", ["isActive", "sortOrder"]),
+
+  wpiMaterialGrades: defineTable({
+    materialId: v.id("wpiMaterials"),
+    code: v.string(),
+    nameId: v.string(),
+    nameEn: v.string(),
+    descriptionId: v.string(),
+    descriptionEn: v.string(),
+    isActive: v.boolean(),
+  })
+    .index("by_material", ["materialId"])
+    .index("by_material_and_code", ["materialId", "code"]),
+
+  wpiRegions: defineTable({
+    code: v.string(),
+    nameId: v.string(),
+    nameEn: v.string(),
+    isActive: v.boolean(),
+  })
+    .index("by_code", ["code"])
+    .index("by_active", ["isActive"]),
+
+  wpiPriceSources: defineTable({
+    code: v.string(),
+    name: v.string(),
+    sourceType: v.union(
+      v.literal("TRANSACTION"),
+      v.literal("OFFER"),
+      v.literal("REFERENCE"),
+      v.literal("EXTERNAL_DATA"),
+    ),
+    organizationId: v.optional(v.id("organizations")),
+    verificationStatus: v.union(v.literal("pending"), v.literal("verified"), v.literal("suspended")),
+    reliabilityNotes: v.optional(v.string()),
+  })
+    .index("by_code", ["code"])
+    .index("by_type_and_status", ["sourceType", "verificationStatus"])
+    .index("by_organization", ["organizationId"]),
+
+  wpiObservations: defineTable({
+    fingerprint: v.string(),
+    sourceId: v.id("wpiPriceSources"),
+    sourceType: v.union(
+      v.literal("TRANSACTION"),
+      v.literal("OFFER"),
+      v.literal("REFERENCE"),
+      v.literal("EXTERNAL_DATA"),
+    ),
+    organizationId: v.optional(v.id("organizations")),
+    materialId: v.id("wpiMaterials"),
+    gradeId: v.id("wpiMaterialGrades"),
+    regionId: v.id("wpiRegions"),
+    observedAt: v.number(),
+    submittedAt: v.number(),
+    pricePerKgIdr: v.number(),
+    quantityGrams: v.optional(v.number()),
+    currency: v.literal("IDR"),
+    status: v.union(
+      v.literal("submitted"),
+      v.literal("validated"),
+      v.literal("rejected"),
+      v.literal("quarantined"),
+      v.literal("eligible"),
+      v.literal("used"),
+    ),
+    validationStatus: v.union(v.literal("pending"), v.literal("passed"), v.literal("failed")),
+    evidenceReference: v.optional(v.string()),
+    createdBy: v.id("users"),
+    reviewedBy: v.optional(v.id("users")),
+    reviewedAt: v.optional(v.number()),
+    rejectionReason: v.optional(v.string()),
+    suspiciousReason: v.optional(v.string()),
+  })
+    .index("by_fingerprint", ["fingerprint"])
+    .index("by_status_and_observed", ["status", "observedAt"])
+    .index("by_material_grade_region_and_observed", ["materialId", "gradeId", "regionId", "observedAt"])
+    .index("by_organization_and_observed", ["organizationId", "observedAt"])
+    .index("by_source", ["sourceId"]),
+
+  wpiCalculationPolicies: defineTable({
+    version: v.string(),
+    windowDays: v.number(),
+    minimumObservations: v.number(),
+    minimumQuantityGrams: v.number(),
+    maxPriceDeviationBps: v.number(),
+    isActive: v.boolean(),
+    createdBy: v.id("users"),
+  }).index("by_active", ["isActive"]),
+
+  wpiCalculationRuns: defineTable({
+    policyId: v.id("wpiCalculationPolicies"),
+    policyVersion: v.string(),
+    windowStart: v.number(),
+    windowEnd: v.number(),
+    status: v.union(v.literal("candidate"), v.literal("published"), v.literal("failed")),
+    inputCount: v.number(),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    errorMessage: v.optional(v.string()),
+  })
+    .index("by_status_and_created", ["status", "createdAt"])
+    .index("by_policy_and_window", ["policyId", "windowStart", "windowEnd"]),
+
+  wpiCalculationInputs: defineTable({
+    runId: v.id("wpiCalculationRuns"),
+    observationId: v.id("wpiObservations"),
+  })
+    .index("by_run", ["runId"])
+    .index("by_observation", ["observationId"]),
+
+  wpiCalculationExclusions: defineTable({
+    runId: v.id("wpiCalculationRuns"),
+    observationId: v.id("wpiObservations"),
+    reason: v.string(),
+  })
+    .index("by_run", ["runId"])
+    .index("by_observation", ["observationId"]),
+
+  wpiSnapshots: defineTable({
+    runId: v.id("wpiCalculationRuns"),
+    materialId: v.id("wpiMaterials"),
+    gradeId: v.id("wpiMaterialGrades"),
+    regionId: v.id("wpiRegions"),
+    status: v.union(v.literal("candidate"), v.literal("published"), v.literal("superseded")),
+    dataQuality: v.union(v.literal("verified"), v.literal("limited_coverage"), v.literal("reference_only"), v.literal("stale"), v.literal("insufficient_data")),
+    verifiedTransactionPricePerKgIdr: v.optional(v.number()),
+    referencePricePerKgIdr: v.optional(v.number()),
+    percentageChangeBps: v.optional(v.number()),
+    normalizedIndexPoints: v.optional(v.number()),
+    eligibleObservationCount: v.number(),
+    independentSourceCount: v.number(),
+    totalQuantityGrams: v.number(),
+    windowStart: v.number(),
+    windowEnd: v.number(),
+    calculatedAt: v.number(),
+    publishedAt: v.optional(v.number()),
+    methodologyVersion: v.string(),
+  })
+    .index("by_status_and_published", ["status", "publishedAt"])
+    .index("by_material_grade_region_and_status", ["materialId", "gradeId", "regionId", "status"])
+    .index("by_run", ["runId"]),
 
   wastePickers: defineTable({
     organizationId: v.id("organizations"),
@@ -133,6 +292,10 @@ export default defineSchema({
     condition: v.string(),
     note: v.string(),
     imageName: v.optional(v.string()),
+    rawLabel: v.optional(v.string()),
+    confidences: v.optional(
+      v.array(v.object({ label: v.string(), confidence: v.number() }))
+    ),
     wpiPricePerKg: v.number(),
     minimumPricePerKg: v.number(),
     finalPricePerKg: v.number(),
@@ -181,5 +344,7 @@ export default defineSchema({
     messageId: v.optional(v.string()),
     sentAt: v.optional(v.number()),
     errorMessage: v.optional(v.string()),
-  }).index("by_transaction", ["transactionId"]),
+  })
+    .index("by_transaction", ["transactionId"])
+    .index("by_message_id", ["messageId"]),
 })

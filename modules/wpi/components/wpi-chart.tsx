@@ -53,30 +53,43 @@ export function WpiChart({
   const [showReference, setShowReference] = useState(true)
   const last = series.at(-1)
   const first = series[0]
+  const hasReference = series.some(
+    (item) => item.referenceDeposit !== undefined
+  )
+  const hasIndex = series.some((item) => item.transactionIndex !== undefined)
   const values = series
     .flatMap((item) => [
       item.transactionIndex,
-      ...(showReference && item.referenceDeposit !== undefined
+      ...(showReference && hasReference && item.referenceDeposit !== undefined
         ? [item.referenceDeposit]
         : []),
     ])
     .filter((value): value is number => value !== undefined)
   const minimum = values.length ? Math.min(...values) : 0
   const maximum = values.length ? Math.max(...values) : 0
+  const firstValue = hasIndex
+    ? first?.transactionIndex
+    : first?.referenceDeposit
+  const lastValue = hasIndex ? last?.transactionIndex : last?.referenceDeposit
   const change =
-    first?.transactionIndex && last?.transactionIndex
-      ? ((last.transactionIndex - first.transactionIndex) /
-          first.transactionIndex) *
-        100
-      : 0
+    firstValue && lastValue ? ((lastValue - firstValue) / firstValue) * 100 : 0
   const summary = useMemo(
     () =>
       last
-        ? `${copy.index}: ${formatRupiah(last.transactionIndex ?? 0)}; ${copy.change}: ${formatPercent(change)}.`
+        ? `${hasIndex ? copy.index : copy.reference}: ${formatRupiah(lastValue ?? 0)}; ${copy.change}: ${formatPercent(change)}.`
         : language === "ID"
           ? "Belum cukup data untuk menampilkan grafik."
           : "There is not enough data to display a chart.",
-    [change, copy.change, copy.index, language, last]
+    [
+      change,
+      copy.change,
+      copy.index,
+      copy.reference,
+      hasIndex,
+      language,
+      last,
+      lastValue,
+    ]
   )
 
   if (series.length < 2) {
@@ -109,30 +122,37 @@ export function WpiChart({
           className="flex shrink-0 flex-wrap gap-2"
           role="group"
         >
-          <button
-            aria-pressed="true"
-            className="inline-flex min-h-9 items-center gap-2 rounded-full bg-brand-500 px-3 text-xs font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-            type="button"
-          >
-            <span aria-hidden="true" className="size-2 rounded-full bg-white" />
-            {copy.index}
-          </button>
-          <button
-            aria-pressed={showReference}
-            className={
-              showReference
-                ? "inline-flex min-h-9 items-center gap-2 rounded-full border border-gold bg-disclosure px-3 text-xs font-semibold text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-                : "inline-flex min-h-9 items-center gap-2 rounded-full border border-brand-100 bg-white px-3 text-xs font-semibold text-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-            }
-            onClick={() => setShowReference((value) => !value)}
-            type="button"
-          >
-            <span
-              aria-hidden="true"
-              className="size-2 rounded-full bg-chart-reference"
-            />
-            {copy.reference}
-          </button>
+          {hasIndex ? (
+            <button
+              aria-pressed="true"
+              className="inline-flex min-h-9 items-center gap-2 rounded-full bg-brand-500 px-3 text-xs font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+              type="button"
+            >
+              <span
+                aria-hidden="true"
+                className="size-2 rounded-full bg-white"
+              />
+              {copy.index}
+            </button>
+          ) : null}
+          {hasReference ? (
+            <button
+              aria-pressed={showReference}
+              className={
+                showReference
+                  ? "inline-flex min-h-9 items-center gap-2 rounded-full border border-gold bg-disclosure px-3 text-xs font-semibold text-brand-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                  : "inline-flex min-h-9 items-center gap-2 rounded-full border border-brand-100 bg-white px-3 text-xs font-semibold text-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+              }
+              onClick={() => setShowReference((value) => !value)}
+              type="button"
+            >
+              <span
+                aria-hidden="true"
+                className="size-2 rounded-full bg-chart-reference"
+              />
+              {copy.reference}
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -232,7 +252,7 @@ export function WpiChart({
             {language === "ID" ? "Terakhir" : "Latest"}
           </span>{" "}
           <strong className="ml-2 text-brand-800 tabular-nums">
-            {formatRupiah(last?.transactionIndex ?? 0)}
+            {formatRupiah(lastValue ?? 0)}
           </strong>
         </p>
         <p>

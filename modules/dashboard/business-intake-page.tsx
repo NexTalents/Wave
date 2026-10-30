@@ -1,20 +1,16 @@
 "use client"
 
 import { useMemo, useState, useEffect, useRef } from "react"
-import { useQuery } from "convex/react"
+import { useMutation, useQuery } from "convex/react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import {
   AlertCircle,
   AlertTriangle,
-  ArrowDownToLine,
-  ArrowRight,
-  Building2,
   Camera,
   Check,
   CheckCircle2,
   ChevronsUpDown,
-  Clock,
   ExternalLink,
   History,
   Info,
@@ -29,7 +25,6 @@ import {
   Search,
   Send,
   ShieldCheck,
-  Sparkles,
   Store,
   User,
   UserRound,
@@ -47,7 +42,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { CameraCaptureDialog } from "@/components/camera-capture-dialog"
 import { BusinessIntakeSkeleton } from "./business-intake-skeleton"
 import { api } from "@/convex/_generated/api"
-import { getLapakSessionToken } from "@/modules/auth/lapak-session"
+import type { Id } from "@/convex/_generated/dataModel"
 import {
   calculateTransaction,
   canConfirmPrice,
@@ -55,15 +50,14 @@ import {
 } from "@/lib/transactions/rules"
 import {
   getPriceInfoForMaterial,
-  saveStoredTransaction,
-  DEFAULT_PICKERS,
 } from "@/lib/transactions/store"
 import type {
-  TransactionRecord,
   WasteConfidence,
   WasteGrade,
   WastePicker,
 } from "@/lib/transactions/types"
+import { getAuthError } from "@/modules/auth/errors"
+import { toTransactionRecord } from "./use-business-transactions"
 
 type PickerListItem = {
   id: string
@@ -71,6 +65,7 @@ type PickerListItem = {
   phone?: string
   memberCode: string
   lapakName?: string
+  lapakId?: Id<"organizations">
 }
 
 type SupplierMode = "waste_picker" | "lapak"
@@ -84,34 +79,11 @@ export function BusinessIntakePage() {
   const organizations = useQuery(api.auth.organizations.listMine)
   const organizationId = organizations?.[0]?.organization._id
 
-  // Lapak Session Token Check (for Lapak logins)
-  const [lapakToken, setLapakToken] = useState<string | null>(null)
-  useEffect(() => {
-    setLapakToken(getLapakSessionToken())
-  }, [])
-
-  const lapakSession = useQuery(
-    api.lapakAuth.currentLapakSession,
-    lapakToken ? { sessionToken: lapakToken } : "skip"
-  )
-  const lapakMembers = useQuery(
-    api.lapakAuth.listMembers,
-    lapakToken ? { sessionToken: lapakToken } : "skip"
-  )
-
-  const isLapak = Boolean(lapakSession) || organizations?.[0]?.organization?.type === "small_lapak"
-
   // Supplier & Picker Selection State
   const [supplierMode, setSupplierMode] = useState<SupplierMode>(
     initialSupplierMode === "lapak" ? "lapak" : "waste_picker"
   )
   const [pickerSearch, setPickerSearch] = useState("")
-
-  useEffect(() => {
-    if (isLapak && supplierMode !== "waste_picker") {
-      setSupplierMode("waste_picker")
-    }
-  }, [isLapak, supplierMode])
 
   const allPickers = useQuery(
     api.wastePickers.list,
@@ -130,16 +102,6 @@ export function BusinessIntakePage() {
 
   // All available items based on supplierMode (unfiltered by search query)
   const allAvailablePickers = useMemo(() => {
-    if (isLapak && lapakMembers && lapakMembers.length > 0) {
-      return lapakMembers.map((member) => ({
-        id: member.id,
-        name: member.name,
-        phone: member.phone,
-        memberCode: member.memberCode,
-        lapakName: lapakSession?.organizationName || "Lapak Anda",
-      }))
-    }
-
     let source: PickerListItem[] = []
 
     if (supplierMode === "lapak") {
@@ -150,20 +112,7 @@ export function BusinessIntakePage() {
         memberCode: lapak.lapakCode,
       }))
       if (source.length === 0) {
-        source = [
-          {
-            id: "lapak-demo-1",
-            name: "Lapak Berkah Mandiri",
-            phone: "0812-8877-6655",
-            memberCode: "LAPAK-B7281A",
-          },
-          {
-            id: "lapak-demo-2",
-            name: "Lapak Sahabat Rongsok",
-            phone: "0877-3344-1122",
-            memberCode: "LAPAK-91C4DF",
-          },
-        ]
+        source = []
       }
     } else {
       const convexList = [
@@ -174,13 +123,14 @@ export function BusinessIntakePage() {
           phone: member.phone,
           memberCode: member.memberCode,
           lapakName: member.lapakName,
+          lapakId: member.lapakId,
         })),
       ]
-      source = convexList.length > 0 ? convexList : DEFAULT_PICKERS
+      source = convexList
     }
 
     return source
-  }, [allPickers, isLapak, lapakMembers, lapakSession?.organizationName, linkedLapakMembers, linkedPartners, supplierMode])
+  }, [allPickers, linkedLapakMembers, linkedPartners, supplierMode])
 
   // Filtered list based on real-time search query
   const filteredPickers = useMemo(() => {
@@ -206,15 +156,6 @@ export function BusinessIntakePage() {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  // Auto-select initial picker if provided
-  useEffect(() => {
-    if (initialPickerId && allAvailablePickers.some((p) => p.id === initialPickerId)) {
-      setSelectedPickerId(initialPickerId)
-    } else if (!selectedPickerId && allAvailablePickers.length > 0) {
-      setSelectedPickerId(allAvailablePickers[0].id)
-    }
-  }, [initialPickerId, allAvailablePickers, selectedPickerId])
-
   const selectedPicker = useMemo<WastePicker | null>(() => {
     const picker = allAvailablePickers.find((item) => item.id === selectedPickerId) ?? allAvailablePickers[0]
     return picker
@@ -226,6 +167,9 @@ export function BusinessIntakePage() {
         }
       : null
   }, [allAvailablePickers, selectedPickerId])
+  const selectedPickerSource =
+    allAvailablePickers.find((item) => item.id === selectedPickerId) ??
+    allAvailablePickers[0]
 
   // Weight & Scale State
   const [weightKg, setWeightKg] = useState("15.5")
@@ -252,7 +196,17 @@ export function BusinessIntakePage() {
   const [finalPrice, setFinalPrice] = useState<string>("2300")
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("cash")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [completedTx, setCompletedTx] = useState<TransactionRecord | null>(null)
+  const [submitError, setSubmitError] = useState("")
+  const [completedTxId, setCompletedTxId] = useState<Id<"transactions"> | null>(null)
+
+  const createTransaction = useMutation(api.transactions.create)
+  const completedView = useQuery(
+    api.transactions.get,
+    organizationId && completedTxId
+      ? { organizationId, transactionId: completedTxId }
+      : "skip"
+  )
+  const completedTx = completedView ? toTransactionRecord(completedView) : null
 
   // Print & Receipt Modal State
   const [isReceiptPreviewOpen, setIsReceiptPreviewOpen] = useState(false)
@@ -283,7 +237,7 @@ export function BusinessIntakePage() {
     setCapturedPhotoUrl(previewUrl)
     setAiResult(null)
     setAiError(null)
-    setCompletedTx(null)
+    setCompletedTxId(null)
     setIsAnalyzing(true)
 
     try {
@@ -349,64 +303,22 @@ export function BusinessIntakePage() {
 
   // Handle Submit Transaction
   const handleSubmitTransaction = async () => {
-    if (!aiResult || !isPriceValid || numericWeight <= 0 || !selectedPicker) return
+    if (!organizationId || !aiResult || !isPriceValid || numericWeight <= 0 || !selectedPicker) return
 
     setIsSubmitting(true)
+    setSubmitError("")
     try {
-      const now = Date.now()
-      const txId = `TRX-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${String(
-        Math.floor(Math.random() * 900) + 100
-      )}`
-
-      // Send WhatsApp Receipt
-      let waStatus: "sent" | "failed" | "queued" | "simulated" | "delivered" = "sent"
-      let waMessageId: string | undefined
-      let waDirectUrl: string | undefined
-      let waFormattedMessage: string | undefined
-      let waProvider: "meta_cloud_api" | "simulation" = "simulation"
-
-      try {
-        const waResponse = await fetch("/api/whatsapp/send-receipt", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            transactionId: txId,
-            recipient: selectedPicker.phone,
-            memberName: selectedPicker.name,
-            memberCode: selectedPicker.memberCode,
-            material: aiResult.material,
-            weightKg: numericWeight,
-            grade: finalGrade,
-            wpiPricePerKg: currentWpiPrice,
-            finalPricePerKg: numericPrice,
-            grossValue: calculation.grossValue,
-            paymentMode,
-            cashPaid: calculation.cashPaid,
-            walletCredit: calculation.walletCredit,
-            heldValue: calculation.heldValue,
-          }),
-        })
-
-        if (waResponse.ok) {
-          const waData = await waResponse.json()
-          waStatus = waData.status || "sent"
-          waMessageId = waData.messageId
-          waDirectUrl = waData.waDirectUrl
-          waFormattedMessage = waData.formattedMessage
-          waProvider = waData.provider || "simulation"
-        }
-      } catch (waErr) {
-        console.warn("[Intake] WhatsApp send receipt error:", waErr)
-      }
-
-      const record: TransactionRecord = {
-        id: txId,
-        createdAt: now,
-        dateFormatted: new Intl.DateTimeFormat("id-ID", {
-          dateStyle: "medium",
-          timeStyle: "short",
-        }).format(now),
-        picker: selectedPicker,
+      const transactionId = await createTransaction({
+        organizationId,
+        wastePickerId:
+          supplierMode === "waste_picker"
+            ? (selectedPicker.id as Id<"wastePickers">)
+            : undefined,
+        supplierOrganizationId:
+          supplierMode === "lapak"
+            ? (selectedPicker.id as Id<"organizations">)
+            : selectedPickerSource?.lapakId,
+        supplierType: supplierMode,
         material: aiResult.material,
         rawLabel: aiResult.rawLabel,
         weightKg: numericWeight,
@@ -415,31 +327,15 @@ export function BusinessIntakePage() {
         condition: aiResult.condition,
         note: aiResult.note,
         confidences: aiResult.confidences,
-        imagePreviewUrl: capturedPhotoUrl || undefined,
+        imageName: capturedFile?.name,
         wpiPricePerKg: currentWpiPrice,
         minimumPricePerKg: minimumPrice,
         finalPricePerKg: numericPrice,
-        grossValue: calculation.grossValue,
         paymentMode,
-        cashPaid: calculation.cashPaid,
-        walletCredit: calculation.walletCredit,
-        heldValue: calculation.heldValue,
-        status: "confirmed",
-        whatsappDelivery: {
-          status: waStatus,
-          recipient: selectedPicker.phone,
-          sentAt: new Intl.DateTimeFormat("id-ID", { timeStyle: "short" }).format(now),
-          messageId: waMessageId,
-          waDirectUrl,
-          formattedMessage: waFormattedMessage,
-          provider: waProvider,
-        },
-      }
-
-      saveStoredTransaction(record)
-      setCompletedTx(record)
+      })
+      setCompletedTxId(transactionId)
     } catch (err: unknown) {
-      console.error("Failed to submit transaction:", err)
+      setSubmitError(getAuthError(err))
     } finally {
       setIsSubmitting(false)
     }
@@ -456,13 +352,14 @@ export function BusinessIntakePage() {
     setCapturedFile(null)
     setAiResult(null)
     setAiError(null)
-    setCompletedTx(null)
+    setCompletedTxId(null)
+    setSubmitError("")
     setWeightKg("10.0")
     setFinalGrade("B")
     setFinalPrice("2300")
   }
 
-  if (organizations === undefined && !lapakToken && lapakSession === undefined) {
+  if (organizations === undefined) {
     return <BusinessIntakeSkeleton />
   }
 
@@ -601,46 +498,41 @@ export function BusinessIntakePage() {
                   </span>
                   Pemasok Material
                 </CardTitle>
-                {isLapak ? (
-                  <Badge variant="outline" className="border-primary/20 bg-primary/10 text-primary text-xs font-semibold">
-                    Mitra Pemulung
-                  </Badge>
-                ) : (
-                  <div className="flex items-center rounded-lg bg-muted p-0.5 text-xs">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSupplierMode("waste_picker")
-                        setSelectedPickerId(null)
-                        setPickerSearch("")
-                        setIsPickerDropdownOpen(false)
-                      }}
-                      className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
-                        supplierMode === "waste_picker"
-                          ? "bg-card text-foreground shadow-xs"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Pemulung
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSupplierMode("lapak")
-                        setSelectedPickerId(null)
-                        setPickerSearch("")
-                        setIsPickerDropdownOpen(false)
-                      }}
-                      className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
-                        supplierMode === "lapak"
-                          ? "bg-card text-foreground shadow-xs"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Lapak Mitra
-                    </button>
-                  </div>
-                )}
+                <div className="flex items-center rounded-lg bg-muted p-0.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSupplierMode("waste_picker")
+                      setSelectedPickerId(null)
+                      setPickerSearch("")
+                      setIsPickerDropdownOpen(false)
+                    }}
+                    className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
+                      supplierMode === "waste_picker"
+                        ? "bg-card text-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Pemulung
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSupplierMode("lapak")
+                      setPaymentMode("cash")
+                      setSelectedPickerId(null)
+                      setPickerSearch("")
+                      setIsPickerDropdownOpen(false)
+                    }}
+                    className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
+                      supplierMode === "lapak"
+                        ? "bg-card text-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Lapak Mitra
+                  </button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4 p-5">
@@ -1216,15 +1108,18 @@ export function BusinessIntakePage() {
                     </button>
                     <button
                       type="button"
+                      disabled={supplierMode === "lapak"}
                       onClick={() => setPaymentMode("stock")}
                       className={`rounded-xl border p-2.5 text-left transition ${
                         paymentMode === "stock"
                           ? "border-primary bg-primary/10 shadow-xs"
                           : "border-border bg-card hover:bg-muted"
-                      }`}
+                      } ${supplierMode === "lapak" ? "cursor-not-allowed opacity-50" : ""}`}
                     >
                       <span className="block font-bold text-xs text-foreground">Titip 70%</span>
-                      <span className="text-[10px] text-muted-foreground">30% lot 30 hari</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {supplierMode === "lapak" ? "Belum tersedia untuk lapak" : "30% lot 30 hari"}
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -1310,6 +1205,12 @@ export function BusinessIntakePage() {
                   </>
                 )}
               </Button>
+
+              {submitError ? (
+                <p aria-live="polite" className="rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive" role="alert">
+                  {submitError}
+                </p>
+              ) : null}
 
               {!aiResult && (
                 <p className="text-center text-xs text-muted-foreground">
