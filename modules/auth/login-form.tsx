@@ -7,17 +7,21 @@ import {
   ArrowLeft,
   Building2,
   Check,
+  Eye,
+  EyeOff,
   LoaderCircle,
   LockKeyhole,
   MessageSquare,
   Phone,
   ShieldCheck,
+  Sparkles,
+  Star,
   Store,
   User,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { api } from "@/convex/_generated/api"
 import {
   AuthInput,
@@ -30,6 +34,93 @@ import { getAuthError } from "./errors"
 import { setLapakSessionToken } from "./lapak-session"
 import { setPickerSessionToken } from "./picker-session"
 import { safeRedirect } from "./redirect"
+
+// Dynamic Aside Content for Login
+function LoginSidebarAside({ role }: { role: "clerk" | "lapak" | "pemulung" }) {
+  return (
+    <div className="relative z-10 flex h-full flex-col justify-between gap-8 text-white">
+      {/* Top Branding & Context */}
+      <div className="space-y-4">
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide text-emerald-300 backdrop-blur-xs">
+          <Sparkles className="size-3.5 text-amber-300" />
+          <span>WAVE Enterprise Ecosystem</span>
+        </div>
+
+        <h2 className="text-2xl font-bold leading-tight sm:text-3xl text-white">
+          {role === "clerk" && "Portal Agregator & Industri Daur Ulang."}
+          {role === "lapak" && "Ruang Kerja Lapak Mitra Pengepul."}
+          {role === "pemulung" && "Akses Saldo & Setoran Mitra Pemulung."}
+        </h2>
+
+        <p className="text-sm text-white/80 leading-relaxed">
+          {role === "clerk" &&
+            "Kelola penerimaan timbangan digital, verifikasi mutu material otomatis dengan model AI Gradio, dan kirimkan struk thermal & WhatsApp instan."}
+          {role === "lapak" &&
+            "Pantau pergerakan harga pasar WPI harian, kelola timbangan anggota pemulung binaan, dan salurkan pasokan langsung ke agregator resmi."}
+          {role === "pemulung" &&
+            "Masuk instan tanpa hafalan password. Cukup gunakan nomor WhatsApp Anda untuk memeriksa struk setoran jujur, riwayat timbangan, dan saldo tabungan."}
+        </p>
+
+        {/* Dynamic Key Benefits */}
+        <div className="space-y-3 pt-3 border-t border-white/15">
+          <div className="flex items-start gap-2.5 text-xs text-white/90">
+            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-emerald-500/20 text-emerald-300 mt-0.5">
+              <Check className="size-3 stroke-[3]" />
+            </span>
+            <span>
+              {role === "clerk" && "Klasifikasi grade jenis plastik (PET, HDPE, PP) via AI"}
+              {role === "lapak" && "Akses indeks harga pasar WPI nasional terupdate harian"}
+              {role === "pemulung" && "Login 1-klik via tautan dinamis WhatsApp OTP tanpa password"}
+            </span>
+          </div>
+          <div className="flex items-start gap-2.5 text-xs text-white/90">
+            <span className="grid size-5 shrink-0 place-items-center rounded-full bg-emerald-500/20 text-emerald-300 mt-0.5">
+              <Check className="size-3 stroke-[3]" />
+            </span>
+            <span>
+              {role === "clerk" && "Audit jejak tonase, laporan kepatuhan ESG, dan cetak thermal 78mm"}
+              {role === "lapak" && "Pencatatan nota kasir transparan & verifikasi kode lapak instan"}
+              {role === "pemulung" && "Riwayat timbangan akurat langsung tersimpan di akun Anda"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Testimonial & Badges */}
+      <div className="space-y-4 pt-4 border-t border-white/15">
+        <div className="rounded-2xl bg-white/5 p-4 border border-white/10 backdrop-blur-xs">
+          <div className="flex items-center gap-1 text-amber-300 mb-1.5">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="size-3.5 fill-amber-300 text-amber-300" />
+            ))}
+          </div>
+          <p className="text-xs italic text-white/85">
+            {role === "pemulung"
+              ? "“Mudah sekali masuknya, tinggal klik link di WA langsung terbuka rincian timbangan dan uang setoran saya.”"
+              : "“Sistem timbangan dan notifikasi WA otomatis WAVE membuat operasional kami 3x lebih cepat dan dipercaya mitra.”"}
+          </p>
+          <div className="mt-2.5 flex items-center justify-between text-[11px] text-white/70">
+            <span className="font-semibold text-white">
+              {role === "pemulung" ? "Pak Sukirno" : "Budi Santoso"}
+            </span>
+            <span>
+              {role === "pemulung" ? "Mitra Pemulung Binaan" : "Manajer Operasional Agregator"}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-[11px] text-white/60">
+          <span className="flex items-center gap-1">
+            <ShieldCheck className="size-3.5 text-emerald-400" /> SSL 256-Bit
+          </span>
+          <span className="flex items-center gap-1">
+            <LockKeyhole className="size-3.5 text-emerald-400" /> Standar Transaksi WPI
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export function LoginForm({
   redirectUrl = "/dashboard",
@@ -53,6 +144,7 @@ export function LoginForm({
   const loginLapak = useMutation(api.lapakAuth.loginLapak)
   const [lapakUsername, setLapakUsername] = useState("")
   const [lapakPassword, setLapakPassword] = useState("")
+  const [showLapakPassword, setShowLapakPassword] = useState(false)
   const [lapakError, setLapakError] = useState("")
   const [lapakLoading, setLapakLoading] = useState(false)
 
@@ -66,6 +158,20 @@ export function LoginForm({
   const [pickerError, setPickerError] = useState("")
   const [pickerDevCode, setPickerDevCode] = useState<string | null>(null)
   const [pickerName, setPickerName] = useState<string | null>(null)
+
+  // AUTO-DETECT DYNAMIC LINK CODE FROM WHATSAPP (e.g., /login?code=123456)
+  useEffect(() => {
+    const codeParam = searchParams?.get("code")
+    const phoneParam = searchParams?.get("phone")
+    if (codeParam) {
+      setLoginRole("pemulung")
+      setPickerStep("otp")
+      setPickerOtp(codeParam.trim())
+      if (phoneParam) {
+        setPickerPhone(phoneParam.trim())
+      }
+    }
+  }, [searchParams])
 
   // Handle Clerk Submit (Agen Besar & Umum)
   async function submitClerk(event: React.FormEvent<HTMLFormElement>) {
@@ -208,18 +314,22 @@ export function LoginForm({
 
   return (
     <AuthShell
-      description="Pilih jenis akun Anda untuk mengakses sistem harga WPI dan timbangan digital WAVE."
-      title="Masuk ke Portal WAVE"
+      asideContent={<LoginSidebarAside role={loginRole} />}
+      description="Pilih jenis akun Anda untuk mengakses portal data transaksi, timbangan digital, dan jaringan ekonomi sirkular WAVE."
+      title="Masuk ke WAVE"
     >
       <div className="space-y-6">
         {searchParams?.get("error") === "oauth_unregistered" && (
-          <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3.5 text-xs text-amber-900 flex items-start gap-2.5">
-            <span className="font-bold text-amber-600 mt-0.5">⚠️</span>
+          <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4 text-xs text-amber-900 flex items-start gap-3">
+            <span className="font-bold text-amber-600 mt-0.5 text-base">⚠️</span>
             <div>
-              <p className="font-bold">Akun Belum Terdaftar</p>
-              <p className="opacity-90 mt-0.5">
-                Akun Google Anda belum terdaftar di sistem WAVE. Silakan mendaftar terlebih dahulu melalui tombol{" "}
-                <Link href="/register" className="font-semibold underline">
+              <p className="font-bold text-sm">Akun Google Belum Terdaftar</p>
+              <p className="opacity-90 mt-0.5 leading-relaxed">
+                Akun Google Anda belum terdaftar di sistem WAVE. Silakan mendaftar terlebih dahulu melalui menu{" "}
+                <Link
+                  href={`/register?redirect_url=${encodeURIComponent(targetRedirect)}`}
+                  className="font-bold underline text-amber-950 hover:text-amber-700"
+                >
                   Daftar Akun Bisnis
                 </Link>{" "}
                 di bawah.
@@ -229,59 +339,102 @@ export function LoginForm({
         )}
 
         {/* ROLE SELECTION TABS */}
-        <div className="grid grid-cols-3 gap-1 rounded-2xl bg-brand-50 p-1.5 border border-brand-100">
-          <button
-            type="button"
-            onClick={() => {
-              setLoginRole("clerk")
-              setError("")
-            }}
-            className={`flex flex-col items-center justify-center gap-1 rounded-xl py-2 px-1 text-center transition ${
-              loginRole === "clerk"
-                ? "bg-white text-brand-900 shadow-sm font-bold"
-                : "text-brand-700 hover:text-brand-900 font-medium"
-            }`}
-          >
-            <Building2 className="size-4 text-brand-600 shrink-0" />
-            <span className="text-[11px] leading-tight">Agen Besar</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setLoginRole("lapak")
-              setLapakError("")
-            }}
-            className={`flex flex-col items-center justify-center gap-1 rounded-xl py-2 px-1 text-center transition ${
-              loginRole === "lapak"
-                ? "bg-white text-brand-900 shadow-sm font-bold"
-                : "text-brand-700 hover:text-brand-900 font-medium"
-            }`}
-          >
-            <Store className="size-4 text-brand-600 shrink-0" />
-            <span className="text-[11px] leading-tight">Lapak Mitra</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setLoginRole("pemulung")
-              setPickerError("")
-            }}
-            className={`flex flex-col items-center justify-center gap-1 rounded-xl py-2 px-1 text-center transition ${
-              loginRole === "pemulung"
-                ? "bg-white text-emerald-800 shadow-sm font-bold"
-                : "text-brand-700 hover:text-brand-900 font-medium"
-            }`}
-          >
-            <User className="size-4 text-emerald-600 shrink-0" />
-            <span className="text-[11px] leading-tight">Mitra Pemulung</span>
-          </button>
+        <div className="space-y-2">
+          <label className="block text-xs font-semibold text-brand-800 uppercase tracking-wider">
+            Masuk Sebagai:
+          </label>
+          <div className="grid grid-cols-3 gap-2 rounded-2xl bg-brand-50/80 p-1.5 border border-brand-100">
+            {/* OPSI 1: AGEN BESAR */}
+            <button
+              type="button"
+              onClick={() => {
+                setLoginRole("clerk")
+                setError("")
+              }}
+              className={`flex flex-col items-center justify-center gap-1.5 rounded-xl py-3 px-2 text-center transition-all duration-200 ${
+                loginRole === "clerk"
+                  ? "bg-white text-brand-900 shadow-sm font-bold border border-brand-200/80 ring-2 ring-brand-500/20"
+                  : "text-brand-700 hover:text-brand-900 font-medium hover:bg-white/50"
+              }`}
+            >
+              <div
+                className={`grid size-8 place-items-center rounded-lg transition ${
+                  loginRole === "clerk"
+                    ? "bg-brand-500 text-white"
+                    : "bg-brand-100 text-brand-700"
+                }`}
+              >
+                <Building2 className="size-4" />
+              </div>
+              <span className="text-xs leading-tight">Agen Besar</span>
+              <span className="text-[10px] text-muted-foreground hidden sm:inline">
+                Agregator
+              </span>
+            </button>
+
+            {/* OPSI 2: LAPAK MITRA */}
+            <button
+              type="button"
+              onClick={() => {
+                setLoginRole("lapak")
+                setLapakError("")
+              }}
+              className={`flex flex-col items-center justify-center gap-1.5 rounded-xl py-3 px-2 text-center transition-all duration-200 ${
+                loginRole === "lapak"
+                  ? "bg-white text-brand-900 shadow-sm font-bold border border-brand-200/80 ring-2 ring-brand-500/20"
+                  : "text-brand-700 hover:text-brand-900 font-medium hover:bg-white/50"
+              }`}
+            >
+              <div
+                className={`grid size-8 place-items-center rounded-lg transition ${
+                  loginRole === "lapak"
+                    ? "bg-brand-500 text-white"
+                    : "bg-brand-100 text-brand-700"
+                }`}
+              >
+                <Store className="size-4" />
+              </div>
+              <span className="text-xs leading-tight">Lapak Mitra</span>
+              <span className="text-[10px] text-muted-foreground hidden sm:inline">
+                Pengepul
+              </span>
+            </button>
+
+            {/* OPSI 3: MITRA PEMULUNG */}
+            <button
+              type="button"
+              onClick={() => {
+                setLoginRole("pemulung")
+                setPickerError("")
+              }}
+              className={`flex flex-col items-center justify-center gap-1.5 rounded-xl py-3 px-2 text-center transition-all duration-200 ${
+                loginRole === "pemulung"
+                  ? "bg-white text-emerald-900 shadow-sm font-bold border border-emerald-300 ring-2 ring-emerald-500/20"
+                  : "text-brand-700 hover:text-brand-900 font-medium hover:bg-white/50"
+              }`}
+            >
+              <div
+                className={`grid size-8 place-items-center rounded-lg transition ${
+                  loginRole === "pemulung"
+                    ? "bg-emerald-600 text-white"
+                    : "bg-emerald-100 text-emerald-700"
+                }`}
+              >
+                <User className="size-4" />
+              </div>
+              <span className="text-xs leading-tight">Pemulung</span>
+              <span className="text-[10px] text-emerald-700 font-semibold hidden sm:inline">
+                Via WA OTP
+              </span>
+            </button>
+          </div>
         </div>
 
         {/* ===================================================================== */}
         {/* FORM A: AGEN BESAR / CLERK AUTH                                       */}
         {/* ===================================================================== */}
         {loginRole === "clerk" && (
-          <div className="space-y-5">
+          <div className="space-y-5 rounded-2xl border border-brand-100/80 bg-white p-5 sm:p-6 shadow-xs">
             <div className="space-y-3">
               <button
                 aria-busy={oauthLoading === "google"}
@@ -315,7 +468,7 @@ export function LoginForm({
 
             <div className="my-5 flex items-center gap-3 text-xs text-brand-700">
               <span className="h-px flex-1 bg-border" />
-              atau masuk dengan email
+              atau masuk dengan email agen
               <span className="h-px flex-1 bg-border" />
             </div>
 
@@ -325,7 +478,7 @@ export function LoginForm({
                 label="Email"
                 name="email"
                 onChange={setEmail}
-                placeholder="nama@contoh.com"
+                placeholder="nama@perusahaan.com"
                 type="email"
                 value={email}
               />
@@ -334,10 +487,11 @@ export function LoginForm({
                 label="Password"
                 name="password"
                 onChange={setPassword}
-                placeholder="Masukkan password"
+                placeholder="Masukkan password akun"
                 type="password"
                 value={password}
               />
+
               {error ? (
                 <p
                   aria-live="polite"
@@ -347,6 +501,7 @@ export function LoginForm({
                   {error}
                 </p>
               ) : null}
+
               <button
                 aria-busy={loading}
                 className={authPrimaryButtonClass}
@@ -363,38 +518,58 @@ export function LoginForm({
         )}
 
         {/* ===================================================================== */}
-        {/* FORM B: LAPAK MITRA / CONVEX AUTH (ZERO FRICTION)                     */}
+        {/* FORM B: LAPAK MITRA (CONVEX NATIVE AUTH)                              */}
         {/* ===================================================================== */}
         {loginRole === "lapak" && (
-          <div className="space-y-5">
-            <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-3.5 text-xs text-emerald-900 flex items-start gap-2.5">
-              <Store className="size-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold">Masuk Langsung untuk Lapak Mitra</p>
-                <p className="opacity-90 mt-0.5">
-                  Cukup gunakan username akun lapak dan password Anda tanpa perlu email atau kode OTP.
-                </p>
-              </div>
+          <div className="space-y-5 rounded-2xl border border-brand-100/80 bg-white p-5 sm:p-6 shadow-xs">
+            <div className="rounded-xl border border-brand-100 bg-brand-50/50 p-3.5 text-xs text-brand-800 flex items-start gap-2.5">
+              <Store className="size-4 text-brand-600 shrink-0 mt-0.5" />
+              <p className="leading-relaxed">
+                Gunakan ID Lapak dan kata sandi yang telah didaftarkan oleh penanggung jawab lapak Anda.
+              </p>
             </div>
 
             <form className="space-y-4" onSubmit={submitLapak}>
-              <AuthInput
-                autoComplete="username"
-                label="Username Lapak"
-                name="username"
-                onChange={setLapakUsername}
-                placeholder="Masukkan username lapak"
-                value={lapakUsername}
-              />
-              <AuthInput
-                autoComplete="current-password"
-                label="Password Lapak"
-                name="password"
-                onChange={setLapakPassword}
-                placeholder="Masukkan password lapak"
-                type="password"
-                value={lapakPassword}
-              />
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-brand-800">
+                  ID Username Lapak *
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    value={lapakUsername}
+                    onChange={(e) => setLapakUsername(e.target.value)}
+                    placeholder="contoh: lapak-sumber-makmur"
+                    className="h-11 w-full rounded-xl border border-brand-100 bg-brand-50/40 px-3.5 text-sm text-ink outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold text-brand-800">
+                  Password Lapak *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showLapakPassword ? "text" : "password"}
+                    required
+                    value={lapakPassword}
+                    onChange={(e) => setLapakPassword(e.target.value)}
+                    placeholder="Masukkan password lapak"
+                    className="h-11 w-full rounded-xl border border-brand-100 bg-brand-50/40 pl-3.5 pr-10 text-sm text-ink outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLapakPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-brand-700 hover:text-brand-900"
+                    tabIndex={-1}
+                  >
+                    {showLapakPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  </button>
+                </div>
+              </div>
+
               {lapakError ? (
                 <p
                   aria-live="polite"
@@ -404,50 +579,57 @@ export function LoginForm({
                   {lapakError}
                 </p>
               ) : null}
+
               <button
                 aria-busy={lapakLoading}
                 className={authPrimaryButtonClass}
-                disabled={lapakLoading || !lapakUsername.trim() || !lapakPassword}
+                disabled={lapakLoading}
                 type="submit"
               >
                 {lapakLoading ? (
                   <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
                 ) : null}
-                {lapakLoading ? "Memverifikasi..." : "Masuk ke Dashboard Lapak"}
+                {lapakLoading ? "Memverifikasi lapak..." : "Masuk ke Dashboard Lapak"}
               </button>
             </form>
           </div>
         )}
 
         {/* ===================================================================== */}
-        {/* FORM C: MITRA PEMULUNG / WHATSAPP OTP (ZERO PASSWORD)                 */}
+        {/* FORM C: PEMULUNG (WHATSAPP OTP / 1-CLICK DYNAMIC VERIFY)              */}
         {/* ===================================================================== */}
         {loginRole === "pemulung" && (
-          <div className="space-y-5">
-            <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-3.5 text-xs text-emerald-900 flex items-start gap-2.5">
-              <MessageSquare className="size-4 text-emerald-600 shrink-0 mt-0.5" />
+          <div className="space-y-5 rounded-2xl border border-emerald-200 bg-emerald-50/30 p-5 sm:p-6 shadow-xs">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-100/50 p-3.5 text-xs text-emerald-950 flex items-start gap-2.5">
+              <MessageSquare className="size-4 text-emerald-700 shrink-0 mt-0.5" />
               <div>
-                <p className="font-bold">Masuk Cepat via WhatsApp</p>
-                <p className="opacity-90 mt-0.5">
-                  Tanpa perlu password atau email. Kami akan mengirimkan 6 angka kode ke nomor WhatsApp Anda.
+                <p className="font-semibold">Masuk Mudah Tanpa Password</p>
+                <p className="opacity-90 mt-0.5 leading-relaxed">
+                  Masukkan nomor WhatsApp yang telah didaftarkan operator. Kami akan mengirimkan 6 digit kode OTP masuk langsung ke chat WhatsApp Anda.
                 </p>
               </div>
             </div>
 
             {pickerStep === "phone" ? (
               <form className="space-y-4" onSubmit={submitPickerRequestOtp}>
-                <AuthInput
-                  autoComplete="tel"
-                  label="Nomor WhatsApp Pemulung"
-                  name="pickerPhone"
-                  onChange={setPickerPhone}
-                  placeholder="Contoh: 081234567890"
-                  type="tel"
-                  value={pickerPhone}
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  Gunakan nomor yang didaftarkan ke lapak atau kasir penimbangan.
-                </p>
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold text-brand-800">
+                    Nomor WhatsApp Pemulung *
+                  </label>
+                  <div className="relative flex items-center">
+                    <span className="inline-flex h-11 items-center rounded-l-xl border border-r-0 border-emerald-200 bg-emerald-100/60 px-3 text-xs font-bold text-emerald-900">
+                      +62
+                    </span>
+                    <input
+                      type="tel"
+                      required
+                      value={pickerPhone}
+                      onChange={(e) => setPickerPhone(e.target.value)}
+                      placeholder="812-3456-7890"
+                      className="h-11 w-full rounded-r-xl border border-emerald-200 bg-white px-3.5 text-sm text-ink outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 font-medium"
+                    />
+                  </div>
+                </div>
 
                 {pickerError ? (
                   <p
@@ -461,7 +643,7 @@ export function LoginForm({
 
                 <button
                   aria-busy={pickerLoading}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-700 active:scale-[0.99] disabled:opacity-50"
+                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.99] disabled:opacity-50"
                   disabled={pickerLoading || !pickerPhone.trim()}
                   type="submit"
                 >
@@ -486,14 +668,14 @@ export function LoginForm({
                       setPickerError("")
                       setPickerOtp("")
                     }}
-                    className="flex items-center gap-1 font-semibold text-emerald-600 hover:underline"
+                    className="flex items-center gap-1 font-semibold text-emerald-700 hover:underline"
                   >
                     <ArrowLeft className="size-3" /> Ganti Nomor
                   </button>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-foreground">
+                  <label className="block text-xs font-semibold text-brand-800">
                     Masukkan 6 Angka Kode OTP
                   </label>
                   <input
@@ -504,7 +686,7 @@ export function LoginForm({
                     value={pickerOtp}
                     onChange={(e) => setPickerOtp(e.target.value.replace(/\D/g, ""))}
                     placeholder="123456"
-                    className="w-full rounded-2xl border border-input bg-background px-4 py-3 text-center text-2xl font-black tracking-widest focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                    className="w-full rounded-2xl border-2 border-emerald-300 bg-white px-4 py-3 text-center text-2xl font-black tracking-widest text-emerald-950 focus:border-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-500/20"
                   />
                 </div>
 
@@ -532,7 +714,7 @@ export function LoginForm({
 
                 <button
                   aria-busy={pickerLoading}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-700 active:scale-[0.99] disabled:opacity-50"
+                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.99] disabled:opacity-50"
                   disabled={pickerLoading || pickerOtp.length < 6}
                   type="submit"
                 >
@@ -549,7 +731,7 @@ export function LoginForm({
                     type="button"
                     disabled={pickerLoading}
                     onClick={(e) => void submitPickerRequestOtp(e)}
-                    className="text-xs text-muted-foreground hover:text-emerald-600 underline font-medium"
+                    className="text-xs text-muted-foreground hover:text-emerald-700 underline font-medium"
                   >
                     Tidak menerima kode? Kirim ulang OTP
                   </button>
@@ -559,6 +741,7 @@ export function LoginForm({
           </div>
         )}
 
+        {/* BOTTOM REDIRECT TO REGISTER */}
         <div className="mt-7 flex items-center justify-between gap-4 text-sm border-t border-brand-100 pt-4">
           <span className="text-brand-700">
             {loginRole === "pemulung" ? "Punya usaha lapak / agen?" : "Belum punya akun usaha?"}
@@ -567,7 +750,7 @@ export function LoginForm({
             className="font-semibold text-brand-600 underline-offset-4 hover:underline"
             href={`/register?redirect_url=${encodeURIComponent(targetRedirect)}`}
           >
-            {loginRole === "pemulung" ? "Daftar Akun Usaha" : "Daftar Akun Bisnis"}
+            {loginRole === "pemulung" ? "Daftar Akun Usaha" : "Daftar Akun WAVE"}
           </Link>
         </div>
       </div>

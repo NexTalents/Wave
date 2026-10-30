@@ -32,11 +32,13 @@ export function AuthShell({
   description,
   step,
   title,
+  asideContent,
 }: {
   children: ReactNode
   description: string
   step?: 1 | 2
   title: string
+  asideContent?: ReactNode
 }) {
   return (
     <main className="wave-auth min-h-screen bg-white text-ink">
@@ -60,42 +62,44 @@ export function AuthShell({
         </header>
 
         <div className="grid flex-1 items-stretch gap-4 py-4 lg:grid-cols-[minmax(280px,0.72fr)_minmax(0,1.28fr)] lg:gap-5 lg:py-6">
-          <aside className="relative min-h-[250px] overflow-hidden rounded-[28px] bg-brand-800 p-7 text-white sm:p-10 lg:min-h-[620px] lg:p-12">
+          <aside className="relative min-h-[250px] overflow-hidden rounded-[28px] bg-gradient-to-b from-brand-800 to-brand-900 p-7 text-white sm:p-10 lg:min-h-[620px] lg:p-12 shadow-xl border border-brand-700/50">
             <div
               aria-hidden="true"
-              className="absolute -top-24 -right-24 size-72 rounded-full border border-white/10"
+              className="absolute -top-24 -right-24 size-72 rounded-full border border-white/10 bg-emerald-500/5 blur-2xl"
             />
             <div
               aria-hidden="true"
-              className="absolute -bottom-36 -left-24 size-80 rounded-full border border-gold/20"
+              className="absolute -bottom-36 -left-24 size-80 rounded-full border border-gold/20 bg-emerald-400/5 blur-2xl"
             />
-            <div className="relative z-10 flex h-full flex-col justify-between gap-12">
-              <div>
-                <h2 className="wave-page-title max-w-[480px]">
-                  Harga lebih jelas, keputusan lebih adil.
-                </h2>
-                <p className="wave-body mt-6 max-w-[420px] text-white/75">
-                  WAVE menyatukan data transaksi dan harga acuan untuk ekosistem
-                  limbah Indonesia.
-                </p>
-              </div>
-              <div className="flex items-end justify-between gap-4 border-t border-white/15 pt-5">
+            {asideContent ?? (
+              <div className="relative z-10 flex h-full flex-col justify-between gap-12">
                 <div>
-                  <p className="wave-caption font-semibold tracking-[0.16em] text-white/65 uppercase">
-                    Fokus WAVE
-                  </p>
-                  <p className="wave-body-sm mt-2 text-white/85">
-                    Data yang bisa dibaca, nilai yang bisa dibagi.
+                  <h2 className="wave-page-title max-w-[480px]">
+                    Harga lebih jelas, keputusan lebih adil.
+                  </h2>
+                  <p className="wave-body mt-6 max-w-[420px] text-white/75">
+                    WAVE menyatukan data transaksi dan harga acuan untuk ekosistem
+                    limbah Indonesia.
                   </p>
                 </div>
-                <div
-                  aria-hidden="true"
-                  className="hidden size-14 place-items-center rounded-full border border-gold/50 text-gold sm:grid"
-                >
-                  <LockKeyhole className="size-5" />
+                <div className="flex items-end justify-between gap-4 border-t border-white/15 pt-5">
+                  <div>
+                    <p className="wave-caption font-semibold tracking-[0.16em] text-white/65 uppercase">
+                      Fokus WAVE
+                    </p>
+                    <p className="wave-body-sm mt-2 text-white/85">
+                      Data yang bisa dibaca, nilai yang bisa dibagi.
+                    </p>
+                  </div>
+                  <div
+                    aria-hidden="true"
+                    className="hidden size-14 place-items-center rounded-full border border-gold/50 text-gold sm:grid"
+                  >
+                    <LockKeyhole className="size-5" />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </aside>
 
           <section className="flex min-w-0 flex-col justify-center rounded-[32px] border border-brand-100 bg-white px-5 py-8 shadow-[0_18px_60px_rgb(16_40_21_/.08)] sm:px-10 sm:py-12 lg:px-16 lg:py-14">
