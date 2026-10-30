@@ -1,5 +1,5 @@
-import { IndividualProfile, IndividualRoute } from "@/modules/dashboard"
+import { IndividualProfile } from "@/modules/dashboard"
 
 export default function IndividualProfilPage() {
-  return <IndividualRoute><IndividualProfile /></IndividualRoute>
+  return <IndividualProfile />
 }

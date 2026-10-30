@@ -1,13 +1,11 @@
 "use client"
 
 import { CircleUserRound, ShieldCheck, UsersRound } from "lucide-react"
-import { usePathname, useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { usePathname } from "next/navigation"
 import { AppShell } from "@/components/app-shell"
 import { Dashboard } from "@/components/dashboard"
-import { LoadingScreen } from "@/components/loading-screen"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { AuthStatusScreen, useAuthState } from "@/modules/auth"
 import { getBusinessNavGroups, navGroups } from "@/components/app-shared"
 import { dashboardRoleLabels, type DashboardRole } from "./types"
@@ -20,67 +18,20 @@ const roleIcons = {
   admin: ShieldCheck,
 } satisfies Record<DashboardRole, typeof CircleUserRound>
 
-const roleRoutes: Record<DashboardRole, string> = {
-  individual: "/dashboard/individual",
-  business: "/dashboard/business",
-  admin: "/dashboard/admin",
-}
-
 export function DashboardView({
-  expectedRole,
-  previewRole,
   children,
 }: {
-  expectedRole?: DashboardRole
-  previewRole?: DashboardRole
   children?: React.ReactNode
 }) {
   const pathname = usePathname()
-  const router = useRouter()
   const authState = useAuthState()
-  const user = authState.status === "ready" ? authState.user : null
-  const userRole = authState.status === "ready" ? authState.role : "individual"
-  const role = previewRole ?? userRole
+  const role = authState.status === "ready" ? authState.role : "individual"
   const RoleIcon = roleIcons[role]
-  const targetRoute = roleRoutes[userRole]
-
-  useEffect(() => {
-    if (authState.status !== "ready" || previewRole) return
-    if (expectedRole && expectedRole !== userRole) {
-      router.replace(targetRoute)
-      return
-    }
-    if (!expectedRole && !pathname.startsWith(targetRoute)) router.replace(targetRoute)
-  }, [authState.status, expectedRole, pathname, previewRole, router, targetRoute, userRole])
-
-  if (authState.status === "loading" || authState.status === "syncing") {
-    return (
-      <LoadingScreen
-        description="Memeriksa sesi dan menentukan ruang kerja yang sesuai dengan akunmu."
-        eyebrow="WAVE · Workspace"
-        icon={ShieldCheck}
-        title="Menyiapkan dashboard…"
-      />
-    )
-  }
-
-  if (authState.status === "signedOut") {
-    return (
-      <main className="grid min-h-screen place-items-center bg-background p-6">
-        <Card className="w-full max-w-md">
-          <CardHeader><CardTitle>Login diperlukan</CardTitle></CardHeader>
-          <CardContent><a className="text-primary underline-offset-4 hover:underline" href="/login">Masuk ke WAVE</a></CardContent>
-        </Card>
-      </main>
-    )
-  }
 
   if (authState.status !== "ready") return <AuthStatusScreen state={authState} />
 
-  if (!previewRole && (!pathname.startsWith(targetRoute) || (expectedRole && expectedRole !== userRole))) return null
-
   if (role === "individual") {
-    return <IndividualDashboard name={user?.name} />
+    return <IndividualDashboard name={authState.user.name} />
   }
 
   const currentNavGroups = role === "business" ? getBusinessNavGroups(pathname) : navGroups
@@ -93,7 +44,7 @@ export function DashboardView({
             <h1 className="text-3xl font-semibold tracking-tight text-foreground">Dashboard WAVE</h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">Ruang kerja awal untuk menghubungkan data material, transaksi, dan keputusan ekonomi sirkular.</p>
           </div>
-          <Badge variant="secondary" className="w-fit gap-2 px-3 py-1.5"><RoleIcon aria-hidden="true" />{dashboardRoleLabels[role]}{previewRole ? " · preview" : ""}</Badge>
+          <Badge variant="secondary" className="w-fit gap-2 px-3 py-1.5"><RoleIcon aria-hidden="true" />{dashboardRoleLabels[role]}</Badge>
         </section>
 
         <Card className="border-primary/20 bg-primary/5">

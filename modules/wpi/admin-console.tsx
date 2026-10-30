@@ -14,7 +14,7 @@ import {
 import { useMemo, useState } from "react"
 import { api } from "@/convex/_generated/api"
 import { AppShell } from "@/components/app-shell"
-import { LoadingPanel, LoadingScreen } from "@/components/loading-screen"
+import { LoadingPanel } from "@/components/loading-screen"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -31,7 +31,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { adminNavGroups } from "@/components/app-shared"
-import { useCurrentUser } from "@/modules/auth"
 import { regions as regionOptions } from "@/modules/wpi/data"
 
 const statusLabels: Record<string, string> = {
@@ -97,17 +96,12 @@ function MetricCard({
 }
 
 export function AdminWpiConsole() {
-  const user = useCurrentUser()
-  const isAdmin = user?.platformRole === "admin"
-  const overview = useQuery(api.wpi.admin.overview, isAdmin ? {} : "skip")
-  const observations = useQuery(
-    api.wpi.admin.observations,
-    isAdmin ? {} : "skip"
-  )
-  const catalog = useQuery(api.wpi.admin.materials, isAdmin ? {} : "skip")
-  const sources = useQuery(api.wpi.admin.sources, isAdmin ? {} : "skip")
-  const audits = useQuery(api.wpi.admin.audits, isAdmin ? {} : "skip")
-  const candidates = useQuery(api.wpi.admin.candidates, isAdmin ? {} : "skip")
+  const overview = useQuery(api.wpi.admin.overview, {})
+  const observations = useQuery(api.wpi.admin.observations, {})
+  const catalog = useQuery(api.wpi.admin.materials, {})
+  const sources = useQuery(api.wpi.admin.sources, {})
+  const audits = useQuery(api.wpi.admin.audits, {})
+  const candidates = useQuery(api.wpi.admin.candidates, {})
   const reviewObservation = useMutation(api.wpi.admin.reviewObservation)
   const runCalculation = useMutation(api.wpi.admin.runCalculation)
   const publishSnapshot = useMutation(api.wpi.snapshots.publish)
@@ -178,32 +172,6 @@ export function AdminWpiConsole() {
   const selectedMaterial = catalog?.find(
     (item) => item._id === selectedMaterialId
   )
-
-  if (user === undefined)
-    return (
-      <LoadingScreen
-        description="Memeriksa hak akses administrator dan menyiapkan kontrol kualitas WPI."
-        eyebrow="WPI Admin · Access"
-        icon={ShieldCheck}
-        title="Menyiapkan console admin…"
-      />
-    )
-  if (!user || user.platformRole !== "admin")
-    return (
-      <main className="grid min-h-screen place-items-center bg-background p-6">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Akses admin diperlukan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Halaman ini hanya tersedia untuk WAVE Administrator yang terdaftar
-              di server.
-            </p>
-          </CardContent>
-        </Card>
-      </main>
-    )
 
   async function perform(action: () => Promise<unknown>, message: string) {
     setBusy(true)

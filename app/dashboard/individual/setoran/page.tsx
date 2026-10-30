@@ -1,5 +1,5 @@
-import { IndividualDeposits, IndividualRoute } from "@/modules/dashboard"
+import { IndividualDeposits } from "@/modules/dashboard"
 
 export default function IndividualSetoranPage() {
-  return <IndividualRoute><IndividualDeposits /></IndividualRoute>
+  return <IndividualDeposits />
 }

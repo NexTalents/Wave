@@ -16,7 +16,7 @@ import { api } from "@/convex/_generated/api"
 import type { Id } from "@/convex/_generated/dataModel"
 import { buildObservationFingerprint } from "@/convex/wpi/workflow"
 import { AppShell } from "@/components/app-shell"
-import { LoadingPanel, LoadingScreen } from "@/components/loading-screen"
+import { LoadingPanel } from "@/components/loading-screen"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -33,7 +33,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { businessNavGroups } from "@/components/app-shared"
-import { useCurrentUser } from "@/modules/auth"
+import { useActiveOrganization } from "@/modules/auth"
 
 const sourceTypeLabels = {
   TRANSACTION: "Transaksi aktual",
@@ -93,13 +93,7 @@ function stateVariant(status: string) {
 }
 
 export function BusinessWpiDashboard() {
-  const user = useCurrentUser()
-  const organizations = useQuery(
-    api.auth.organizations.listMine,
-    user ? {} : "skip"
-  )
-  const membershipEntry = organizations?.[0]
-  const organization = membershipEntry?.organization
+  const organization = useActiveOrganization()
   const organizationId = organization?._id
   const isVerified = organization?.verificationStatus === "verified"
   const catalog = useQuery(api.wpi.catalog.master, {})
@@ -186,49 +180,7 @@ export function BusinessWpiDashboard() {
       .filter((item) => item.material && item.grade && item.region)
   }, [catalog, overview])
 
-  if (user === undefined || organizations === undefined)
-    return (
-      <LoadingScreen
-        description="Memeriksa membership organisasi dan menyiapkan workspace pengiriman harga."
-        eyebrow="WPI Business · Access"
-        icon={Send}
-        title="Menyiapkan workspace bisnis…"
-      />
-    )
-  if (!user)
-    return (
-      <main className="grid min-h-screen place-items-center bg-background p-6">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Login diperlukan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <a
-              className="text-sm font-semibold text-primary underline-offset-4 hover:underline"
-              href="/login"
-            >
-              Masuk ke WAVE
-            </a>
-          </CardContent>
-        </Card>
-      </main>
-    )
-  if (user.accountType !== "business")
-    return (
-      <main className="grid min-h-screen place-items-center bg-background p-6">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Akun bisnis diperlukan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              WPI Business hanya tersedia untuk akun organisasi.
-            </p>
-          </CardContent>
-        </Card>
-      </main>
-    )
-  if (!organization || !membershipEntry)
+  if (!organization)
     return (
       <main className="grid min-h-screen place-items-center bg-background p-6">
         <Card className="w-full max-w-md">

@@ -1,6 +1,7 @@
 export { RequireAuth } from "./guards"
 export { AuthProvider, useAuthSyncStatus } from "./provider"
 export { AuthStatusScreen } from "./auth-status-screen"
+export { RoleGuard, useActiveOrganization } from "./role-guard"
 export { SignedOutOnly } from "./signed-out-only"
 export {
   hasPermission,

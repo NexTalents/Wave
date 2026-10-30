@@ -1,4 +1,4 @@
-import { IndividualPrices, IndividualRoute } from "@/modules/dashboard"
+import { IndividualPrices } from "@/modules/dashboard"
 import { getPublicOverview, loadPublicWpi } from "@/modules/wpi/data/published"
 import { parseFilters } from "@/modules/wpi/data"
 
@@ -11,9 +11,5 @@ export default async function IndividualHargaPage() {
     data
   )
   const overview = getPublicOverview(data, filters)
-  return (
-    <IndividualRoute>
-      <IndividualPrices series={overview.series} snapshot={overview.snapshot} />
-    </IndividualRoute>
-  )
+  return <IndividualPrices series={overview.series} snapshot={overview.snapshot} />
 }
