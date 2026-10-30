@@ -32,13 +32,11 @@ export function AuthShell({
   description,
   step,
   title,
-  asideContent,
 }: {
   children: ReactNode
   description: string
   step?: 1 | 2
   title: string
-  asideContent?: ReactNode
 }) {
   return (
     <main className="wave-auth min-h-screen bg-white text-ink">
@@ -71,35 +69,33 @@ export function AuthShell({
               aria-hidden="true"
               className="absolute -bottom-36 -left-24 size-80 rounded-full border border-gold/20"
             />
-            {asideContent ?? (
-              <div className="relative z-10 flex h-full flex-col justify-between gap-12">
+            <div className="relative z-10 flex h-full flex-col justify-between gap-12">
+              <div>
+                <h2 className="wave-page-title max-w-[480px]">
+                  Harga lebih jelas, keputusan lebih adil.
+                </h2>
+                <p className="wave-body mt-6 max-w-[420px] text-white/75">
+                  WAVE menyatukan data transaksi dan harga acuan untuk ekosistem
+                  limbah Indonesia.
+                </p>
+              </div>
+              <div className="flex items-end justify-between gap-4 border-t border-white/15 pt-5">
                 <div>
-                  <h2 className="wave-page-title max-w-[480px]">
-                    Harga lebih jelas, keputusan lebih adil.
-                  </h2>
-                  <p className="wave-body mt-6 max-w-[420px] text-white/75">
-                    WAVE menyatukan data transaksi dan harga acuan untuk ekosistem
-                    limbah Indonesia.
+                  <p className="wave-caption font-semibold tracking-[0.16em] text-white/65 uppercase">
+                    Fokus WAVE
+                  </p>
+                  <p className="wave-body-sm mt-2 text-white/85">
+                    Data yang bisa dibaca, nilai yang bisa dibagi.
                   </p>
                 </div>
-                <div className="flex items-end justify-between gap-4 border-t border-white/15 pt-5">
-                  <div>
-                    <p className="wave-caption font-semibold tracking-[0.16em] text-white/65 uppercase">
-                      Fokus WAVE
-                    </p>
-                    <p className="wave-body-sm mt-2 text-white/85">
-                      Data yang bisa dibaca, nilai yang bisa dibagi.
-                    </p>
-                  </div>
-                  <div
-                    aria-hidden="true"
-                    className="hidden size-14 place-items-center rounded-full border border-gold/50 text-gold sm:grid"
-                  >
-                    <LockKeyhole className="size-5" />
-                  </div>
+                <div
+                  aria-hidden="true"
+                  className="hidden size-14 place-items-center rounded-full border border-gold/50 text-gold sm:grid"
+                >
+                  <LockKeyhole className="size-5" />
                 </div>
               </div>
-            )}
+            </div>
           </aside>
 
           <section className="flex min-w-0 flex-col justify-center rounded-[32px] border border-brand-100 bg-white px-5 py-8 shadow-[0_18px_60px_rgb(16_40_21_/.08)] sm:px-10 sm:py-12 lg:px-16 lg:py-14">

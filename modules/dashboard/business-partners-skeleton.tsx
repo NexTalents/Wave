@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-
 export function BusinessPartnersSkeleton() {
   return (
     <div className="space-y-6 pb-12" aria-busy="true" aria-label="Memuat daftar mitra">
@@ -82,4 +81,3 @@ export function BusinessPartnersSkeleton() {
     </div>
   )
 }
-

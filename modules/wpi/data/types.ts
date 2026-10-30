@@ -52,6 +52,15 @@ export type WpiRow = {
   transactionCount: number
   observedAt: string
   source: Localized
+  dataQuality?:
+    | "verified"
+    | "limited_coverage"
+    | "reference_only"
+    | "stale"
+    | "insufficient_data"
+  priceClassification?:
+    "verified_transaction" | "reference_only" | "unavailable"
+  changeAvailable?: boolean
 }
 
 export type WpiSeries = {
@@ -60,3 +69,26 @@ export type WpiSeries = {
   referenceDeposit?: number
   transactionCount: number
 }[]
+
+export type WpiDataState = "published" | "stale" | "empty" | "unavailable"
+
+export type WpiStatus = {
+  updatedAt?: string
+  period?: { start: string; end: string }
+  transactions: number
+  regions: number
+  materials: number
+  dataState: WpiDataState
+  methodologyVersion?: string
+}
+
+export type WpiSnapshotItem = {
+  materialSlug: string
+  material: Localized
+  index?: number
+  reference?: number
+  change: number
+  changeAvailable?: boolean
+  observedAt?: string
+  dataQuality?: WpiRow["dataQuality"]
+}

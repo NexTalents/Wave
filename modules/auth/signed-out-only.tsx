@@ -1,30 +1,28 @@
 "use client"
 
-import { useAuth } from "@clerk/nextjs"
-import { LoaderCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, type ReactNode } from "react"
+import { AuthStatusScreen } from "./auth-status-screen"
+import { useAuthState } from "./use-auth-state"
 
 export function SignedOutOnly({ children }: { children: ReactNode }) {
   const router = useRouter()
-  const { isLoaded, isSignedIn } = useAuth()
+  const state = useAuthState()
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
+    if (
+      state.status === "ready" ||
+      state.status === "needsOnboarding" ||
+      state.status === "syncing"
+    ) {
       router.replace("/dashboard")
     }
-  }, [isLoaded, isSignedIn, router])
+  }, [router, state.status])
 
-  if (!isLoaded || isSignedIn) {
-    return (
-      <main className="grid min-h-screen place-items-center bg-background">
-        <LoaderCircle
-          aria-label="Memeriksa sesi"
-          className="size-6 animate-spin text-primary"
-        />
-      </main>
-    )
+  if (state.status === "signedOut") return children
+  if (state.status === "convexAuthError" || state.status === "syncError" || state.status === "suspended") {
+    return <AuthStatusScreen state={state} />
   }
 
-  return children
+  return <AuthStatusScreen state={state} />
 }

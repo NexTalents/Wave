@@ -1,5 +1,3 @@
-export const DEFAULT_WHATSAPP_PHONE_NUMBER_ID = "1379578261903928"
-
 export type WhatsAppReceiptPayload = {
   transactionId: string
   dateFormatted?: string
@@ -17,17 +15,6 @@ export type WhatsAppReceiptPayload = {
   cashPaid: number
   walletCredit: number
   heldValue: number
-}
-
-export type WhatsAppDeliveryResult = {
-  success: boolean
-  status: "sent" | "delivered" | "failed" | "simulated"
-  messageId?: string
-  recipient: string
-  formattedMessage: string
-  waDirectUrl: string
-  provider: "meta_cloud_api" | "simulation"
-  error?: string
 }
 
 /**
@@ -85,100 +72,7 @@ export function formatWhatsAppReceiptMessage(payload: WhatsAppReceiptPayload): s
   )
 }
 
-/**
- * Sends receipt via Meta WhatsApp Cloud API or generates direct wa.me fallback
- */
-export async function sendWhatsAppReceipt(
-  payload: WhatsAppReceiptPayload,
-  options?: {
-    phoneNumberId?: string
-    accessToken?: string
-  }
-): Promise<WhatsAppDeliveryResult> {
-  const phoneNumberId =
-    options?.phoneNumberId ||
-    process.env.WHATSAPP_PHONE_NUMBER_ID ||
-    DEFAULT_WHATSAPP_PHONE_NUMBER_ID
-
-  const accessToken =
-    options?.accessToken ||
-    process.env.WHATSAPP_ACCESS_TOKEN ||
-    process.env.WHATSAPP_TOKEN
-
+export function buildWhatsAppDirectUrl(payload: WhatsAppReceiptPayload) {
   const recipient = normalizeWhatsAppNumber(payload.recipient)
-  const messageText = formatWhatsAppReceiptMessage(payload)
-  const waDirectUrl = `https://wa.me/${recipient}?text=${encodeURIComponent(messageText)}`
-
-  // If token is available, attempt real Meta WhatsApp Cloud API call
-  if (accessToken && phoneNumberId) {
-    try {
-      const endpoint = `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messaging_product: "whatsapp",
-          recipient_type: "individual",
-          to: recipient,
-          type: "text",
-          text: {
-            preview_url: false,
-            body: messageText,
-          },
-        }),
-      })
-
-      const data = await res.json()
-
-      if (res.ok && data?.messages?.[0]?.id) {
-        return {
-          success: true,
-          status: "sent",
-          messageId: data.messages[0].id,
-          recipient,
-          formattedMessage: messageText,
-          waDirectUrl,
-          provider: "meta_cloud_api",
-        }
-      } else {
-        const errorMsg =
-          data?.error?.message || "Gagal mengirim pesan melalui Meta WhatsApp Cloud API."
-        console.warn("[WhatsApp Cloud API] Error:", errorMsg, data)
-        return {
-          success: false,
-          status: "failed",
-          error: errorMsg,
-          recipient,
-          formattedMessage: messageText,
-          waDirectUrl,
-          provider: "meta_cloud_api",
-        }
-      }
-    } catch (err: any) {
-      console.error("[WhatsApp Cloud API] Fetch Exception:", err)
-      return {
-        success: false,
-        status: "failed",
-        error: err.message || "Koneksi ke Meta WhatsApp API gagal.",
-        recipient,
-        formattedMessage: messageText,
-        waDirectUrl,
-        provider: "meta_cloud_api",
-      }
-    }
-  }
-
-  // Fallback simulation when token is not yet configured
-  return {
-    success: true,
-    status: "simulated",
-    messageId: `sim-wa-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    recipient,
-    formattedMessage: messageText,
-    waDirectUrl,
-    provider: "simulation",
-  }
+  return `https://wa.me/${recipient}?text=${encodeURIComponent(formatWhatsAppReceiptMessage(payload))}`
 }

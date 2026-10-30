@@ -23,7 +23,7 @@ export function LapakLoginForm() {
     try {
       const result = await login({ username, password })
       setLapakSessionToken(result.sessionToken)
-      router.push("/dashboard/business")
+      router.push("/dashboard/lapak")
     } catch (value) {
       setError(value instanceof Error ? value.message : "Login lapak belum berhasil.")
     } finally {

@@ -2,8 +2,10 @@ import { materials } from "./materials"
 import { observations } from "./observations"
 import { regions } from "./regions"
 import type {
+  Material,
   Period,
   PriceType,
+  Region,
   WpiFilters,
   WpiObservation,
   WpiRow,
@@ -28,17 +30,26 @@ export function valid<T extends string>(
 }
 
 export function parseFilters(
-  searchParams: Record<string, string | string[] | undefined>
+  searchParams: Record<string, string | string[] | undefined>,
+  catalog: { materials?: Material[]; regions?: Region[] } = {}
 ): WpiFilters {
-  const materialValues = ["all", ...materials.map((item) => item.slug)]
-  const gradeValues = ["all", "A", "B", "C"]
-  const regionValues = regions.map((item) => item.code)
+  const materialCatalog = catalog.materials?.length ? catalog.materials : materials
+  const regionCatalog = catalog.regions?.length ? catalog.regions : regions
+  const materialValues = ["all", ...materialCatalog.map((item) => item.slug)]
+  const gradeValues = [
+    "all",
+    ...new Set(materialCatalog.flatMap((item) => item.grades.map((grade) => grade.code))),
+  ]
+  const regionValues = regionCatalog.map((item) => item.code)
   const first = (value: string | string[] | undefined) =>
     Array.isArray(value) ? value[0] : value
+  const defaultRegion = regionValues.includes("indonesia")
+    ? "indonesia"
+    : (regionValues[0] ?? "indonesia")
   return {
     material: valid(first(searchParams.material), materialValues, "all"),
     grade: valid(first(searchParams.grade), gradeValues, "all"),
-    region: valid(first(searchParams.region), regionValues, "indonesia"),
+    region: valid(first(searchParams.region), regionValues, defaultRegion),
     priceType: valid(
       first(searchParams.priceType),
       priceTypes,

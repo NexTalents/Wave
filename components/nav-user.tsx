@@ -1,127 +1,101 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useClerk, useUser } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { clearLapakSessionToken, getLapakSessionToken } from "@/modules/auth/lapak-session";
+import { useClerk, useUser } from "@clerk/nextjs"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
-	Avatar,
-	AvatarFallback,
-	AvatarImage,
-} from "@/components/ui/avatar";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuGroup,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { UserIcon, SettingsIcon, LogOutIcon } from "lucide-react";
+  LoaderCircle,
+  UserIcon,
+  LogOutIcon,
+} from "lucide-react"
+import { useSignOut } from "@/modules/auth"
+
+function getInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("") || "W"
+}
 
 export function NavUser() {
-	const router = useRouter();
-	const { signOut } = useClerk();
-	const { user: clerkUser } = useUser();
+  const clerk = useClerk()
+  const { isLoaded, user } = useUser()
+  const { error, isSigningOut, signOut } = useSignOut()
+  const name = user?.fullName || user?.firstName || "Pengguna WAVE"
+  const email =
+    user?.primaryEmailAddress?.emailAddress || "Email belum tersedia"
+  const initials = getInitials(name)
 
-	const [lapakToken, setLapakToken] = useState<string | null>(null);
-	useEffect(() => {
-		setLapakToken(getLapakSessionToken());
-	}, []);
-
-	const lapakSession = useQuery(
-		api.lapakAuth.currentLapakSession,
-		lapakToken ? { sessionToken: lapakToken } : "skip"
-	);
-	const logoutLapak = useMutation(api.lapakAuth.logoutLapak);
-
-	const isLapak = Boolean(lapakSession);
-
-	const displayName = isLapak
-		? (lapakSession?.name || lapakSession?.organizationName || "Mitra Lapak")
-		: (clerkUser?.fullName || clerkUser?.firstName || "Agen WAVE");
-
-	const displaySubtext = isLapak
-		? `${lapakSession?.organizationName || "Lapak"} · ${lapakSession?.lapakCode}`
-		: (clerkUser?.primaryEmailAddress?.emailAddress || "Agen Besar WAVE");
-
-	const displayAvatar = isLapak ? undefined : clerkUser?.imageUrl;
-	const avatarFallback = (displayName.charAt(0) || "W").toUpperCase();
-
-	const handleLogout = async () => {
-		if (lapakToken) {
-			try {
-				await logoutLapak({ sessionToken: lapakToken });
-			} catch {
-				// Ignore errors during token invalidation
-			}
-			clearLapakSessionToken();
-			window.location.href = "/login";
-			return;
-		}
-
-		await signOut({ redirectUrl: "/login" });
-	};
-
-	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger
-				render={
-					<button
-						aria-label="Buka menu pengguna"
-						className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-						type="button"
-					/>
-				}
-			>
-				<Avatar className="size-8">
-					{displayAvatar && <AvatarImage src={displayAvatar} />}
-					<AvatarFallback className={isLapak ? "bg-primary/20 text-primary font-bold" : ""}>
-						{avatarFallback}
-					</AvatarFallback>
-				</Avatar>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-60">
-				<DropdownMenuGroup>
-					<DropdownMenuLabel className="pointer-events-none flex items-center gap-2">
-						<Avatar className="isolate size-8">
-							{displayAvatar && <AvatarImage src={displayAvatar} />}
-							<AvatarFallback className={isLapak ? "bg-primary/20 text-primary font-bold" : ""}>
-								{avatarFallback}
-							</AvatarFallback>
-						</Avatar>
-						<div className="overflow-hidden">
-							<span className="font-medium text-foreground block truncate">{displayName}</span>
-							<div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-muted-foreground text-xs font-mono">
-								{displaySubtext}
-							</div>
-						</div>
-					</DropdownMenuLabel>
-				</DropdownMenuGroup>
-				<DropdownMenuSeparator />
-				<DropdownMenuGroup>
-					<DropdownMenuItem onClick={() => router.push("/dashboard/business/partners")}>
-						<UserIcon />
-						{isLapak ? "Data Anggota Pemulung" : "Mitra & Pemasok"}
-					</DropdownMenuItem>
-					{!isLapak && (
-						<DropdownMenuItem onClick={() => router.push("/dashboard/business")}>
-							<SettingsIcon />
-							Pengaturan Agen
-						</DropdownMenuItem>
-					)}
-				</DropdownMenuGroup>
-				<DropdownMenuSeparator />
-				<DropdownMenuGroup>
-					<DropdownMenuItem onClick={handleLogout} variant="destructive">
-						<LogOutIcon />
-						Keluar (Log out)
-					</DropdownMenuItem>
-				</DropdownMenuGroup>
-			</DropdownMenuContent>
-		</DropdownMenu>
-	);
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label="Buka menu akun"
+        className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        disabled={!isLoaded}
+        nativeButton
+        render={<button type="button" />}
+      >
+        <Avatar className="size-8">
+          <AvatarImage alt={name} src={user?.imageUrl} />
+          <AvatarFallback>{initials}</AvatarFallback>
+        </Avatar>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-60">
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="pointer-events-none flex items-center gap-2">
+            <Avatar className="isolate size-8">
+              <AvatarImage alt={name} src={user?.imageUrl} />
+              <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <span className="block truncate font-medium text-foreground">
+                {name}
+              </span>
+              <div className="max-w-full overflow-hidden text-xs text-ellipsis whitespace-nowrap text-muted-foreground">
+                {email}
+              </div>
+            </div>
+          </DropdownMenuLabel>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem onClick={() => clerk.openUserProfile()}>
+            <UserIcon />
+            Kelola akun
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
+          <DropdownMenuItem
+            aria-busy={isSigningOut}
+            disabled={isSigningOut}
+            onClick={() => void signOut()}
+            variant="destructive"
+          >
+            {isSigningOut ? (
+              <LoaderCircle className="animate-spin" />
+            ) : (
+              <LogOutIcon />
+            )}
+            {isSigningOut ? "Keluar..." : "Keluar"}
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        {error ? (
+          <p className="px-1.5 py-2 text-xs text-destructive" role="alert">
+            {error}
+          </p>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
 }

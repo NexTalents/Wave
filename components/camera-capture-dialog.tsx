@@ -10,6 +10,9 @@ interface CameraCaptureDialogProps {
   onCapture: (file: File, previewUrl: string) => void
 }
 
+type CameraTrackCapabilities = MediaTrackCapabilities & { torch?: boolean }
+type CameraTrackConstraintSet = MediaTrackConstraintSet & { torch?: boolean }
+
 export function CameraCaptureDialog({
   isOpen,
   onClose,
@@ -31,6 +34,8 @@ export function CameraCaptureDialog({
   const startCamera = async (mode: "environment" | "user" = facingMode) => {
     try {
       setErrorMessage(null)
+      setCapturedBlob(null)
+      setCapturedUrl(null)
       // Stop existing stream if any
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop())
@@ -65,18 +70,20 @@ export function CameraCaptureDialog({
       // Check torch capability
       const videoTrack = stream.getVideoTracks()[0]
       if (videoTrack) {
-        const capabilities = videoTrack.getCapabilities?.() as any
+        const capabilities = videoTrack.getCapabilities?.() as CameraTrackCapabilities
         setHasTorch(Boolean(capabilities?.torch))
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[Camera] Error accessing camera:", err)
       setHasCamera(false)
-      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+      const errorName = err instanceof DOMException || err instanceof Error ? err.name : ""
+      const errorMessage = err instanceof Error ? err.message : "Kesalahan tidak diketahui."
+      if (errorName === "NotAllowedError" || errorName === "PermissionDeniedError") {
         setErrorMessage("Izin akses kamera ditolak. Harap izinkan akses kamera pada pengaturan browser.")
-      } else if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
+      } else if (errorName === "NotFoundError" || errorName === "DevicesNotFoundError") {
         setErrorMessage("Tidak ada perangkat kamera yang terdeteksi.")
       } else {
-        setErrorMessage("Gagal membuka kamera: " + (err.message || "Kesalahan tidak diketahui."))
+        setErrorMessage("Gagal membuka kamera: " + errorMessage)
       }
     }
   }
@@ -96,15 +103,16 @@ export function CameraCaptureDialog({
   // Handle open/close
   useEffect(() => {
     if (isOpen) {
-      setCapturedBlob(null)
-      setCapturedUrl(null)
-      startCamera(facingMode)
+      // Camera access is an external synchronization; startup owns its loading state.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      void startCamera(facingMode)
     } else {
       stopCamera()
     }
     return () => {
       stopCamera()
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, facingMode])
 
   // Toggle Torch
@@ -114,8 +122,8 @@ export function CameraCaptureDialog({
     if (!track) return
     try {
       const nextTorch = !isTorchOn
-      await (track as any).applyConstraints({
-        advanced: [{ torch: nextTorch }],
+      await track.applyConstraints({
+        advanced: [{ torch: nextTorch } as CameraTrackConstraintSet],
       })
       setIsTorchOn(nextTorch)
     } catch (err) {

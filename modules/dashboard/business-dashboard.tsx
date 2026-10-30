@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useQuery } from "convex/react"
+import { useMemo } from "react"
 import Link from "next/link"
 import {
   ArrowDownToLine,
@@ -108,7 +109,7 @@ export function BusinessDashboard() {
         <MetricCard
           icon={UsersRound}
           label="Partner Aktif"
-          value="5 Mitra"
+          value={pickers === undefined ? "…" : `${pickers.length} Mitra`}
           note="Anggota pemulung terdaftar WAVE"
         />
         <MetricCard
@@ -141,6 +142,13 @@ export function BusinessDashboard() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="divide-y divide-border">
+              {recentTransactions.length === 0 ? (
+                <p className="px-5 py-6 text-sm text-muted-foreground">
+                  {loadedTransactions === undefined
+                    ? "Memuat transaksi…"
+                    : "Belum ada setoran. Catat setoran pertama dari menu Setoran Masuk."}
+                </p>
+              ) : null}
               {recentTransactions.map((tx) => (
                 <div
                   className="grid gap-3 px-5 py-3.5 transition hover:bg-muted/30 sm:grid-cols-[1fr_auto] sm:items-center"

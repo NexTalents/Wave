@@ -9,6 +9,14 @@ export const wpiContentByLanguage = {
     lastUpdated: "Data terakhir diperbarui",
     prototype:
       "Data prototipe — angka pada halaman ini bersifat ilustratif dan belum merepresentasikan pasar aktual.",
+    publishedData:
+      "Data published WAVE — angka berasal dari snapshot yang dipublikasikan melalui pipeline WPI.",
+    staleData:
+      "Snapshot published terakhir berstatus stale — gunakan sebagai referensi dengan kehati-hatian.",
+    emptyData:
+      "Belum ada snapshot published untuk ditampilkan. Data akan muncul setelah kalkulasi dan publikasi disetujui.",
+    unavailableData:
+      "Data WPI belum dapat dimuat. Coba lagi setelah koneksi ke backend tersedia.",
     snapshot: "Ringkasan pasar",
     filters: "Filter data",
     table: "Harga material",
@@ -132,6 +140,14 @@ export const wpiContentByLanguage = {
     lastUpdated: "Last updated",
     prototype:
       "Prototype data — figures on this page are illustrative and do not represent the actual market.",
+    publishedData:
+      "WAVE published data — figures come from snapshots published through the WPI pipeline.",
+    staleData:
+      "The latest published snapshot is marked stale — use it as a reference with care.",
+    emptyData:
+      "There is no published snapshot to display yet. Data will appear after an approved calculation and publication.",
+    unavailableData:
+      "WPI data could not be loaded. Try again when the backend connection is available.",
     snapshot: "Market snapshot",
     filters: "Data filters",
     table: "Material prices",

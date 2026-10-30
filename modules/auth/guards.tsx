@@ -1,11 +1,11 @@
 "use client"
 
-import { useConvexAuth } from "convex/react"
 import type { ReactNode } from "react"
+import { useAuthState } from "./use-auth-state"
 
 export function RequireAuth({ children, fallback = null }: { children: ReactNode; fallback?: ReactNode }) {
-  const { isAuthenticated, isLoading } = useConvexAuth()
+  const state = useAuthState()
 
-  if (isLoading) return fallback
-  return isAuthenticated ? children : fallback
+  if (state.status === "loading" || state.status === "syncing") return fallback
+  return state.status === "ready" || state.status === "needsOnboarding" ? children : fallback
 }

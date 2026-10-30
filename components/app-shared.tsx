@@ -148,6 +148,33 @@ export function getBusinessNavGroups(pathname?: string): SidebarNavGroup[] {
   ]
 }
 
-export const businessNavGroups: SidebarNavGroup[] = getBusinessNavGroups(
-  "/dashboard/business"
-)
+export const businessNavGroups: SidebarNavGroup[] = getBusinessNavGroups()
+
+export const adminNavGroups: SidebarNavGroup[] = [
+  {
+    label: "WPI Admin",
+    items: [
+      {
+        title: "Overview",
+        path: "/dashboard/admin/wpi#overview",
+        icon: <LayoutDashboardIcon />,
+        isActive: true,
+      },
+      {
+        title: "Observasi",
+        path: "/dashboard/admin/wpi#observations",
+        icon: <ClipboardCheckIcon />,
+      },
+      {
+        title: "Material & source",
+        path: "/dashboard/admin/wpi#configuration",
+        icon: <DatabaseIcon />,
+      },
+      {
+        title: "Audit",
+        path: "/dashboard/admin/wpi#audit",
+        icon: <ShieldCheckIcon />,
+      },
+    ],
+  },
+]

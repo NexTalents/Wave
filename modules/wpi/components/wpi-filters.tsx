@@ -23,6 +23,13 @@ export function WpiFilters({
   const router = useRouter()
   const pathname = usePathname()
   const current = useSearchParams()
+  const gradeOptions = [
+    ...new Set(
+      materials.flatMap((material) =>
+        material.grades.map((grade) => grade.code)
+      )
+    ),
+  ]
   const update = (key: string, value: string) => {
     const params = new URLSearchParams(current.toString())
     const defaults = {
@@ -57,7 +64,10 @@ export function WpiFilters({
       filters.grade,
       [
         { value: "all", label: copy.allGrades },
-        ...["A", "B", "C"].map((value) => ({ value, label: `Grade ${value}` })),
+        ...gradeOptions.map((value) => ({
+          value,
+          label: `Grade ${value}`,
+        })),
       ],
     ],
     [
