@@ -3,12 +3,13 @@
 import { useAuth } from "@clerk/nextjs"
 import { useConvexAuth, useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
+import type { Id } from "@/convex/_generated/dataModel"
 import type { DashboardRole } from "@/modules/dashboard/types"
 import { useAuthSyncStatus } from "./provider"
 import type { AccountType, OrganizationType } from "./types"
 
 export type AuthUserSummary = {
-  _id: string
+  _id: Id<"users">
   name?: string
   email?: string
   accountType?: AccountType
@@ -16,7 +17,7 @@ export type AuthUserSummary = {
 }
 
 export type AuthOrganizationSummary = {
-  _id: string
+  _id: Id<"organizations">
   name: string
   type: OrganizationType
   verificationStatus: "pending" | "verified" | "suspended"
