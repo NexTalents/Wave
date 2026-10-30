@@ -51,6 +51,9 @@ importers:
         specifier: ^1.4.0
         version: 1.4.0
     devDependencies:
+      '@gradio/client':
+        specifier: ^2.7.2
+        version: 2.7.2
       '@playwright/test':
         specifier: ^1.64.1
         version: 1.64.1
@@ -514,6 +517,10 @@ packages:
 
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
+
+  '@gradio/client@2.7.2':
+    resolution: {integrity: sha512-brl8qT8vTY5PKSF1u5IhTrIdcmDg3uD8IDZ0Ccq2gT7e499DfabFABKorTU6qxLUV60W5fBXxLquNNhHVim0tA==}
+    engines: {node: '>=18.0.0'}
 
   '@hono/node-server@2.1.5':
     resolution: {integrity: sha512-MgP/I06GdvsilDspMk/qmRzpk8LOUStP6jFAbSRi40W09DhoyUn+Mj7eyKICPqeYKybOjVFLVIAQzvu1bfIa7Q==}
@@ -1908,6 +1915,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  fetch-event-stream@0.1.6:
+    resolution: {integrity: sha512-GREtJ5HNikdU2AXtZ6E/5bk+aslMU6ie5mPG6H9nvsdDkkHQ6m5lHwmmmDTOBexok9hApQ7EprsXCdmz9ZC68w==}
 
   figures@6.1.0:
     resolution: {integrity: sha512-d+l3qxjSesT4V7v2fh+QnmFnUWv9lSpjarhShNTgBOfA0ttejbQUAlHLitbjkoRiDulW0OPoQPYIGhIC8ohejg==}
@@ -3862,6 +3872,10 @@ snapshots:
 
   '@floating-ui/utils@0.2.12': {}
 
+  '@gradio/client@2.7.2':
+    dependencies:
+      fetch-event-stream: 0.1.6
+
   '@hono/node-server@2.1.5(hono@4.13.13)':
     dependencies:
       hono: 4.13.13
@@ -5347,6 +5361,8 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.7):
     optionalDependencies:
       picomatch: 4.0.7
+
+  fetch-event-stream@0.1.6: {}
 
   figures@6.1.0:
     dependencies:

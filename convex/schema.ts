@@ -219,4 +219,80 @@ export default defineSchema({
     .index("by_status_and_published", ["status", "publishedAt"])
     .index("by_material_grade_region_and_status", ["materialId", "gradeId", "regionId", "status"])
     .index("by_run", ["runId"]),
+
+  wastePickers: defineTable({
+    organizationId: v.id("organizations"),
+    name: v.string(),
+    phone: v.optional(v.string()),
+    memberCode: v.string(),
+    status: v.union(v.literal("active"), v.literal("inactive")),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_member_code", ["organizationId", "memberCode"]),
+
+  marketPrices: defineTable({
+    organizationId: v.id("organizations"),
+    material: v.string(),
+    grade: v.union(v.literal("A"), v.literal("B"), v.literal("C")),
+    pricePerKg: v.number(),
+    minimumPricePerKg: v.number(),
+    effectiveDate: v.string(),
+  }).index("by_organization_and_material", ["organizationId", "material"]),
+
+  transactions: defineTable({
+    organizationId: v.id("organizations"),
+    wastePickerId: v.id("wastePickers"),
+    operatorUserId: v.id("users"),
+    material: v.string(),
+    weightKg: v.number(),
+    aiGrade: v.union(v.literal("A"), v.literal("B"), v.literal("C")),
+    finalGrade: v.union(v.literal("A"), v.literal("B"), v.literal("C")),
+    condition: v.string(),
+    note: v.string(),
+    imageName: v.optional(v.string()),
+    wpiPricePerKg: v.number(),
+    minimumPricePerKg: v.number(),
+    finalPricePerKg: v.number(),
+    grossValue: v.number(),
+    paymentMode: v.union(v.literal("cash"), v.literal("stock")),
+    cashPaid: v.number(),
+    walletCredit: v.number(),
+    status: v.union(v.literal("confirmed"), v.literal("voided")),
+    wpiEligibleAt: v.number(),
+    voidedAt: v.optional(v.number()),
+    voidReason: v.optional(v.string()),
+  })
+    .index("by_organization", ["organizationId"])
+    .index("by_picker", ["wastePickerId"])
+    .index("by_status_and_wpi_time", ["organizationId", "status", "wpiEligibleAt"]),
+
+  materialLots: defineTable({
+    organizationId: v.id("organizations"),
+    transactionId: v.id("transactions"),
+    wastePickerId: v.id("wastePickers"),
+    material: v.string(),
+    weightKg: v.number(),
+    grade: v.union(v.literal("A"), v.literal("B"), v.literal("C")),
+    initialWpiPricePerKg: v.number(),
+    initialValue: v.number(),
+    remainingValue: v.number(),
+    expiresAt: v.number(),
+    status: v.union(v.literal("held"), v.literal("released")),
+  }).index("by_picker_and_status", ["wastePickerId", "status"]),
+
+  receiptDeliveries: defineTable({
+    transactionId: v.id("transactions"),
+    channel: v.union(v.literal("whatsapp"), v.literal("mock_whatsapp")),
+    status: v.union(
+      v.literal("queued"),
+      v.literal("sent"),
+      v.literal("delivered"),
+      v.literal("read"),
+      v.literal("failed")
+    ),
+    recipient: v.optional(v.string()),
+    messageId: v.optional(v.string()),
+    sentAt: v.optional(v.number()),
+    errorMessage: v.optional(v.string()),
+  }).index("by_transaction", ["transactionId"]),
 })

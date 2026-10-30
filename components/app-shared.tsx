@@ -105,25 +105,29 @@ export const navLinks: SidebarNavItem[] = [
   ),
 ]
 
-export const businessNavGroups: SidebarNavGroup[] = [
+export function getBusinessNavGroups(pathname?: string): SidebarNavGroup[] {
+  const current = pathname || "/dashboard/business"
+  return [
   {
     label: "Operasional",
     items: [
       {
         title: "Overview",
-        path: "/dashboard/business#overview",
+        path: "/dashboard/business",
         icon: <LayoutDashboardIcon />,
-        isActive: true,
+        isActive: current === "/dashboard/business" || current === "/dashboard/business/",
       },
       {
         title: "Transaksi",
-        path: "/dashboard/business#transactions",
+        path: "/dashboard/business/transactions",
         icon: <ReceiptTextIcon />,
+        isActive: current.startsWith("/dashboard/business/transactions"),
       },
       {
         title: "Setoran masuk",
-        path: "/dashboard/business#intake",
+        path: "/dashboard/business/intake",
         icon: <ArrowDownToLineIcon />,
+        isActive: current.startsWith("/dashboard/business/intake"),
       },
     ],
   },
@@ -167,7 +171,10 @@ export const businessNavGroups: SidebarNavGroup[] = [
       },
     ],
   },
-]
+  ]
+}
+
+export const businessNavGroups: SidebarNavGroup[] = getBusinessNavGroups()
 
 export const adminNavGroups: SidebarNavGroup[] = [
   {

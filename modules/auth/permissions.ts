@@ -6,6 +6,8 @@ export const permissions = {
   organizationRead: "organization:read",
   membersManage: "members:manage",
   depositsCreate: "deposits:create",
+  transactionsConfirm: "transactions:confirm",
+  transactionsVoid: "transactions:void",
   inventoryRead: "inventory:read",
   batchesCreate: "batches:create",
   batchesSell: "batches:sell",
@@ -23,6 +25,8 @@ export const rolePermissions: Readonly<Record<OrganizationRole, readonly Permiss
   operator: [
     permissions.organizationRead,
     permissions.depositsCreate,
+    permissions.transactionsConfirm,
+    permissions.transactionsVoid,
     permissions.inventoryRead,
     permissions.batchesCreate,
     permissions.batchesSell,

@@ -6,4 +6,7 @@ export { IndividualRoute } from "./individual-route"
 export { IndividualProfile } from "./individual-profile"
 export { IndividualPrices } from "./individual-prices"
 export { BusinessDashboard } from "./business-dashboard"
+export { BusinessIntakePage } from "./business-intake-page"
+export { BusinessTransactionsPage } from "./business-transactions-page"
 export type { DashboardRole } from "./types"
+
