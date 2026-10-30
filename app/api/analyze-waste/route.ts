@@ -102,10 +102,13 @@ export async function POST(request: Request) {
     if (labelObj && typeof labelObj === "object") {
       rawLabel = String(labelObj.label || "").toLowerCase()
       if (Array.isArray(labelObj.confidences)) {
-        confidences = labelObj.confidences.map((c) => ({
-          label: MATERIAL_MAP[c.label?.toLowerCase()] || c.label,
-          confidence: Number(c.confidence) || 0,
-        }))
+        confidences = labelObj.confidences.map((c) => {
+          const label = String(c.label || "")
+          return {
+            label: MATERIAL_MAP[label.toLowerCase()] || label,
+            confidence: Number(c.confidence) || 0,
+          }
+        })
       }
     } else if (typeof labelObj === "string") {
       rawLabel = labelObj.toLowerCase()
