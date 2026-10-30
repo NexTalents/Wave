@@ -13,11 +13,6 @@ import {
   BarChart3Icon,
   HandshakeIcon,
   ReceiptTextIcon,
-  Settings2Icon,
-  WalletCardsIcon,
-  ShieldCheckIcon,
-  DatabaseIcon,
-  ClipboardCheckIcon,
 } from "lucide-react"
 
 export type SidebarNavItem = {
@@ -108,70 +103,48 @@ export const navLinks: SidebarNavItem[] = [
 export function getBusinessNavGroups(pathname?: string): SidebarNavGroup[] {
   const current = pathname || "/dashboard/business"
   return [
-  {
-    label: "Operasional",
-    items: [
-      {
-        title: "Overview",
-        path: "/dashboard/business",
-        icon: <LayoutDashboardIcon />,
-        isActive: current === "/dashboard/business" || current === "/dashboard/business/",
-      },
-      {
-        title: "Transaksi",
-        path: "/dashboard/business/transactions",
-        icon: <ReceiptTextIcon />,
-        isActive: current.startsWith("/dashboard/business/transactions"),
-      },
-      {
-        title: "Setoran masuk",
-        path: "/dashboard/business/intake",
-        icon: <ArrowDownToLineIcon />,
-        isActive: current.startsWith("/dashboard/business/intake"),
-      },
-    ],
-  },
-  {
-    label: "Jaringan WAVE",
-    items: [
-      {
-        title: "Material & harga",
-        path: "/dashboard/business#materials",
-        icon: <BarChart3Icon />,
-      },
-      {
-        title: "WPI Business",
-        path: "/dashboard/business/wpi",
-        icon: <DatabaseIcon />,
-      },
-      {
-        title: "Partner pemasok",
-        path: "/dashboard/business/partners",
-        icon: <HandshakeIcon />,
-        isActive: current.startsWith("/dashboard/business/partners"),
-      },
-      {
-        title: "Pembayaran",
-        path: "/dashboard/business#payouts",
-        icon: <WalletCardsIcon />,
-      },
-    ],
-  },
-  {
-    label: "Workspace",
-    items: [
-      {
-        title: "Laporan",
-        path: "/dashboard/business#reports",
-        icon: <ChartPieIcon />,
-      },
-      {
-        title: "Pengaturan tim",
-        path: "/dashboard/business#team",
-        icon: <Settings2Icon />,
-      },
-    ],
-  },
+    {
+      label: "Operasional",
+      items: [
+        {
+          title: "Overview",
+          path: "/dashboard/business",
+          icon: <LayoutDashboardIcon />,
+          isActive:
+            current === "/dashboard/business" ||
+            current === "/dashboard/business/",
+        },
+        {
+          title: "Transaksi",
+          path: "/dashboard/business/transactions",
+          icon: <ReceiptTextIcon />,
+          isActive: current.startsWith("/dashboard/business/transactions"),
+        },
+        {
+          title: "Setoran masuk",
+          path: "/dashboard/business/intake",
+          icon: <ArrowDownToLineIcon />,
+          isActive: current.startsWith("/dashboard/business/intake"),
+        },
+        {
+          title: "Harga",
+          path: "/dashboard/business/harga",
+          icon: <BarChart3Icon />,
+          isActive: current.startsWith("/dashboard/business/harga"),
+        },
+      ],
+    },
+    {
+      label: "Jaringan WAVE",
+      items: [
+        {
+          title: "Partner pemasok",
+          path: "/dashboard/business/partners",
+          icon: <HandshakeIcon />,
+          isActive: current.startsWith("/dashboard/business/partners"),
+        },
+      ],
+    },
   ]
 }
 

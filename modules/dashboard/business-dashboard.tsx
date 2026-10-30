@@ -15,16 +15,20 @@ import {
   UsersRound,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { api } from "@/convex/_generated/api"
-import { useBusinessTransactions } from "./use-business-transactions"
+import { getStoredTransactions } from "@/lib/transactions/store"
+import type { TransactionRecord } from "@/lib/transactions/types"
+import { formatPercent, formatRupiah, getSnapshot } from "@/modules/wpi/data"
 
 export function BusinessDashboard() {
-  const { organization, transactions: loadedTransactions } = useBusinessTransactions()
-  const pickers = useQuery(
-    api.wastePickers.list,
-    organization ? { organizationId: organization._id } : "skip"
-  )
-  const transactions = useMemo(() => loadedTransactions ?? [], [loadedTransactions])
+  const [transactions, setTransactions] = useState<TransactionRecord[]>([])
+
+  useEffect(() => {
+    setTransactions(getStoredTransactions())
+    const handleUpdate = () => setTransactions(getStoredTransactions())
+    window.addEventListener("wave_transactions_updated", handleUpdate)
+    return () =>
+      window.removeEventListener("wave_transactions_updated", handleUpdate)
+  }, [])
 
   const confirmedTx = useMemo(
     () => transactions.filter((tx) => tx.status === "confirmed"),
@@ -37,7 +41,9 @@ export function BusinessDashboard() {
   )
 
   const totalWeight = useMemo(
-    () => Math.round(confirmedTx.reduce((sum, tx) => sum + tx.weightKg, 0) * 10) / 10,
+    () =>
+      Math.round(confirmedTx.reduce((sum, tx) => sum + tx.weightKg, 0) * 10) /
+      10,
     [confirmedTx]
   )
 
@@ -46,15 +52,25 @@ export function BusinessDashboard() {
     [transactions]
   )
 
+  const materials = useMemo(() => getSnapshot(), [])
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <section id="overview" className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+      <section
+        id="overview"
+        className="flex flex-col justify-between gap-4 md:flex-row md:items-end"
+      >
         <div>
-          <p className="text-sm font-semibold text-primary uppercase tracking-wider">Workspace Bisnis</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight text-foreground">Overview Operasional</h1>
+          <p className="text-sm font-semibold tracking-wider text-primary uppercase">
+            Workspace Bisnis
+          </p>
+          <h1 className="mt-1 text-3xl font-bold tracking-tight text-foreground">
+            Overview Operasional
+          </h1>
           <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
-            Pantau arus material daur ulang, riwayat transaksi, dan performa pasokan dari seluruh mitra pemulung.
+            Pantau arus material daur ulang, riwayat transaksi, dan performa
+            pasokan dari seluruh mitra pemulung.
           </p>
         </div>
         <div className="flex items-center gap-2.5">
@@ -74,7 +90,10 @@ export function BusinessDashboard() {
       </section>
 
       {/* KPI Metrics */}
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Ringkasan bisnis">
+      <section
+        className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        aria-label="Ringkasan bisnis"
+      >
         <MetricCard
           icon={CircleDollarSign}
           label="Nilai Pembelian Bulan Ini"
@@ -105,15 +124,17 @@ export function BusinessDashboard() {
       <section className="grid gap-6 xl:grid-cols-[1.35fr_1fr]">
         {/* Recent Transactions Card */}
         <Card id="transactions" className="border-border shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between gap-4 border-b bg-muted/20 py-4 px-5">
+          <CardHeader className="flex flex-row items-center justify-between gap-4 border-b bg-muted/20 px-5 py-4">
             <div>
-              <CardTitle className="text-base font-bold">Transaksi Terbaru</CardTitle>
+              <CardTitle className="text-base font-bold">
+                Transaksi Terbaru
+              </CardTitle>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 Setoran material terakhir yang masuk dari mitra operasional.
               </p>
             </div>
             <Link
-              className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+              className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
               href="/dashboard/business/transactions"
             >
               Lihat semua <ArrowUpRight className="size-3.5" />
@@ -130,7 +151,7 @@ export function BusinessDashboard() {
               ) : null}
               {recentTransactions.map((tx) => (
                 <div
-                  className="grid gap-3 px-5 py-3.5 sm:grid-cols-[1fr_auto] sm:items-center hover:bg-muted/30 transition"
+                  className="grid gap-3 px-5 py-3.5 transition hover:bg-muted/30 sm:grid-cols-[1fr_auto] sm:items-center"
                   key={tx.id}
                 >
                   <div className="flex min-w-0 items-start gap-3">
@@ -139,10 +160,10 @@ export function BusinessDashboard() {
                     </span>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="truncate font-semibold text-foreground text-sm">
+                        <p className="truncate text-sm font-semibold text-foreground">
                           {tx.picker.name}
                         </p>
-                        <span className="inline-flex items-center justify-center size-4 rounded bg-primary text-[10px] font-bold text-primary-foreground">
+                        <span className="inline-flex size-4 items-center justify-center rounded bg-primary text-[10px] font-bold text-primary-foreground">
                           {tx.finalGrade}
                         </span>
                       </div>
@@ -152,7 +173,9 @@ export function BusinessDashboard() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between gap-3 pl-12 sm:block sm:pl-0 sm:text-right">
-                    <p className="font-bold text-foreground text-sm">{tx.weightKg} kg</p>
+                    <p className="text-sm font-bold text-foreground">
+                      {tx.weightKg} kg
+                    </p>
                     <p className="text-xs font-semibold text-primary">
                       Rp {tx.grossValue.toLocaleString("id-ID")}
                     </p>
@@ -161,70 +184,61 @@ export function BusinessDashboard() {
               ))}
             </div>
             <Link
-              className="flex items-center justify-center gap-2 border-t border-border p-3.5 text-xs font-semibold text-primary hover:bg-muted/50 transition"
+              className="flex items-center justify-center gap-2 border-t border-border p-3.5 text-xs font-semibold text-primary transition hover:bg-muted/50"
               href="/dashboard/business/transactions"
             >
-              Buka Semua Daftar Transaksi & Audit Log <ArrowUpRight aria-hidden="true" className="size-4" />
+              Buka Semua Daftar Transaksi & Audit Log{" "}
+              <ArrowUpRight aria-hidden="true" className="size-4" />
             </Link>
           </CardContent>
         </Card>
 
         {/* Materials & Reference Prices */}
         <Card id="materials" className="border-border shadow-xs">
-          <CardHeader className="border-b bg-muted/20 py-4 px-5">
-            <CardTitle className="text-base font-bold">Indeks Material & Harga WPI</CardTitle>
+          <CardHeader className="border-b bg-muted/20 px-5 py-4">
+            <CardTitle className="text-base font-bold">
+              Indeks Material & Harga WPI
+            </CardTitle>
             <p className="mt-0.5 text-xs text-muted-foreground">
               Standar harga acuan WAVE untuk evaluasi setoran masuk.
             </p>
           </CardHeader>
-          <CardContent className="p-4 space-y-2.5">
-            {[
-              {
-                name: "PET",
-                desc: "Botol Plastik Bening",
-                gradeA: "Rp 4.800/kg",
-                gradeB: "Rp 3.900/kg",
-                change: "+4,2%",
-              },
-              {
-                name: "Kardus",
-                desc: "Karton Gelombang Kering",
-                gradeA: "Rp 2.700/kg",
-                gradeB: "Rp 2.300/kg",
-                change: "+1,8%",
-              },
-              {
-                name: "Aluminium",
-                desc: "Kaleng Minuman Bersih",
-                gradeA: "Rp 18.500/kg",
-                gradeB: "Rp 15.000/kg",
-                change: "-0,6%",
-              },
-              {
-                name: "Kertas",
-                desc: "Kertas Putih HVS / Arsip",
-                gradeA: "Rp 2.200/kg",
-                gradeB: "Rp 1.800/kg",
-                change: "+0,5%",
-              },
-            ].map((item) => (
+          <CardContent className="space-y-2.5 p-4">
+            {materials.map((item) => (
               <Link
                 className="flex items-center gap-3 rounded-xl border border-border p-3 transition hover:bg-muted/50"
-                href={`/wpi?material=${item.name.toLowerCase()}`}
-                key={item.name}
+                href={`/dashboard/business/harga?material=${item.materialSlug}`}
+                key={item.materialSlug}
               >
-                <span className="grid size-9 place-items-center rounded-lg bg-secondary text-primary shrink-0">
+                <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-secondary text-primary">
                   <BarChart3 aria-hidden="true" className="size-4" />
                 </span>
-                <span className="flex-1 min-w-0">
-                  <span className="block font-semibold text-foreground text-sm">{item.name}</span>
-                  <span className="block text-xs text-muted-foreground truncate">{item.desc}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-foreground">
+                    {item.material.ID}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    Indeks transaksi WPI
+                  </span>
                 </span>
                 <span className="text-right">
-                  <span className="block text-xs font-bold text-foreground">Grade A: {item.gradeA}</span>
-                  <span className="block text-[11px] text-muted-foreground">Grade B: {item.gradeB}</span>
+                  <span className="block text-sm font-bold text-foreground">
+                    {formatRupiah(item.index)}
+                  </span>
+                  <span
+                    className={
+                      item.change >= 0
+                        ? "block text-xs font-semibold text-primary"
+                        : "block text-xs font-semibold text-destructive"
+                    }
+                  >
+                    {formatPercent(item.change)}
+                  </span>
                 </span>
-                <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground shrink-0" />
+                <ChevronRight
+                  aria-hidden="true"
+                  className="size-4 shrink-0 text-muted-foreground"
+                />
               </Link>
             ))}
           </CardContent>
@@ -263,16 +277,20 @@ export function BusinessDashboard() {
       <Card id="reports" className="border-primary/20 bg-primary/5">
         <CardContent className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="font-bold text-foreground text-base">Laporan Periode Operasional Siap Ditinjau</p>
+            <p className="text-base font-bold text-foreground">
+              Laporan Periode Operasional Siap Ditinjau
+            </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Analisis pergerakan volume setoran, efektivitas klasifikasi AI Gradio, dan total pencairan dana kepada mitra pemulung.
+              Analisis pergerakan volume setoran, efektivitas klasifikasi AI
+              Gradio, dan total pencairan dana kepada mitra pemulung.
             </p>
           </div>
           <Link
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-primary/30 bg-card px-4 text-sm font-semibold text-primary hover:bg-secondary transition shrink-0"
+            className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-primary/30 bg-card px-4 text-sm font-semibold text-primary transition hover:bg-secondary"
             href="/dashboard/business/transactions"
           >
-            Lihat Laporan Transaksi <ArrowUpRight aria-hidden="true" className="size-4" />
+            Lihat Laporan Transaksi{" "}
+            <ArrowUpRight aria-hidden="true" className="size-4" />
           </Link>
         </CardContent>
       </Card>
@@ -298,7 +316,9 @@ function MetricCard({
           <p className="text-xs font-medium text-muted-foreground">{label}</p>
           <Icon aria-hidden="true" className="size-5 text-primary" />
         </div>
-        <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">{value}</p>
+        <p className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+          {value}
+        </p>
         <p className="mt-1 text-xs text-muted-foreground">{note}</p>
       </CardContent>
     </Card>
@@ -321,14 +341,19 @@ function ActionCard({
   href: string
 }) {
   return (
-    <Card id={id} className="transition hover:-translate-y-0.5 hover:shadow-md border-border">
-      <CardContent className="p-5 flex flex-col justify-between h-full">
+    <Card
+      id={id}
+      className="border-border transition hover:-translate-y-0.5 hover:shadow-md"
+    >
+      <CardContent className="flex h-full flex-col justify-between p-5">
         <div>
           <span className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
             <Icon aria-hidden="true" className="size-5" />
           </span>
-          <p className="mt-4 font-bold text-foreground text-base">{title}</p>
-          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{description}</p>
+          <p className="mt-4 text-base font-bold text-foreground">{title}</p>
+          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+            {description}
+          </p>
         </div>
         <Link
           className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
