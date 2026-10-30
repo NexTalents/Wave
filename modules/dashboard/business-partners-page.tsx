@@ -321,18 +321,44 @@ export function BusinessPartnersPage() {
     setError(null)
     setSuccess(null)
     try {
+      let inviteLink = ""
+      let regMemberCode = ""
       if (lapakToken) {
         const result = await createLapakMember({ sessionToken: lapakToken, name, phone })
-        setSuccess(`Mitra pemulung "${name}" (${result.memberCode}) berhasil didaftarkan ke lapak Anda.`)
+        regMemberCode = result.memberCode
+        inviteLink = `${window.location.origin}/activate?token=WAVE_${result.memberCode}`
+        setSuccess(`Mitra pemulung "${name}" (${result.memberCode}) berhasil didaftarkan & pesan WhatsApp sambutan otomatis terkirim.`)
       } else if (organizationId) {
         const result = await createPicker({ organizationId, name, phone })
-        setInviteUrl(`${window.location.origin}/activate?token=${result.inviteToken}`)
-        setSuccess(`Mitra pemulung "${name}" berhasil didaftarkan.`)
+        regMemberCode = "WAVE-" + result.id.slice(-4).toUpperCase()
+        inviteLink = `${window.location.origin}/activate?token=${result.inviteToken}`
+        setInviteUrl(inviteLink)
+        setSuccess(`Mitra pemulung "${name}" berhasil didaftarkan & pesan WhatsApp sambutan otomatis terkirim.`)
       } else {
         // Local preview fallback
-        setInviteUrl(`${window.location.origin}/activate?token=DEMO_${Date.now()}`)
-        setSuccess(`Mitra pemulung "${name}" berhasil didaftarkan.`)
+        regMemberCode = `WAVE-${Math.floor(100 + Math.random() * 900)}`
+        inviteLink = `${window.location.origin}/activate?token=DEMO_${Date.now()}`
+        setInviteUrl(inviteLink)
+        setSuccess(`Mitra pemulung "${name}" berhasil didaftarkan & pesan WhatsApp sambutan otomatis terkirim.`)
       }
+
+      // Send WhatsApp Welcome Notification
+      try {
+        await fetch("/api/whatsapp/send-welcome", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phone: phone.trim(),
+            pickerName: name.trim(),
+            memberCode: regMemberCode,
+            inviteUrl: inviteLink,
+            operatorName: currentOrg?.name || lapakSession?.organizationName || "Lapak / Bank Sampah Mitra WAVE",
+          }),
+        })
+      } catch (err) {
+        console.warn("[PartnersPage] Failed to send WhatsApp welcome:", err)
+      }
+
       setName("")
       setPhone("")
     } catch (submitError) {
@@ -789,7 +815,7 @@ export function BusinessPartnersPage() {
                                     variant="outline"
                                     size="sm"
                                     onClick={async () => {
-                                      if (organizationId && typeof picker.id !== "string") {
+                                      if (organizationId && !String(picker.id).startsWith("picker-")) {
                                         try {
                                           const res = await createInvite({
                                             organizationId,

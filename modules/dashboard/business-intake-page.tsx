@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState, useEffect, useRef } from "react"
-import { useQuery } from "convex/react"
+import { useQuery, useMutation } from "convex/react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import {
@@ -19,6 +19,7 @@ import {
   History,
   Info,
   LoaderCircle,
+  MessageCircle,
   Phone,
   Printer,
   Receipt,
@@ -32,6 +33,7 @@ import {
   Sparkles,
   Store,
   User,
+  UserPlus,
   UserRound,
   Users,
   Wallet,
@@ -127,6 +129,88 @@ export function BusinessIntakePage() {
     api.partners.listLapakMembers,
     organizationId ? { organizationId } : "skip"
   )
+
+  // Quick Picker Registration State & Mutations
+  const createPickerMutation = useMutation(api.wastePickers.create)
+  const createLapakMemberMutation = useMutation(api.lapakAuth.createMember)
+  const [isQuickPickerModalOpen, setIsQuickPickerModalOpen] = useState(false)
+  const [quickPickerName, setQuickPickerName] = useState("")
+  const [quickPickerPhone, setQuickPickerPhone] = useState("")
+  const [quickPickerLoading, setQuickPickerLoading] = useState(false)
+  const [quickPickerSuccess, setQuickPickerSuccess] = useState<string | null>(null)
+  const [quickPickerError, setQuickPickerError] = useState<string | null>(null)
+
+  async function handleQuickRegisterPicker(e?: React.FormEvent) {
+    if (e) e.preventDefault()
+    if (!quickPickerName.trim() || !quickPickerPhone.trim()) return
+
+    setQuickPickerLoading(true)
+    setQuickPickerError(null)
+    setQuickPickerSuccess(null)
+
+    try {
+      let newPickerId = ""
+      let newMemberCode = ""
+      let inviteUrl = ""
+
+      if (lapakToken) {
+        const res = await createLapakMemberMutation({
+          sessionToken: lapakToken,
+          name: quickPickerName.trim(),
+          phone: quickPickerPhone.trim(),
+        })
+        newPickerId = res.id
+        newMemberCode = res.memberCode
+        inviteUrl = `${window.location.origin}/activate?token=WAVE_${res.memberCode}`
+      } else if (organizationId) {
+        const res = await createPickerMutation({
+          organizationId,
+          name: quickPickerName.trim(),
+          phone: quickPickerPhone.trim(),
+        })
+        newPickerId = res.id
+        newMemberCode = "WAVE-" + res.id.slice(-4).toUpperCase()
+        inviteUrl = `${window.location.origin}/activate?token=${res.inviteToken}`
+      } else {
+        newPickerId = `pick-quick-${Date.now()}`
+        newMemberCode = `WAVE-${Math.floor(100 + Math.random() * 900)}`
+        inviteUrl = `${window.location.origin}/activate?token=DEMO_${Date.now()}`
+      }
+
+      // Automatic WhatsApp Welcome Notification
+      try {
+        await fetch("/api/whatsapp/send-welcome", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phone: quickPickerPhone.trim(),
+            pickerName: quickPickerName.trim(),
+            memberCode: newMemberCode,
+            inviteUrl,
+            operatorName:
+              organizations?.[0]?.organization.name ||
+              lapakSession?.organizationName ||
+              "Lapak / Bank Sampah Mitra WAVE",
+          }),
+        })
+      } catch (err) {
+        console.warn("[QuickPicker] Failed to send WhatsApp welcome:", err)
+      }
+
+      setSelectedPickerId(newPickerId)
+      setQuickPickerSuccess(`Berhasil mendaftarkan "${quickPickerName}" (${newMemberCode})! WhatsApp sambutan telah terkirim.`)
+      setTimeout(() => {
+        setIsQuickPickerModalOpen(false)
+        setQuickPickerSuccess(null)
+        setQuickPickerName("")
+        setQuickPickerPhone("")
+      }, 1500)
+    } catch (err) {
+      setQuickPickerError(err instanceof Error ? err.message : "Gagal mendaftarkan pemulung.")
+    } finally {
+      setQuickPickerLoading(false)
+    }
+  }
 
   // All available items based on supplierMode (unfiltered by search query)
   const allAvailablePickers = useMemo(() => {
@@ -649,12 +733,29 @@ export function BusinessIntakePage() {
                   <label className="text-xs font-semibold text-foreground">
                     Cari & Pilih {supplierMode === "lapak" ? "Lapak Pengepul" : "Mitra Pemulung"} *
                   </label>
-                  <Link
-                    href="/dashboard/business/partners"
-                    className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-0.5"
-                  >
-                    + Mitra Baru <ExternalLink className="size-2.5" />
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    {supplierMode === "waste_picker" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setQuickPickerName(pickerSearch.trim())
+                          setQuickPickerPhone("")
+                          setQuickPickerError(null)
+                          setQuickPickerSuccess(null)
+                          setIsQuickPickerModalOpen(true)
+                        }}
+                        className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 transition"
+                      >
+                        <UserPlus className="size-3" /> + Daftar Cepat
+                      </button>
+                    )}
+                    <Link
+                      href="/dashboard/business/partners"
+                      className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-0.5"
+                    >
+                      + Mitra Baru <ExternalLink className="size-2.5" />
+                    </Link>
+                  </div>
                 </div>
 
                 {/* SEARCHABLE COMBOBOX */}
@@ -708,12 +809,29 @@ export function BusinessIntakePage() {
                           <p className="text-xs text-muted-foreground font-medium">
                             Tidak ditemukan {supplierMode === "lapak" ? "lapak" : "pemulung"} yang cocok dengan &quot;{pickerSearch}&quot;
                           </p>
-                          <Link
-                            href="/dashboard/business/partners"
-                            className="mt-2.5 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-                          >
-                            + Tambah Mitra Baru di Partners <ExternalLink className="size-3" />
-                          </Link>
+                          {supplierMode === "waste_picker" ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setQuickPickerName(pickerSearch.trim())
+                                setQuickPickerPhone("")
+                                setQuickPickerError(null)
+                                setQuickPickerSuccess(null)
+                                setIsQuickPickerModalOpen(true)
+                                setIsPickerDropdownOpen(false)
+                              }}
+                              className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white shadow-xs hover:bg-emerald-700 transition"
+                            >
+                              <UserPlus className="size-3.5" /> Daftarkan {pickerSearch ? `"${pickerSearch}"` : "Pemulung Baru"} Cepat
+                            </button>
+                          ) : (
+                            <Link
+                              href="/dashboard/business/partners"
+                              className="mt-2.5 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                            >
+                              + Tambah Mitra Baru di Partners <ExternalLink className="size-3" />
+                            </Link>
+                          )}
                         </div>
                       ) : (
                         <div className="space-y-1">
@@ -1502,6 +1620,112 @@ export function BusinessIntakePage() {
           <div style={{ borderTop: "1px dashed #000", paddingTop: "6px", textAlign: "center", fontSize: "8px" }}>
             <p style={{ margin: 0 }}>Transparansi Harga Bersama WAVE</p>
             <p style={{ margin: 0 }}>Layanan: wa.me/628112002026</p>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: REGISTRASI CEPAT PEMULUNG DI MEJA TIMBANGAN                       */}
+      {/* ========================================================================= */}
+      {isQuickPickerModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+        >
+          <div className="relative flex w-full max-w-md flex-col overflow-hidden rounded-3xl border border-border bg-card text-card-foreground shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border bg-muted/30 px-6 py-4">
+              <div className="flex items-center gap-2.5">
+                <span className="grid size-9 place-items-center rounded-xl bg-emerald-500/10 text-emerald-600">
+                  <UserPlus className="size-5" />
+                </span>
+                <div>
+                  <h3 className="font-bold text-foreground text-sm">
+                    Daftar Cepat Pemulung Baru
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Langsung terdaftar & pesan WhatsApp terkirim otomatis
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQuickPickerModalOpen(false)}
+                className="rounded-full p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleQuickRegisterPicker} className="space-y-4 p-6">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-foreground">
+                  Nama Lengkap / Panggilan Pemulung *
+                </label>
+                <Input
+                  value={quickPickerName}
+                  onChange={(e) => setQuickPickerName(e.target.value)}
+                  placeholder="Contoh: Pak Budi"
+                  className="h-10 text-sm"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold text-foreground">
+                  Nomor WhatsApp Pemulung *
+                </label>
+                <Input
+                  type="tel"
+                  value={quickPickerPhone}
+                  onChange={(e) => setQuickPickerPhone(e.target.value)}
+                  placeholder="Contoh: 081234567890"
+                  className="h-10 text-sm font-mono"
+                  required
+                />
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Struk timbangan dan kartu anggota digital akan otomatis dikirimkan ke nomor ini.
+                </p>
+              </div>
+
+              {quickPickerError && (
+                <p className="rounded-xl bg-destructive/10 p-3 text-xs text-destructive">
+                  {quickPickerError}
+                </p>
+              )}
+
+              {quickPickerSuccess && (
+                <div className="rounded-xl bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                  <CheckCircle2 className="size-4 shrink-0" />
+                  <span>{quickPickerSuccess}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsQuickPickerModalOpen(false)}
+                  disabled={quickPickerLoading}
+                  size="sm"
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={quickPickerLoading || !quickPickerName.trim() || !quickPickerPhone.trim()}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs h-9 gap-1.5"
+                >
+                  {quickPickerLoading ? (
+                    <LoaderCircle className="size-3.5 animate-spin" />
+                  ) : (
+                    <MessageCircle className="size-3.5" />
+                  )}
+                  {quickPickerLoading ? "Mendaftarkan..." : "Daftarkan & Kirim WA"}
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       )}

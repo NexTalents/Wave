@@ -1,29 +1,56 @@
 "use client"
 
-import { useConvexAuth } from "convex/react"
+import { useConvexAuth, useQuery } from "convex/react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useCurrentUser } from "@/modules/auth"
+import { getPickerSessionToken } from "@/modules/auth/picker-session"
+import { api } from "@/convex/_generated/api"
 import { AccountTypeSetup } from "./account-type-setup"
 
 export function IndividualRoute({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const { isAuthenticated, isLoading } = useConvexAuth()
-  const user = useCurrentUser()
+  const [mounted, setMounted] = useState(false)
+  const [pickerToken, setPickerToken] = useState<string | null>(null)
 
   useEffect(() => {
-    if (user && user.accountType !== "individual") {
+    setPickerToken(getPickerSessionToken())
+    setMounted(true)
+  }, [])
+
+  // Clerk Auth
+  const { isAuthenticated: isClerkAuth, isLoading: isClerkLoading } = useConvexAuth()
+  const user = useCurrentUser()
+
+  // WhatsApp OTP Pemulung Session
+  const pickerSession = useQuery(
+    api.pickerAuth.currentPickerSession,
+    pickerToken ? { sessionToken: pickerToken } : "skip"
+  )
+
+  const isPickerAuthenticated = Boolean(pickerSession)
+  const isOverallAuthenticated = isClerkAuth || isPickerAuthenticated
+
+  useEffect(() => {
+    if (!mounted) return
+    // Only redirect if Clerk user is signed in with a business account and not a pemulung session
+    if (!isPickerAuthenticated && user && user.accountType !== "individual") {
       router.replace(
-        user?.accountType === "business" ? "/dashboard/business" : "/dashboard"
+        user.accountType === "business" ? "/dashboard/business" : "/dashboard"
       )
     }
-  }, [router, user])
+  }, [mounted, isPickerAuthenticated, router, user])
 
-  if (isLoading || (isAuthenticated && user === undefined)) {
+  const isLoading =
+    !mounted ||
+    (isClerkLoading && !pickerToken) ||
+    (Boolean(pickerToken) && pickerSession === undefined)
+
+  if (isLoading) {
     return (
       <main className="grid min-h-screen place-items-center bg-background p-6">
         <Card className="w-full max-w-md">
@@ -38,16 +65,19 @@ export function IndividualRoute({ children }: { children: ReactNode }) {
     )
   }
 
-  if (!isAuthenticated) {
+  if (!isOverallAuthenticated) {
     return (
       <main className="grid min-h-screen place-items-center bg-background p-6">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md shadow-lg border-border">
           <CardHeader>
             <CardTitle>Login diperlukan</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Halaman ini khusus untuk Mitra Pemulung WAVE. Silakan masuk atau aktivasi akun Anda.
+            </p>
             <Link
-              className="text-primary underline-offset-4 hover:underline"
+              className="inline-flex items-center text-primary font-semibold text-sm underline-offset-4 hover:underline"
               href="/login"
             >
               Masuk ke WAVE
@@ -58,10 +88,18 @@ export function IndividualRoute({ children }: { children: ReactNode }) {
     )
   }
 
-  if (user === null) return <AccountTypeSetup />
-  if (!user) return null
+  // If authenticated via Pemulung WhatsApp session
+  if (isPickerAuthenticated) {
+    return <div data-individual-route={pathname}>{children}</div>
+  }
 
-  if (user.accountType !== "individual") return null
+  // If authenticated via Clerk
+  if (isClerkAuth) {
+    if (user === null) return <AccountTypeSetup />
+    if (!user) return null
+    if (user.accountType !== "individual") return null
+    return <div data-individual-route={pathname}>{children}</div>
+  }
 
-  return <div data-individual-route={pathname}>{children}</div>
+  return null
 }

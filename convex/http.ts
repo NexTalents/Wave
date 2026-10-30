@@ -58,9 +58,15 @@ http.route({
           const messageId = st.id
           const status = st.status
           const recipient = st.recipient_id
-          const errorMessage = st.errors?.[0]?.message
+          const errorDetail = st.errors?.[0]
+          const errorMessage = errorDetail
+            ? `[Code ${errorDetail.code}] ${errorDetail.title || errorDetail.message || ""}: ${errorDetail.error_data?.details || errorDetail.message || ""}`
+            : undefined
 
-          console.log(`[WhatsApp Webhook] Msg ${messageId} -> ${recipient} [${status}]`)
+          console.log(
+            `[WhatsApp Webhook] Msg ${messageId} -> ${recipient} [${status}]`,
+            errorDetail ? JSON.stringify(errorDetail) : ""
+          )
 
           if (
             messageId &&

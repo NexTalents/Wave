@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useCurrentUser } from "@/modules/auth"
 import { getLapakSessionToken } from "@/modules/auth/lapak-session"
+import { getPickerSessionToken } from "@/modules/auth/picker-session"
 import { api } from "@/convex/_generated/api"
 import { getBusinessNavGroups, navGroups } from "@/components/app-shared"
 import { dashboardRoleLabels, type DashboardRole } from "./types"
@@ -43,9 +44,11 @@ export function DashboardView({
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
   const [lapakToken, setLapakToken] = useState<string | null>(null)
+  const [pickerToken, setPickerToken] = useState<string | null>(null)
 
   useEffect(() => {
     setLapakToken(getLapakSessionToken())
+    setPickerToken(getPickerSessionToken())
     setMounted(true)
   }, [])
 
@@ -59,10 +62,19 @@ export function DashboardView({
     lapakToken ? { sessionToken: lapakToken } : "skip"
   )
 
-  const isLapakAuthenticated = Boolean(lapakSession)
-  const isOverallAuthenticated = isClerkAuth || isLapakAuthenticated
+  // Convex Pemulung Authentication (for waste pickers activated via WhatsApp)
+  const pickerSession = useQuery(
+    api.pickerAuth.currentPickerSession,
+    pickerToken ? { sessionToken: pickerToken } : "skip"
+  )
 
-  const effectiveUserRole: DashboardRole = isLapakAuthenticated
+  const isPickerAuthenticated = Boolean(pickerSession)
+  const isLapakAuthenticated = Boolean(lapakSession)
+  const isOverallAuthenticated = isClerkAuth || isLapakAuthenticated || isPickerAuthenticated
+
+  const effectiveUserRole: DashboardRole = isPickerAuthenticated
+    ? "individual"
+    : isLapakAuthenticated
     ? "business"
     : (user?.accountType ?? "individual")
 
@@ -85,7 +97,11 @@ export function DashboardView({
   }, [expectedRole, isClerkAuth, isOverallAuthenticated, mounted, pathname, previewRole, router, targetRoute, user, effectiveUserRole])
 
   // Loading State
-  const isLoading = !mounted || (clerkLoading && !lapakToken) || (Boolean(lapakToken) && lapakSession === undefined)
+  const isLoading =
+    !mounted ||
+    (clerkLoading && !lapakToken && !pickerToken) ||
+    (Boolean(lapakToken) && lapakSession === undefined) ||
+    (Boolean(pickerToken) && pickerSession === undefined)
 
   if (isLoading) {
     return (
@@ -106,7 +122,7 @@ export function DashboardView({
     return <AccountTypeSetup />
   }
 
-  // Not authenticated in either Clerk or Lapak Convex
+  // Not authenticated in either Clerk or Lapak/Picker Convex
   if (!isOverallAuthenticated) {
     return (
       <main className="grid min-h-screen place-items-center bg-background p-6">
@@ -114,7 +130,7 @@ export function DashboardView({
           <CardHeader><CardTitle>Login diperlukan</CardTitle></CardHeader>
           <CardContent>
             <p className="text-xs text-muted-foreground mb-4">
-              Silakan masuk dengan akun Agen Besar atau akun Lapak Mitra Pengepul Anda untuk melanjutkan.
+              Silakan masuk dengan akun Agen Besar, Lapak Mitra, atau tautan aktivasi WhatsApp Pemulung Anda untuk melanjutkan.
             </p>
             <a className="inline-flex items-center gap-2 text-primary underline-offset-4 hover:underline font-semibold text-sm" href="/login">
               Masuk ke WAVE Bisnis <ArrowRight aria-hidden="true" className="size-4" />
@@ -130,7 +146,7 @@ export function DashboardView({
   }
 
   if (role === "individual") {
-    return <IndividualDashboard name={user?.name} />
+    return <IndividualDashboard name={pickerSession?.name || user?.name} />
   }
 
   const currentNavGroups = role === "business" ? getBusinessNavGroups(pathname) : navGroups

@@ -25,7 +25,7 @@ import {
   Zap,
 } from "lucide-react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useId, useMemo, useState } from "react"
 import { api } from "@/convex/_generated/api"
 import { AuthShell } from "./auth-shell"
@@ -148,6 +148,7 @@ function RegisterSidebarAside({ role }: { role: AccountRole }) {
 
 export function RegisterForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [accountRole, setAccountRole] = useState<AccountRole>("large_agent")
 
   return (
@@ -158,6 +159,17 @@ export function RegisterForm() {
       title="Daftar Akun WAVE Bisnis"
     >
       <div className="space-y-6">
+        {searchParams.get("error") === "oauth_unregistered" && (
+          <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3.5 text-xs text-amber-900 flex items-start gap-2.5">
+            <AlertTriangle className="size-4 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold">Akun Google Belum Terdaftar</p>
+              <p className="opacity-90 mt-0.5">
+                Akun Google Anda belum terdaftar di sistem WAVE. Silakan pilih jenis usaha dan lengkapi pendaftaran di bawah ini.
+              </p>
+            </div>
+          </div>
+        )}
         {/* ========================================================================= */}
         {/* TAB / CARD SELECTOR TERPADU (2 PILIHAN PERAN BISNIS)                       */}
         {/* ========================================================================= */}

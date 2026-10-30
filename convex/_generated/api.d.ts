@@ -15,6 +15,7 @@ import type * as auth_users from "../auth/users.js";
 import type * as http from "../http.js";
 import type * as lapakAuth from "../lapakAuth.js";
 import type * as partners from "../partners.js";
+import type * as pickerAuth from "../pickerAuth.js";
 import type * as transactions from "../transactions.js";
 import type * as wastePickers from "../wastePickers.js";
 import type * as whatsapp from "../whatsapp.js";
@@ -33,6 +34,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   lapakAuth: typeof lapakAuth;
   partners: typeof partners;
+  pickerAuth: typeof pickerAuth;
   transactions: typeof transactions;
   wastePickers: typeof wastePickers;
   whatsapp: typeof whatsapp;
