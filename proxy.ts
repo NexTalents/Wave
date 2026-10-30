@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
+import { NextResponse } from "next/server"
 
 const isProtectedPage = createRouteMatcher(["/dashboard(.*)"])
 const isProtectedApi = createRouteMatcher([
@@ -7,7 +8,14 @@ const isProtectedApi = createRouteMatcher([
 ])
 
 export default clerkMiddleware(async (auth, request) => {
-  if (!isProtectedPage(request) && !isProtectedApi(request)) return
+  if (isProtectedApi(request)) {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    return
+  }
+  if (!isProtectedPage(request)) return
 
   const signInUrl = new URL("/login", request.url)
   signInUrl.searchParams.set(

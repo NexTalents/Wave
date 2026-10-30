@@ -14,7 +14,9 @@ test.describe("Auth guards", () => {
   test("E-10 ignores an external redirect target", async ({ page }) => {
     await page.goto("/login?redirect_url=//evil.com")
 
-    await expect(page).toHaveURL(/\/login\?redirect_url=\/\/evil\.com$/)
+    await expect(page).toHaveURL(
+      /^http:\/\/localhost:\d+\/login\?redirect_url=(\/\/|%2F%2F)evil\.com$/
+    )
     await expect(
       page.getByRole("heading", { name: "Masuk ke WAVE" })
     ).toBeVisible()

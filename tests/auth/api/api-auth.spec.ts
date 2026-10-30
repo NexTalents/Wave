@@ -7,5 +7,21 @@ test("E-12 rejects an unauthenticated WhatsApp request", async ({
     data: { transactionId: "unauthenticated-test" },
   })
 
-  expect([401, 404]).toContain(response.status())
+  expect(response.status()).toBe(401)
+})
+
+test("E-12b rejects an unauthenticated AI analysis request", async ({
+  request,
+}) => {
+  const response = await request.post("/api/analyze-waste", {
+    multipart: {
+      image: {
+        name: "sample.jpg",
+        mimeType: "image/jpeg",
+        buffer: Buffer.from("not-a-real-image"),
+      },
+    },
+  })
+
+  expect(response.status()).toBe(401)
 })
