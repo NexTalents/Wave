@@ -154,3 +154,15 @@
     @apply font-sans;
   }
 }
+
+@keyframes wave-loading-progress {
+  0% {
+    transform: translateX(-120%);
+  }
+  50% {
+    transform: translateX(190%);
+  }
+  100% {
+    transform: translateX(360%);
+  }
+}

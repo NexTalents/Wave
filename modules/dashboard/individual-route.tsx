@@ -4,8 +4,8 @@ import { useConvexAuth } from "convex/react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, type ReactNode } from "react"
+import { LoadingScreen } from "@/components/loading-screen"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
 import { useCurrentUser } from "@/modules/auth"
 import { AccountTypeSetup } from "./account-type-setup"
 
@@ -25,16 +25,11 @@ export function IndividualRoute({ children }: { children: ReactNode }) {
 
   if (isLoading || (isAuthenticated && user === undefined)) {
     return (
-      <main className="grid min-h-screen place-items-center bg-background p-6">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <Skeleton className="h-6 w-44" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
-      </main>
+      <LoadingScreen
+        description="Memuat profil dan ruang kerja personalmu."
+        eyebrow="WAVE · Pemulung"
+        title="Menyiapkan ruang personal…"
+      />
     )
   }
 

@@ -6,9 +6,9 @@ import { usePathname, useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { AppShell } from "@/components/app-shell"
 import { Dashboard } from "@/components/dashboard"
+import { LoadingScreen } from "@/components/loading-screen"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
 import { useCurrentUser } from "@/modules/auth"
 import { getBusinessNavGroups, navGroups } from "@/components/app-shared"
 import { dashboardRoleLabels, type DashboardRole } from "./types"
@@ -41,9 +41,9 @@ export function DashboardView({
   const router = useRouter()
   const { isAuthenticated, isLoading: authLoading } = useConvexAuth()
   const user = useCurrentUser()
-  const role = previewRole ?? user?.accountType ?? "individual"
+  const userRole = user?.platformRole === "admin" ? "admin" : user?.accountType ?? "individual"
+  const role = previewRole ?? userRole
   const RoleIcon = roleIcons[role]
-  const userRole = user?.accountType ?? "individual"
   const targetRoute = roleRoutes[userRole]
 
   useEffect(() => {
@@ -57,12 +57,12 @@ export function DashboardView({
 
   if (authLoading || (isAuthenticated && user === undefined)) {
     return (
-      <main className="grid min-h-screen place-items-center bg-background p-6">
-        <Card className="w-full max-w-md">
-          <CardHeader><Skeleton className="h-6 w-44" /></CardHeader>
-          <CardContent className="flex flex-col gap-3"><Skeleton className="h-4 w-full" /><Skeleton className="h-10 w-full" /></CardContent>
-        </Card>
-      </main>
+      <LoadingScreen
+        description="Memeriksa sesi dan menentukan ruang kerja yang sesuai dengan akunmu."
+        eyebrow="WAVE · Workspace"
+        icon={ShieldCheck}
+        title="Menyiapkan dashboard…"
+      />
     )
   }
 

@@ -16,12 +16,12 @@ import { api } from "@/convex/_generated/api"
 import type { Id } from "@/convex/_generated/dataModel"
 import { buildObservationFingerprint } from "@/convex/wpi/workflow"
 import { AppShell } from "@/components/app-shell"
+import { LoadingPanel, LoadingScreen } from "@/components/loading-screen"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,
@@ -188,15 +188,12 @@ export function BusinessWpiDashboard() {
 
   if (user === undefined || organizations === undefined)
     return (
-      <main className="grid min-h-screen place-items-center bg-background p-6">
-        <Card className="w-full max-w-md">
-          <CardContent className="space-y-3 p-6">
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
-      </main>
+      <LoadingScreen
+        description="Memeriksa membership organisasi dan menyiapkan workspace pengiriman harga."
+        eyebrow="WPI Business · Access"
+        icon={Send}
+        title="Menyiapkan workspace bisnis…"
+      />
     )
   if (!user)
     return (
@@ -331,10 +328,12 @@ export function BusinessWpiDashboard() {
         ) : null}
 
         {isVerified && !overview ? (
-          <div className="space-y-4">
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-52 w-full" />
-          </div>
+          <LoadingPanel
+            description="Mengambil metrik organisasi dan benchmark published yang setara."
+            eyebrow="WPI Business · Overview"
+            icon={TrendingUp}
+            title="Memuat ringkasan organisasi…"
+          />
         ) : null}
         {overview ? (
           <section
@@ -388,7 +387,13 @@ export function BusinessWpiDashboard() {
               </CardHeader>
               <CardContent className="p-0">
                 {!overview ? (
-                  <Skeleton className="m-6 h-32" />
+                  <LoadingPanel
+                    className="m-4 rounded-lg border-0 sm:m-6"
+                    description="Mencari benchmark material, grade, region, dan periode yang sama."
+                    eyebrow="WPI Business · Benchmark"
+                    icon={Scale}
+                    title="Memuat perbandingan…"
+                  />
                 ) : comparableBenchmarks.length === 0 ? (
                   <p className="p-6 text-sm text-muted-foreground">
                     Belum ada published benchmark yang dapat dibandingkan.
@@ -748,7 +753,13 @@ export function BusinessWpiDashboard() {
               </CardHeader>
               <CardContent className="p-0">
                 {!overview ? (
-                  <Skeleton className="m-6 h-32" />
+                  <LoadingPanel
+                    className="m-4 rounded-lg border-0 sm:m-6"
+                    description="Menyiapkan riwayat submission yang hanya terlihat oleh organisasi ini."
+                    eyebrow="WPI Business · History"
+                    icon={FileInput}
+                    title="Memuat riwayat…"
+                  />
                 ) : overview.observations.length === 0 ? (
                   <p className="p-6 text-sm text-muted-foreground">
                     Belum ada submission.

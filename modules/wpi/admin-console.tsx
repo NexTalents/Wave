@@ -14,12 +14,12 @@ import {
 import { useMemo, useState } from "react"
 import { api } from "@/convex/_generated/api"
 import { AppShell } from "@/components/app-shell"
+import { LoadingPanel, LoadingScreen } from "@/components/loading-screen"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
   Table,
   TableBody,
@@ -93,15 +93,6 @@ function MetricCard({
         <p className="mt-1 text-xs text-muted-foreground">{note}</p>
       </CardContent>
     </Card>
-  )
-}
-
-function LoadingPanel() {
-  return (
-    <div className="space-y-4">
-      <Skeleton className="h-24 w-full" />
-      <Skeleton className="h-48 w-full" />
-    </div>
   )
 }
 
@@ -190,15 +181,12 @@ export function AdminWpiConsole() {
 
   if (user === undefined)
     return (
-      <main className="grid min-h-screen place-items-center bg-background p-6">
-        <Card className="w-full max-w-md">
-          <CardContent className="space-y-3 p-6">
-            <Skeleton className="h-6 w-48" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
-      </main>
+      <LoadingScreen
+        description="Memeriksa hak akses administrator dan menyiapkan kontrol kualitas WPI."
+        eyebrow="WPI Admin · Access"
+        icon={ShieldCheck}
+        title="Menyiapkan console admin…"
+      />
     )
   if (!user || user.platformRole !== "admin")
     return (
@@ -281,7 +269,12 @@ export function AdminWpiConsole() {
         ) : null}
 
         {!overview ? (
-          <LoadingPanel />
+          <LoadingPanel
+            description="Mengambil metrik, snapshot, dan coverage data terbaru."
+            eyebrow="WPI Admin · Overview"
+            icon={Database}
+            title="Memuat ringkasan WPI…"
+          />
         ) : (
           <section
             className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6"
@@ -527,7 +520,13 @@ export function AdminWpiConsole() {
               </CardContent>
               <CardContent className="p-0">
                 {!observations ? (
-                  <LoadingPanel />
+                  <LoadingPanel
+                    className="rounded-none border-0"
+                    description="Menyiapkan antrean observasi untuk direview."
+                    eyebrow="WPI Admin · Observasi"
+                    icon={FileCheck2}
+                    title="Memuat observasi…"
+                  />
                 ) : filteredObservations.length === 0 ? (
                   <p className="p-6 text-sm text-muted-foreground">
                     Belum ada observasi pada filter ini.
@@ -863,9 +862,12 @@ export function AdminWpiConsole() {
                     </div>
                   </>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Belum ada candidate calculation.
-                  </p>
+                  <LoadingPanel
+                    description="Memeriksa candidate terbaru dan status kalkulasi."
+                    eyebrow="WPI Admin · Kalkulasi"
+                    icon={Play}
+                    title="Memuat candidate…"
+                  />
                 )}
               </CardContent>
             </Card>
@@ -886,7 +888,12 @@ export function AdminWpiConsole() {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {!catalog ? (
-                    <LoadingPanel />
+                    <LoadingPanel
+                      description="Mengambil material, grade, dan wilayah yang aktif."
+                      eyebrow="WPI Admin · Configuration"
+                      icon={Database}
+                      title="Memuat master material…"
+                    />
                   ) : catalog.length === 0 ? (
                     <div className="space-y-3">
                       <p className="text-sm text-muted-foreground">
@@ -1034,7 +1041,13 @@ export function AdminWpiConsole() {
               </CardHeader>
               <CardContent className="p-0">
                 {!sources ? (
-                  <LoadingPanel />
+                  <LoadingPanel
+                    className="rounded-none border-0"
+                    description="Mengambil daftar sumber harga dan status verifikasinya."
+                    eyebrow="WPI Admin · Configuration"
+                    icon={ShieldCheck}
+                    title="Memuat price sources…"
+                  />
                 ) : sources.length === 0 ? (
                   <p className="p-6 text-sm text-muted-foreground">
                     Belum ada source.
@@ -1092,7 +1105,13 @@ export function AdminWpiConsole() {
               </CardHeader>
               <CardContent className="p-0">
                 {!audits ? (
-                  <LoadingPanel />
+                  <LoadingPanel
+                    className="rounded-none border-0"
+                    description="Mengambil jejak aksi admin dan lifecycle WPI."
+                    eyebrow="WPI Admin · Audit"
+                    icon={ShieldCheck}
+                    title="Memuat audit history…"
+                  />
                 ) : audits.length === 0 ? (
                   <p className="p-6 text-sm text-muted-foreground">
                     Belum ada audit event.
