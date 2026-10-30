@@ -4,11 +4,7 @@ import { useSignUp } from "@clerk/nextjs/legacy"
 import { LoaderCircle } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
-import {
-  AuthInput,
-  AuthShell,
-  authPrimaryButtonClass,
-} from "./auth-shell"
+import { AuthInput, AuthShell, authPrimaryButtonClass } from "./auth-shell"
 import { getAuthError } from "./errors"
 import {
   accountTypes,
@@ -18,8 +14,13 @@ import {
   type OrganizationType,
 } from "./types"
 import { useRouter } from "next/navigation"
+import { safeRedirect } from "./redirect"
 
-export function RegisterForm() {
+export function RegisterForm({
+  redirectUrl = "/dashboard",
+}: {
+  redirectUrl?: string
+}) {
   const router = useRouter()
   const { isLoaded, setActive, signUp } = useSignUp()
   const [accountType, setAccountType] = useState<AccountType>("individual")
@@ -61,12 +62,21 @@ export function RegisterForm() {
 
       if (result.status === "complete" && result.createdSessionId) {
         await setActive({ session: result.createdSessionId })
-        router.push("/dashboard")
+        router.push(safeRedirect(redirectUrl))
         return
       }
 
+      if (
+        result.status !== "missing_requirements" ||
+        !result.unverifiedFields.includes("email_address")
+      ) {
+        router.replace("/register")
+        return
+      }
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" })
-      router.push(`/verify?mode=signup&accountType=${accountType}`)
+      router.push(
+        `/verify?mode=signup&accountType=${accountType}&redirect_url=${encodeURIComponent(safeRedirect(redirectUrl))}`
+      )
     } catch (value) {
       setError(getAuthError(value))
     } finally {
@@ -90,7 +100,7 @@ export function RegisterForm() {
                 className={
                   selected
                     ? "rounded-2xl border border-brand-400 bg-brand-50 p-4 text-left ring-2 ring-brand-500/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-                    : "rounded-2xl border border-brand-100 bg-white p-4 text-left transition-[background-color,border-color,box-shadow] hover:border-brand-300 hover:bg-brand-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                    : "hover:border-brand-300 rounded-2xl border border-brand-100 bg-white p-4 text-left transition-[background-color,border-color,box-shadow] hover:bg-brand-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
                 }
                 key={type}
                 onClick={() => setAccountType(type)}
@@ -123,7 +133,7 @@ export function RegisterForm() {
                 Jenis organisasi
               </span>
               <select
-                className="h-12 w-full rounded-2xl border border-brand-100 bg-brand-50/45 px-4 text-sm text-ink outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-500/10"
+                className="h-12 w-full rounded-2xl border border-brand-100 bg-brand-50/45 px-4 text-sm text-ink transition outline-none focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-500/10"
                 onChange={(event) =>
                   setOrganizationType(event.target.value as OrganizationType)
                 }
@@ -206,7 +216,9 @@ export function RegisterForm() {
           disabled={!isLoaded || loading}
           type="submit"
         >
-          {loading ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : null}
+          {loading ? (
+            <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+          ) : null}
           {loading
             ? "Menyiapkan verifikasi..."
             : "Konfirmasi email dan lanjutkan"}
@@ -215,7 +227,7 @@ export function RegisterForm() {
           Sudah punya akun?{" "}
           <Link
             className="font-semibold text-brand-600 underline-offset-4 hover:underline"
-            href="/login"
+            href={`/login?redirect_url=${encodeURIComponent(safeRedirect(redirectUrl))}`}
           >
             Masuk di sini
           </Link>

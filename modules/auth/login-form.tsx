@@ -13,8 +13,13 @@ import {
   authSocialButtonClass,
 } from "./auth-shell"
 import { getAuthError } from "./errors"
+import { safeRedirect } from "./redirect"
 
-export function LoginForm() {
+export function LoginForm({
+  redirectUrl = "/dashboard",
+}: {
+  redirectUrl?: string
+}) {
   const router = useRouter()
   const { isLoaded, setActive, signIn } = useSignIn()
   const [email, setEmail] = useState("")
@@ -40,12 +45,51 @@ export function LoginForm() {
       })
       if (result.status === "complete" && result.createdSessionId) {
         await setActive({ session: result.createdSessionId })
-        router.push("/dashboard")
+        router.push(safeRedirect(redirectUrl))
         return
       }
 
       if (result.status === "needs_second_factor") {
-        router.push("/verify?mode=login")
+        router.push(
+          `/verify?mode=login&factor=second&redirect_url=${encodeURIComponent(safeRedirect(redirectUrl))}`
+        )
+        return
+      }
+
+      if (result.status === "needs_client_trust") {
+        router.push(
+          `/verify?mode=login&factor=second&redirect_url=${encodeURIComponent(safeRedirect(redirectUrl))}`
+        )
+        return
+      }
+
+      if (result.status === "needs_first_factor") {
+        const hasEmailCode = result.supportedFirstFactors?.some(
+          (factor) => factor.strategy === "email_code"
+        )
+        if (hasEmailCode) {
+          router.push(
+            `/verify?mode=login&factor=first&redirect_url=${encodeURIComponent(safeRedirect(redirectUrl))}`
+          )
+          return
+        }
+        setError(
+          "Login memerlukan metode verifikasi tambahan yang belum tersedia."
+        )
+        return
+      }
+
+      if (result.status === "needs_new_password") {
+        setError(
+          "Password perlu diperbarui. Gunakan alur reset password Clerk atau hubungi admin WAVE."
+        )
+        return
+      }
+
+      if (result.status === "needs_protect_check") {
+        setError(
+          "Verifikasi keamanan tambahan diperlukan. Coba lagi dari perangkat ini."
+        )
         return
       }
 
@@ -67,7 +111,7 @@ export function LoginForm() {
     try {
       await signIn.authenticateWithRedirect({
         redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/dashboard",
+        redirectUrlComplete: safeRedirect(redirectUrl),
         strategy,
       })
     } catch (value) {
@@ -164,7 +208,7 @@ export function LoginForm() {
         <span className="text-brand-700">Belum punya akun?</span>
         <Link
           className="font-semibold text-brand-600 underline-offset-4 hover:underline"
-          href="/register"
+          href={`/register?redirect_url=${encodeURIComponent(safeRedirect(redirectUrl))}`}
         >
           Buat akun
         </Link>
