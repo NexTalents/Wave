@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function BusinessTransactionsRoute() {
   return (
-    <DashboardView expectedRole="business">
+    <DashboardView>
       <BusinessTransactionsPage />
     </DashboardView>
   )

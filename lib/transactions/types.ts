@@ -25,6 +25,7 @@ export type WasteConfidence = {
 
 export type TransactionRecord = {
   id: string
+  recordId: string
   createdAt: number
   dateFormatted: string
   picker: WastePicker

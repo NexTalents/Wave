@@ -2,6 +2,7 @@ import { v } from "convex/values"
 import { mutation, query } from "./_generated/server"
 import { requirePermission, writeAuditLog } from "./auth/authorization"
 import { getCurrentUser } from "./auth/authorization"
+import { permissions } from "../modules/auth/permissions"
 
 const pickerValidator = v.object({
   id: v.id("wastePickers"),
@@ -70,15 +71,16 @@ export const create = mutation({
   },
   returns: inviteResultValidator,
   handler: async (ctx, args) => {
-    const actor = await requirePermission(
-      ctx,
-      args.organizationId,
-      "members:manage"
-    )
+    const actor = await requirePermission(ctx, args.organizationId, permissions.depositsCreate)
     const name = args.name.trim()
     const phone = args.phone.trim()
-    if (!name) throw new Error("Nama pemulung wajib diisi")
-    if (!phone) throw new Error("Nomor telepon wajib diisi")
+    const digits = phone.replace(/\D/g, "")
+    if (name.length < 2 || name.length > 80) {
+      throw new Error("Waste picker name must be 2-80 characters")
+    }
+    if (digits.length < 9 || digits.length > 15) {
+      throw new Error("Waste picker phone number is invalid")
+    }
 
     const existing = await ctx.db
       .query("wastePickers")

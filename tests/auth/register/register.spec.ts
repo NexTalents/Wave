@@ -19,8 +19,8 @@ test.describe("Register", () => {
     "Clerk requires registration passwords of at least 15 characters"
   )
 
-  for (const user of authUsers) {
-    test(`${user.accountType} user can complete registration without email verification`, async ({
+  for (const user of authUsers.filter((candidate) => candidate.accountType === "business")) {
+    test("large agent can complete registration without email verification", async ({
       page,
     }) => {
       const registrationEmail = uniqueRegistrationEmail(
@@ -31,32 +31,29 @@ test.describe("Register", () => {
       await expectAuthShell(page, "Buat akun WAVE")
       await page
         .getByRole("button", {
-          name:
-            user.accountType === "business"
-              ? "Bisnis / organisasi"
-              : "Individu",
+          name: "Agen besar / grosir",
         })
         .click()
 
-      if (user.accountType === "business") {
-        await page
-          .getByLabel("Nama bisnis / organisasi")
-          .fill(user.organizationName ?? "WAVE Test Organization")
-        await page.getByLabel("Jenis organisasi").selectOption("bank_sampah")
-      }
+      await page
+        .getByLabel("Nama bisnis / organisasi")
+        .fill(user.organizationName ?? "WAVE Test Organization")
+      await page.getByLabel("Jenis organisasi").selectOption("large_agent")
 
       await page.getByLabel("Nama depan").fill("WAVE")
       await page.getByLabel("Nama belakang").fill("Test")
       await page.getByLabel("Email").fill(registrationEmail)
+      await page.getByLabel("Nomor telepon").fill("081234567890")
       await fillPasswordPair(page, user.password)
       await page
         .getByRole("button", { name: "Konfirmasi email dan lanjutkan" })
         .click()
 
       await expect(page).toHaveURL(
-        new RegExp(`/dashboard/${user.accountType}$`)
+        /\/dashboard\/business$/,
+        { timeout: 15_000 }
       )
-      await expectDashboard(page, user.accountType)
+      await expectDashboard(page, "business")
     })
   }
 })

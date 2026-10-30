@@ -1,161 +1,198 @@
-# WAVE — Waste Value Exchange
+# WAVE
 
-WAVE is a transparent market intelligence and B2B trading platform designed for the circular economy. It empowers informal waste pickers by providing a public Waste Price Index (WPI), utilizes Computer Vision for objective material grading, and orchestrates trades using AI Agents.
-
-## Visual Identity
-
-### Logo
-
-![WAVE Logo](public/assets/wave-logo.svg)
-
-The WAVE logo combines the wordmark “WAVE” with a friendly animal mascot resembling a cow or buffalo. The mascot represents WAVE’s proximity to communities and field operators, while the bold wordmark communicates strength, movement, and the circulation of value within the recycling ecosystem.
-
-The logo uses a monochrome style with a transparent background. It can be displayed in black on light backgrounds and in white/inverted form on dark backgrounds.
-
-### Colors
-
-WAVE’s color palette is dominated by shades of green to represent the environment, sustainability, growth, and the circular economy.
-
-| No. | Color | Hex Code | Meaning |
-| --- | --- | --- | --- |
-| 1 | WAVE Green | `#245A32` | Primary brand color representing sustainability, trust, and circular economic growth. |
-| 2 | Deep Green | `#102815` | Represents stability, professionalism, security, and a strong ecosystem. |
-| 3 | Sage Green | `#86AD7E` | Represents balance, environmental recovery, collaboration, and harmony. |
-| 4 | Pale Green | `#EFF5EC` | Provides a clean, light, and environmentally friendly interface background. |
-| 5 | Off White | `#F7FAF5` | Represents transparency, cleanliness, openness, and ease of use. |
-| 6 | Coral | `#BF5B5A` | Accent and warning color representing attention, urgency, and actions that require review. |
-| 7 | Gold | `#8D7239` | Represents economic value, material quality, commodity pricing, and value creation. |
-| 8 | Muted Green Gray | `#647466` | Used for secondary information and supporting text in a neutral, readable way. |
-
-### Typography
-
-WAVE uses a modern and accessible type system to support both business operations and community-oriented users.
-
-| Font | Usage | Meaning |
-| --- | --- | --- |
-| Plus Jakarta Sans | Headings, body text, navigation, buttons, and primary interface information. | Modern, professional, friendly, and highly readable. |
-| JetBrains Mono | Lapak codes, member codes, transaction numbers, prices, and technical information. | Precise, structured, technical, and trustworthy. |
-
-Plus Jakarta Sans is the primary interface font, while JetBrains Mono is used for data that requires accurate character-by-character reading.
-
-## The Problem
-
-In developing countries like Indonesia, the waste recycling supply chain is heavily dependent on informal waste pickers.
-- Information asymmetry: Waste pickers are passive price-takers. Prices are dictated by middlemen without any public reference.
-- Subjective grading: Quality assessment of raw recyclable materials is done manually, often resulting in unfair price deductions.
-- Fragmented trading: Waste banks struggle to find the right industrial buyers and fail to time the market correctly due to the lack of predictive analytics.
+WAVE is a web application for recording recyclable-material deposits and publishing a Waste Price Index (WPI). It provides individual, business, and admin workspaces backed by Clerk authentication and Convex.
 
 ## The Solution
 
-WAVE acts as a stock exchange for recyclable materials. It consists of:
+WAVE introduces an integrated ecosystem built around four complementary capabilities.
 
-- WPI (Waste Price Index): A real-time benchmark price derived from actual, validated industrial transactions.
-- AI Visual Inspection: OpenCV-powered grading (A/B/C) to provide objective evidence of material quality before transactions.
-- Agentic Trade Orchestration: Nebius/NVIDIA-powered AI Agents that read industrial demands, evaluate warehouse stocks, and draft optimized transaction allocations.
-- Inclusive Transparency: Waste pickers receive digital receipts via WhatsApp (comparing the Market Price vs. Paid Price) without needing to install any app.
+### 1. Waste Price Index (WPI)
 
-## Architecture & Flow
-WAVE is built as a Modular Monolith to support multiple hackathon submissions within a single, maintainable repository. We use a Feature Flag & UI Slots approach to dynamically load specific AI components (Vision vs. Agent) without cluttering the client bundle.
+Public reference prices, historical charts, price movements, and material information for `PET`, `HDPE`, `PP`, `OCC`, `Aluminium`, and `Iron`. Published data distinguishes validated transaction prices from reference prices.
+
+> Demo or simulated data is not presented as independently verified market data.
+
+### 2. AI-Powered Visual Inspection
+
+The business intake flow sends a captured image to an external Gradio service, receives a material and grade A/B/C proposal, then requires operator confirmation. The feature assists rather than replaces human inspection.
+
+### 3. Agentic Trade Orchestration
+
+_Planned._ AI-assisted inventory and buyer matching with human approval. No trade-agent or buyer marketplace implementation currently exists in this repository.
+
+### 4. Inclusive Price Transparency
+
+After Convex records a deposit, it schedules a WhatsApp receipt containing the material, weight, grade, prices, and payment values.
+
+## Features
+
+| Feature                                           | Status                                     |
+| ------------------------------------------------- | ------------------------------------------ |
+| Landing pages, WPI, and material details          | Implemented                                |
+| Clerk auth, onboarding, role guards, and sign-out | Implemented                                |
+| Individual dashboard                              | Implemented; deposit data is not connected |
+| Business intake, transactions, void, and members  | Implemented                                |
+| Image analysis through Gradio                     | Implemented; requires an external service  |
+| WPI admin review, calculation, and publishing     | Implemented                                |
+| WhatsApp receipts through Convex                  | Implemented                                |
+| B2B buyer marketplace and AI trade agent          | Planned                                    |
+
+## Architecture
+
+WAVE follows a modular monolith: Next.js handles the web application and image-analysis API, Clerk handles identity, and Convex provides the database and transactional/realtime backend.
+
+### High-Level Architecture
+
+```mermaid
+flowchart TB
+    USERS["Individuals / Business Operators / Admins"]
+
+    subgraph WEB["WAVE Web Platform"]
+        UI["Next.js App Router"]
+        PUBLIC["Landing Pages & Public WPI"]
+        DASHBOARD["Role-Based Dashboards"]
+        ANALYSIS["Image Analysis API"]
+    end
+
+    subgraph CORE["Application Core"]
+        AUTH["Clerk Authentication"]
+        TRANSACTIONS["Deposits & Transactions"]
+        WPI["WPI Review, Calculation & Publishing"]
+        RECEIPTS["WhatsApp Receipts"]
+    end
+
+    subgraph DATA["Data Layer"]
+        CONVEX[("Convex Database")]
+    end
+
+    GRADIO["External Gradio Service"]
+    META["WhatsApp Cloud API"]
+    AGENT["Trade Agent — Planned"]
+
+    USERS --> UI
+    UI --> PUBLIC
+    UI --> DASHBOARD
+    UI --> AUTH
+    DASHBOARD --> TRANSACTIONS
+    DASHBOARD --> WPI
+    ANALYSIS --> GRADIO
+    TRANSACTIONS --> CONVEX
+    WPI --> CONVEX
+    RECEIPTS --> CONVEX
+    RECEIPTS --> META
+    TRANSACTIONS --> RECEIPTS
+    TRANSACTIONS -.-> AGENT
+```
+
+Dashed connections represent planned capabilities.
+
+### End-to-End Workflow
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant P as Waste Picker
-    participant OBS as Waste Bank Operator
-    participant CV as OpenCV Service (Vision Module)
-    participant CORE as WAVE Core (Rules & DB)
-    participant AGENT as NVIDIA Agent (Nebius Module)
-    participant BUY as Industrial Buyer
+    actor Picker as Waste Picker
+    participant Operator as Business Operator
+    participant Web as WAVE Web
+    participant Gradio as Gradio Service
+    participant Core as Convex Core
+    participant WA as WhatsApp
+    participant Admin as WPI Admin
 
-    Note over P, CORE: Phase 1: Visual Inspection (OpenCV x AWS)
-    P->>OBS: Brings recyclable materials
-    OBS->>CV: Captures photo via WAVE App
-    CV-->>CV: AI Visual Grading & Feature Extraction
-    CV-->>OBS: Returns Grade Proposal (A/B/C) + Evidence
-    OBS->>CORE: Approves Grade & Logs Deposit
-    CORE->>P: Sends transparent WhatsApp Receipt
+    Picker->>Operator: Deliver recyclable material
+    Operator->>Web: Select member, weight, and capture image
+    Web->>Gradio: Analyze image
+    Gradio-->>Web: Material and grade proposal
+    Operator->>Web: Confirm grade, price, and payment mode
+    Web->>Core: Create transaction
+    Core->>Core: Calculate payment and store records
+    Core-->>WA: Send digital receipt
+    Admin->>Core: Review eligible observations
+    Admin->>Core: Calculate and publish WPI snapshot
+    Core-->>Web: Serve published WPI
 
-    Note over OBS, BUY: Phase 2: Agentic Trade (Nebius x NVIDIA)
-    BUY->>CORE: Posts buy order (e.g., 500kg PET Grade A)
-    CORE-->>AGENT: Triggers AI Agent
-    AGENT-->>AGENT: Evaluates inventory & vision evidence via Tool Calling
-    AGENT->>OBS: Proposes trade allocation draft
-    OBS->>CORE: Human Approval
-    CORE->>BUY: Deal Executed
-    
-    Note over CORE, BUY: Phase 3: Market Intelligence
-    CORE-->>CORE: Calculates new WPI based on real transaction
+    Note over Core,Admin: Buyer marketplace and trade-agent matching remain planned
 ```
+
+### Architecture Principles
+
+- **Modularity:** auth, dashboard, transactions, WhatsApp, and WPI have separate domain modules.
+- **Human-in-the-loop:** operators confirm AI-assisted grading; admins review and publish WPI data.
+- **Single source of truth:** Convex stores operational records and published WPI data.
+- **Authorization:** backend access is scoped by user role and organization.
 
 ## Tech Stack
 
-### Core Platform
-
-- Frontend: Next.js App Router, React, TailwindCSS, dan Shadcn UI
-- Database dan real-time data: Convex
-- Language: TypeScript
-
-### AI dan Python Runtime
-
-- Computer Vision: Python, FastAPI, OpenCV, dan AWS
-- Agent orchestration: Nebius AI Cloud, NVIDIA open-source LLM, dan tool calling
+| Layer                 | Technology                                        |
+| --------------------- | ------------------------------------------------- |
+| Web                   | Next.js 16, React 19, TypeScript                  |
+| UI                    | Tailwind CSS, Base UI, shadcn components          |
+| Auth                  | Clerk                                             |
+| Backend & data        | Convex                                            |
+| Image analysis client | Gradio client; external service required          |
+| Testing               | Vitest, convex-test, Node test runner, Playwright |
 
 ## Repository Structure
 
 ```text
-/wave-monorepo
- ├── /src
- │    ├── /core                  # Shared business logic, Convex DB schemas, UI layouts
- │    ├── /modules
- │    │    ├── /vision           # OpenCV components, AWS integrations, camera UI
- │    │    ├── /agent            # NVIDIA AI Agent chat UI, Nebius integration
- │    │    └── /transaction      # Shared ledger and B2B trade components
- │    └── /app                   # Next.js pages with UI Slots & Dynamic Imports
- │
- ├── /services
- │    └── /vision-api            # Python FastAPI service for OpenCV image processing
- │
- └── .env.example                # Environment variables (including Feature Flags)
+app/         Next.js routes and image-analysis API
+components/  shared UI components
+modules/     auth, dashboard, landing-page, and WPI features
+convex/      schema, auth, transactions, WhatsApp, and WPI backend
+lib/         transaction rules and shared utilities
+tests/       unit and Playwright tests
 ```
 
-## Getting Started
+## Local Development
 
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/your-org/wave-platform.git
-cd wave-platform
-```
-
-### 2. Environment Setup
-
-Copy the example environment file:
-
-```bash
-cp .env.example .env.local
-```
-
-Set the active module in `.env.local` to determine which AI feature to compile:
-```env
-# Set to 'OPENCV', 'NEBIUS', or 'FULL'
-NEXT_PUBLIC_ACTIVE_MODULE=FULL
-```
-
-### 3. Install Dependencies and Run Core App
+Prerequisites: Node.js, pnpm, a Convex project, and a Clerk application.
 
 ```bash
 pnpm install
+cp .env.example .env
+```
+
+Configure Clerk and Convex using `.env.example`. For Convex authentication, create a Clerk JWT template named `convex`, then set its issuer on the Convex deployment:
+
+```bash
+npx convex env set CLERK_JWT_ISSUER_DOMAIN https://<clerk-frontend-api>
+```
+
+Run the backend and web application in separate terminals:
+
+```bash
+npx convex dev
+```
+
+```bash
 pnpm dev
 ```
 
-The Convex backend will automatically sync with your local environment.
+The application is available at `http://localhost:3000`.
 
-### 4. Run Python Vision Service
+### Optional Integrations
+
+- Image analysis: set `GRADIO_API_URL` in the Next.js environment. `POST /api/analyze-waste` only accepts authenticated business/admin users.
+- WhatsApp: set `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, and `WHATSAPP_VERIFY_TOKEN` in the Convex deployment environment. Webhook callback: `https://<deployment>.convex.site/whatsapp/webhook`.
+- Playwright auth: set `WAVE_TEST_*` locally. Never store real credentials in `.env.example`.
+
+## Commands
 
 ```bash
-cd services/vision-api
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn main:app --reload
+pnpm dev          # development server
+pnpm build        # production build
+pnpm typecheck    # TypeScript
+pnpm lint         # ESLint
+pnpm test:unit    # WPI unit tests
+pnpm test:convex  # Convex function tests
+pnpm exec playwright test tests/auth # authentication E2E
 ```
+
+## Current Limitations
+
+- Individual deposit data is not yet connected to Convex transactions.
+- The business transaction list loads at most the latest 200 records.
+- The WhatsApp webhook does not yet verify `X-Hub-Signature-256`.
+- This repository does not yet contain billing, a buyer marketplace, or an AI trade agent.
+
+Never commit secrets, tokens, or test credentials. Follow `AGENTS.md` before modifying the codebase.

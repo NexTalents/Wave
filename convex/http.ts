@@ -1,7 +1,6 @@
 import { httpRouter } from "convex/server"
 import { httpAction } from "./_generated/server"
 import { internal } from "./_generated/api"
-import { DEFAULT_VERIFY_TOKEN } from "./whatsapp"
 
 const http = httpRouter()
 
@@ -18,11 +17,11 @@ http.route({
     const token = url.searchParams.get("hub.verify_token")
     const challenge = url.searchParams.get("hub.challenge")
 
-    const expectedToken =
-      process.env.VERIFY_TOKEN ||
-      process.env.WHATSAPP_VERIFY_TOKEN ||
-      DEFAULT_VERIFY_TOKEN
-
+    const expectedToken = process.env.WHATSAPP_VERIFY_TOKEN
+    if (!expectedToken) {
+      console.warn("[WhatsApp Webhook] WHATSAPP_VERIFY_TOKEN is not configured")
+      return new Response("Forbidden", { status: 403 })
+    }
 
     if (mode === "subscribe" && token === expectedToken) {
       console.log("[WhatsApp Webhook] Verification successful!")
@@ -32,7 +31,7 @@ http.route({
       })
     }
 
-    console.warn("[WhatsApp Webhook] Verification token mismatch. Received:", token)
+    console.warn("[WhatsApp Webhook] Verification token mismatch")
     return new Response("Forbidden", { status: 403 })
   }),
 })
@@ -86,8 +85,11 @@ http.route({
       }
 
       return new Response("EVENT_RECEIVED", { status: 200 })
-    } catch (err: any) {
-      console.error("[WhatsApp Webhook] Failed to process payload:", err)
+    } catch (error: unknown) {
+      console.error(
+        "[WhatsApp Webhook] Failed to process payload:",
+        error instanceof Error ? error.message : error
+      )
       return new Response("EVENT_RECEIVED", { status: 200 })
     }
   }),

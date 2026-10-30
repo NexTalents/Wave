@@ -117,33 +117,6 @@ export const currentLapakSession = query({
   },
 })
 
-export const checkLapakCode = query({
-  args: { lapakCode: v.string() },
-  returns: v.object({
-    exists: v.boolean(),
-    lapakName: v.string(),
-    phone: v.optional(v.string()),
-    address: v.optional(v.string()),
-  }),
-  handler: async (ctx, args) => {
-    const code = args.lapakCode.trim().toUpperCase()
-    if (!code) return { exists: false, lapakName: "" }
-    const organization = await ctx.db
-      .query("organizations")
-      .withIndex("by_lapak_code", (q) => q.eq("lapakCode", code))
-      .unique()
-    if (!organization || organization.type !== "small_lapak" || !organization.lapakCode) {
-      return { exists: false, lapakName: "" }
-    }
-    return {
-      exists: true,
-      lapakName: organization.name,
-      phone: organization.phone,
-      address: organization.address,
-    }
-  },
-})
-
 export const logoutLapak = mutation({
   args: { sessionToken: v.string() },
   returns: v.null(),

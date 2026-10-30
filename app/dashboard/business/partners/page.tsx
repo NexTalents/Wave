@@ -12,7 +12,7 @@ export const metadata = {
 
 export default function BusinessPartnersRoute() {
   return (
-    <DashboardView expectedRole="business">
+    <DashboardView>
       <Suspense fallback={<BusinessPartnersSkeleton />}>
         <BusinessPartnersPage />
       </Suspense>

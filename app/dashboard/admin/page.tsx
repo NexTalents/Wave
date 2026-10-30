@@ -1,5 +1,5 @@
-import { DashboardView } from "@/modules/dashboard"
+import { AdminWpiConsole } from "@/modules/wpi/admin-console"
 
 export default function AdminDashboardPage() {
-  return <DashboardView previewRole="admin" />
+  return <AdminWpiConsole />
 }

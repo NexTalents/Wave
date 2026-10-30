@@ -1,5 +1,4 @@
 # Agen Besar dan Lapak Kecil Implementation Plan
-
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Menambahkan pilihan akun Agen Besar/Lapak Kecil, relasi lapak ke agen, login custom lapak dengan banyak penanggung jawab, serta pemilihan pemasok yang benar di intake.
@@ -130,4 +129,3 @@
 - [ ] Run `rtk git diff --check`.
 - [ ] Run targeted lint for new/modified auth, partner, and Convex files.
 - [ ] Verify Convex deployment/codegen when network/authentication is available.
-

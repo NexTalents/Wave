@@ -13,7 +13,11 @@ import {
   BarChart3Icon,
   HandshakeIcon,
   ReceiptTextIcon,
+  Settings2Icon,
   WalletCardsIcon,
+  ShieldCheckIcon,
+  DatabaseIcon,
+  ClipboardCheckIcon,
 } from "lucide-react"
 
 export type SidebarNavItem = {
@@ -104,51 +108,100 @@ export const navLinks: SidebarNavItem[] = [
 export function getBusinessNavGroups(pathname?: string): SidebarNavGroup[] {
   const current = pathname || "/dashboard/business"
   return [
-    {
-      label: "Operasional",
-      items: [
-        {
-          title: "Overview",
-          path: "/dashboard/business",
-          icon: <LayoutDashboardIcon />,
-          isActive:
-            current === "/dashboard/business" ||
-            current === "/dashboard/business/",
-        },
-        {
-          title: "Transaksi",
-          path: "/dashboard/business/transactions",
-          icon: <ReceiptTextIcon />,
-          isActive: current.startsWith("/dashboard/business/transactions"),
-        },
-        {
-          title: "Setoran masuk",
-          path: "/dashboard/business/intake",
-          icon: <ArrowDownToLineIcon />,
-          isActive: current.startsWith("/dashboard/business/intake"),
-        },
-      ],
-    },
-    {
-      label: "Jaringan WAVE",
-      items: [
-        { title: "Material & harga", path: "/wpi", icon: <BarChart3Icon /> },
-        {
-          title: "Partner pemasok",
-          path: "/dashboard/business/partners",
-          icon: <HandshakeIcon />,
-          isActive: current.startsWith("/dashboard/business/partners"),
-        },
-        {
-          title: "Pembayaran",
-          path: "/dashboard/business#payouts",
-          icon: <WalletCardsIcon />,
-        },
-      ],
-    },
+  {
+    label: "Operasional",
+    items: [
+      {
+        title: "Overview",
+        path: "/dashboard/business",
+        icon: <LayoutDashboardIcon />,
+        isActive: current === "/dashboard/business" || current === "/dashboard/business/",
+      },
+      {
+        title: "Transaksi",
+        path: "/dashboard/business/transactions",
+        icon: <ReceiptTextIcon />,
+        isActive: current.startsWith("/dashboard/business/transactions"),
+      },
+      {
+        title: "Setoran masuk",
+        path: "/dashboard/business/intake",
+        icon: <ArrowDownToLineIcon />,
+        isActive: current.startsWith("/dashboard/business/intake"),
+      },
+    ],
+  },
+  {
+    label: "Jaringan WAVE",
+    items: [
+      {
+        title: "Material & harga",
+        path: "/dashboard/business#materials",
+        icon: <BarChart3Icon />,
+      },
+      {
+        title: "WPI Business",
+        path: "/dashboard/business/wpi",
+        icon: <DatabaseIcon />,
+      },
+      {
+        title: "Partner pemasok",
+        path: "/dashboard/business/partners",
+        icon: <HandshakeIcon />,
+        isActive: current.startsWith("/dashboard/business/partners"),
+      },
+      {
+        title: "Pembayaran",
+        path: "/dashboard/business#payouts",
+        icon: <WalletCardsIcon />,
+      },
+    ],
+  },
+  {
+    label: "Workspace",
+    items: [
+      {
+        title: "Laporan",
+        path: "/dashboard/business#reports",
+        icon: <ChartPieIcon />,
+      },
+      {
+        title: "Pengaturan tim",
+        path: "/dashboard/business#team",
+        icon: <Settings2Icon />,
+      },
+    ],
+  },
   ]
 }
 
-export const businessNavGroups: SidebarNavGroup[] = getBusinessNavGroups(
-  "/dashboard/business"
-)
+export const businessNavGroups: SidebarNavGroup[] = getBusinessNavGroups()
+
+export const adminNavGroups: SidebarNavGroup[] = [
+  {
+    label: "WPI Admin",
+    items: [
+      {
+        title: "Overview",
+        path: "/dashboard/admin/wpi#overview",
+        icon: <LayoutDashboardIcon />,
+        isActive: true,
+      },
+      {
+        title: "Observasi",
+        path: "/dashboard/admin/wpi#observations",
+        icon: <ClipboardCheckIcon />,
+      },
+      {
+        title: "Material & source",
+        path: "/dashboard/admin/wpi#configuration",
+        icon: <DatabaseIcon />,
+      },
+      {
+        title: "Audit",
+        path: "/dashboard/admin/wpi#audit",
+        icon: <ShieldCheckIcon />,
+      },
+    ],
+  },
+]

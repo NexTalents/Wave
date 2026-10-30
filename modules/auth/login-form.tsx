@@ -29,10 +29,16 @@ import {
 import { getAuthError } from "./errors"
 import { setLapakSessionToken } from "./lapak-session"
 import { setPickerSessionToken } from "./picker-session"
+import { safeRedirect } from "./redirect"
 
-export function LoginForm() {
+export function LoginForm({
+  redirectUrl = "/dashboard",
+}: {
+  redirectUrl?: string
+}) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const targetRedirect = safeRedirect(redirectUrl)
   const [loginRole, setLoginRole] = useState<"clerk" | "lapak" | "pemulung">("clerk")
 
   // Clerk State
@@ -77,7 +83,7 @@ export function LoginForm() {
       })
       if (result.status === "complete" && result.createdSessionId) {
         await setActive({ session: result.createdSessionId })
-        router.push("/dashboard")
+        router.push(targetRedirect)
         return
       }
 
@@ -189,8 +195,8 @@ export function LoginForm() {
 
     try {
       await signIn.authenticateWithRedirect({
-        redirectUrl: "/sso-callback",
-        redirectUrlComplete: "/dashboard",
+        redirectUrl: `/sso-callback?redirect_url=${encodeURIComponent(targetRedirect)}`,
+        redirectUrlComplete: targetRedirect,
         strategy,
       })
     } catch (value) {
@@ -206,7 +212,7 @@ export function LoginForm() {
       title="Masuk ke Portal WAVE"
     >
       <div className="space-y-6">
-        {searchParams.get("error") === "oauth_unregistered" && (
+        {searchParams?.get("error") === "oauth_unregistered" && (
           <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3.5 text-xs text-amber-900 flex items-start gap-2.5">
             <span className="font-bold text-amber-600 mt-0.5">⚠️</span>
             <div>
@@ -559,7 +565,7 @@ export function LoginForm() {
           </span>
           <Link
             className="font-semibold text-brand-600 underline-offset-4 hover:underline"
-            href="/register"
+            href={`/register?redirect_url=${encodeURIComponent(targetRedirect)}`}
           >
             {loginRole === "pemulung" ? "Daftar Akun Usaha" : "Daftar Akun Bisnis"}
           </Link>

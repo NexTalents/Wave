@@ -1,11 +1,12 @@
 "use client"
 
-import { useConvexAuth, useQuery } from "convex/react"
-import { api } from "@/convex/_generated/api"
+import { useAuthState } from "./use-auth-state"
 
+/** @deprecated Use `useAuthState` for session and authorization status. */
 export function useCurrentUser() {
-  const { isAuthenticated } = useConvexAuth()
-  const user = useQuery(api.auth.users.current, isAuthenticated ? {} : "skip")
+  const state = useAuthState()
 
-  return user
+  if (state.status === "loading" || state.status === "syncing") return undefined
+  if (state.status === "ready") return state.user
+  return null
 }

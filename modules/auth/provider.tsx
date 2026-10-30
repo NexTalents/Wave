@@ -3,18 +3,47 @@
 import { ClerkProvider, useAuth, useUser } from "@clerk/nextjs"
 import { ConvexReactClient, useConvexAuth, useMutation } from "convex/react"
 import { ConvexProviderWithClerk } from "convex/react-clerk"
-import { useEffect, useMemo, useRef, type ReactNode } from "react"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react"
 import { api } from "@/convex/_generated/api"
 import type { AccountType, OrganizationType } from "./types"
 
-function AuthSync() {
+export type AuthSyncStatus = "idle" | "syncing" | "done" | "error"
+
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+const convex = convexUrl ? new ConvexReactClient(convexUrl) : null
+
+const AuthSyncStatusContext = createContext<AuthSyncStatus>("idle")
+
+export function useAuthSyncStatus() {
+  return useContext(AuthSyncStatusContext)
+}
+
+function getErrorCode(error: unknown) {
+  if (!error || typeof error !== "object" || !("data" in error)) return null
+  const data = error.data
+  if (!data || typeof data !== "object" || !("code" in data)) return null
+  return typeof data.code === "string" ? data.code : null
+}
+
+function AuthSync({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useConvexAuth()
   const { user } = useUser()
-  const ensureCurrent = useMutation(api.auth.users.ensureCurrent)
-  const syncedUserId = useRef<string | null>(null)
+  const syncProfile = useMutation(api.auth.users.syncProfile)
+  const completeOnboarding = useMutation(api.auth.users.completeOnboarding)
+  const [syncedUserId, setSyncedUserId] = useState<string | null>(null)
+  const [status, setStatus] = useState<AuthSyncStatus>("idle")
 
   useEffect(() => {
-    if (!isAuthenticated || !user || syncedUserId.current === user.id) return
+    if (!isAuthenticated || !user) {
+      return
+    }
+    if (syncedUserId === user.id) return
 
     const metadata = user.unsafeMetadata as {
       accountType?: AccountType
@@ -25,31 +54,51 @@ function AuthSync() {
       "wave_registration_phone"
     )
 
-    void ensureCurrent({
-      accountType: metadata.accountType,
-      phoneNumber: registrationPhone ?? undefined,
-      organizationName: metadata.organizationName,
-      organizationType: metadata.organizationType,
-    })
+    void syncProfile({})
+      .then(() =>
+        metadata.accountType
+          ? completeOnboarding({
+              accountType: metadata.accountType,
+              phoneNumber: registrationPhone ?? undefined,
+              organizationName: metadata.organizationName,
+              organizationType: metadata.organizationType,
+            })
+          : undefined
+      )
       .then(() => {
         window.sessionStorage.removeItem("wave_registration_phone")
-        syncedUserId.current = user.id
+        setSyncedUserId(user.id)
+        setStatus("done")
       })
       .catch((error: unknown) => {
+        if (getErrorCode(error) === "ACCOUNT_TYPE_LOCKED") {
+          setSyncedUserId(user.id)
+          setStatus("done")
+          return
+        }
+        setStatus("error")
         console.error("Failed to synchronize the authenticated user", error)
       })
-  }, [ensureCurrent, isAuthenticated, user])
+  }, [completeOnboarding, isAuthenticated, syncProfile, syncedUserId, user])
 
-  return null
+  const visibleStatus =
+    !isAuthenticated || !user
+      ? "idle"
+      : status === "error"
+        ? status
+        : syncedUserId === user.id
+          ? status
+          : "syncing"
+
+  return (
+    <AuthSyncStatusContext.Provider value={visibleStatus}>
+      {children}
+    </AuthSyncStatusContext.Provider>
+  )
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-  const convex = useMemo(
-    () => (convexUrl ? new ConvexReactClient(convexUrl) : null),
-    [convexUrl]
-  )
 
   if (!publishableKey || !convex) {
     return (
@@ -79,8 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUpFallbackRedirectUrl="/dashboard"
     >
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-        <AuthSync />
-        {children}
+        <AuthSync>{children}</AuthSync>
       </ConvexProviderWithClerk>
     </ClerkProvider>
   )

@@ -19,26 +19,12 @@ import { wpiContentByLanguage, type WpiCopy } from "@/modules/wpi/content"
 import type {
   Material,
   Region,
+  WpiSnapshotItem,
   WpiFilters as WpiFilterValues,
   WpiRow,
   WpiSeries,
+  WpiStatus,
 } from "@/modules/wpi/data"
-
-type SnapshotItem = {
-  materialSlug: string
-  material: { ID: string; EN: string }
-  index: number
-  reference: number
-  change: number
-  observedAt: string
-}
-type Status = {
-  updatedAt: string
-  period: string
-  transactions: number
-  regions: number
-  materials: number
-}
 
 function OverviewContent({
   filters,
@@ -52,8 +38,8 @@ function OverviewContent({
   filters: WpiFilterValues
   rows: WpiRow[]
   series: WpiSeries
-  snapshot: SnapshotItem[]
-  status: Status
+  snapshot: WpiSnapshotItem[]
+  status: WpiStatus
   materials: Material[]
   regions: Region[]
 }) {
@@ -63,7 +49,17 @@ function OverviewContent({
     <div className="wave-landing min-h-screen bg-white">
       <SiteHeader />
       <WpiHero copy={copy} language={language} status={status} />
-      <WpiPrototypeBanner text={copy.prototype} />
+      <WpiPrototypeBanner
+        text={
+          status.dataState === "published"
+            ? copy.publishedData
+            : status.dataState === "stale"
+              ? copy.staleData
+              : status.dataState === "empty"
+                ? copy.emptyData
+                : copy.unavailableData
+        }
+      />
       <WpiStatusBar language={language} status={status} />
       <main>
         <PageContainer className="space-y-16 py-16 desktop:space-y-24">
@@ -74,15 +70,25 @@ function OverviewContent({
             >
               {copy.snapshot}
             </h2>
-            <div className="mt-6 grid gap-5 desktop:grid-cols-3 md:grid-cols-2">
-              {snapshot.map((item) => (
-                <WpiMarketCard
-                  copy={copy}
-                  item={item}
-                  key={item.materialSlug}
-                  language={language}
-                />
-              ))}
+            <div className="mt-6">
+              {snapshot.length ? (
+                <div className="grid gap-5 desktop:grid-cols-3 md:grid-cols-2">
+                  {snapshot.map((item) => (
+                    <WpiMarketCard
+                      copy={copy}
+                      item={item}
+                      key={item.materialSlug}
+                      language={language}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <WpiEmptyState>
+                  {status.dataState === "unavailable"
+                    ? copy.unavailableData
+                    : copy.empty}
+                </WpiEmptyState>
+              )}
             </div>
           </section>
           <WpiFilters
@@ -122,11 +128,13 @@ function OverviewContent({
               <WpiChart copy={copy} language={language} series={series} />
             </div>
           </section>
-          <WpiMaterialExplorer
-            copy={copy}
-            items={snapshot}
-            language={language}
-          />
+          {snapshot.length ? (
+            <WpiMaterialExplorer
+              copy={copy}
+              items={snapshot}
+              language={language}
+            />
+          ) : null}
           <WpiMethodology faq={copy.faq} title={copy.methodology} />
           <WpiDisclaimer>{copy.disclaimer}</WpiDisclaimer>
         </PageContainer>
@@ -140,8 +148,8 @@ export function WpiOverview(props: {
   filters: WpiFilterValues
   rows: WpiRow[]
   series: WpiSeries
-  snapshot: SnapshotItem[]
-  status: Status
+  snapshot: WpiSnapshotItem[]
+  status: WpiStatus
   materials: Material[]
   regions: Region[]
 }) {

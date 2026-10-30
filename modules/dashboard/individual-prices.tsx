@@ -26,22 +26,21 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatDate, formatPercent, formatRupiah } from "@/modules/wpi/data"
-import type { WpiSeries } from "@/modules/wpi/data"
+import type { WpiSeries, WpiSnapshotItem } from "@/modules/wpi/data"
 import { IndividualMobileNav } from "./individual-mobile-nav"
 import { MATERIAL_PRICES } from "@/lib/transactions/store"
 
-ChartJS.register(CategoryScale, Filler, LineController, LineElement, LinearScale, PointElement, Tooltip)
+ChartJS.register(
+  CategoryScale,
+  Filler,
+  LineController,
+  LineElement,
+  LinearScale,
+  PointElement,
+  Tooltip
+)
 
-type Snapshot = {
-  materialSlug: string
-  material: { ID: string; EN: string }
-  index: number
-  reference: number
-  change: number
-  observedAt: string
-}
-
-type IndividualPricesProps = { series: WpiSeries; snapshot: Snapshot[] }
+type IndividualPricesProps = { series: WpiSeries; snapshot: WpiSnapshotItem[] }
 
 function PriceChart({ series }: { series: WpiSeries }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
