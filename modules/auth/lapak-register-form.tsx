@@ -31,7 +31,7 @@ export function LapakRegisterForm() {
     try {
       const result = await register({ lapakName: lapakName.trim() || undefined, responsibleName, phone: phone || undefined, address: address || undefined, username, password, lapakCode: lapakCode.trim() || undefined })
       setLapakSessionToken(result.sessionToken)
-      router.push("/dashboard/lapak")
+      router.push("/dashboard/business")
     } catch (value) {
       setError(value instanceof Error ? value.message : "Pendaftaran lapak belum berhasil.")
     } finally {

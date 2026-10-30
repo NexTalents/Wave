@@ -1,15 +1,17 @@
 "use client"
 
-import { useConvexAuth } from "convex/react"
+import { useConvexAuth, useQuery } from "convex/react"
 import { ArrowRight, CircleUserRound, ShieldCheck, UsersRound } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { AppShell } from "@/components/app-shell"
 import { Dashboard } from "@/components/dashboard"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useCurrentUser } from "@/modules/auth"
+import { getLapakSessionToken } from "@/modules/auth/lapak-session"
+import { api } from "@/convex/_generated/api"
 import { getBusinessNavGroups, navGroups } from "@/components/app-shared"
 import { dashboardRoleLabels, type DashboardRole } from "./types"
 import { AccountTypeSetup } from "./account-type-setup"
@@ -39,47 +41,93 @@ export function DashboardView({
 }) {
   const pathname = usePathname()
   const router = useRouter()
-  const { isAuthenticated, isLoading: authLoading } = useConvexAuth()
-  const user = useCurrentUser()
-  const role = previewRole ?? user?.accountType ?? "individual"
-  const RoleIcon = roleIcons[role]
-  const userRole = user?.accountType ?? "individual"
-  const targetRoute = roleRoutes[userRole]
+  const [mounted, setMounted] = useState(false)
+  const [lapakToken, setLapakToken] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!isAuthenticated || !user || previewRole) return
-    if (expectedRole && expectedRole !== userRole) {
+    setLapakToken(getLapakSessionToken())
+    setMounted(true)
+  }, [])
+
+  // Clerk Authentication
+  const { isAuthenticated: isClerkAuth, isLoading: clerkLoading } = useConvexAuth()
+  const user = useCurrentUser()
+
+  // Convex Lapak Authentication (for small lapak without Clerk)
+  const lapakSession = useQuery(
+    api.lapakAuth.currentLapakSession,
+    lapakToken ? { sessionToken: lapakToken } : "skip"
+  )
+
+  const isLapakAuthenticated = Boolean(lapakSession)
+  const isOverallAuthenticated = isClerkAuth || isLapakAuthenticated
+
+  const effectiveUserRole: DashboardRole = isLapakAuthenticated
+    ? "business"
+    : (user?.accountType ?? "individual")
+
+  const role = previewRole ?? effectiveUserRole
+  const RoleIcon = roleIcons[role]
+  const targetRoute = roleRoutes[effectiveUserRole]
+
+  useEffect(() => {
+    if (!mounted || !isOverallAuthenticated || previewRole) return
+
+    // If clerk user with different role tries to access
+    if (isClerkAuth && user && expectedRole && expectedRole !== effectiveUserRole) {
       router.replace(targetRoute)
       return
     }
-    if (!expectedRole && !pathname.startsWith(targetRoute)) router.replace(targetRoute)
-  }, [expectedRole, isAuthenticated, pathname, previewRole, router, targetRoute, user, userRole])
 
-  if (authLoading || (isAuthenticated && user === undefined)) {
+    if (!expectedRole && !pathname.startsWith(targetRoute)) {
+      router.replace(targetRoute)
+    }
+  }, [expectedRole, isClerkAuth, isOverallAuthenticated, mounted, pathname, previewRole, router, targetRoute, user, effectiveUserRole])
+
+  // Loading State
+  const isLoading = !mounted || (clerkLoading && !lapakToken) || (Boolean(lapakToken) && lapakSession === undefined)
+
+  if (isLoading) {
     return (
       <main className="grid min-h-screen place-items-center bg-background p-6">
         <Card className="w-full max-w-md">
           <CardHeader><Skeleton className="h-6 w-44" /></CardHeader>
-          <CardContent className="flex flex-col gap-3"><Skeleton className="h-4 w-full" /><Skeleton className="h-10 w-full" /></CardContent>
+          <CardContent className="flex flex-col gap-3">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </CardContent>
         </Card>
       </main>
     )
   }
 
-  if (isAuthenticated && user === null) return <AccountTypeSetup />
+  // Clerk Setup check
+  if (isClerkAuth && user === null) {
+    return <AccountTypeSetup />
+  }
 
-  if (!isAuthenticated) {
+  // Not authenticated in either Clerk or Lapak Convex
+  if (!isOverallAuthenticated) {
     return (
       <main className="grid min-h-screen place-items-center bg-background p-6">
         <Card className="w-full max-w-md">
           <CardHeader><CardTitle>Login diperlukan</CardTitle></CardHeader>
-          <CardContent><a className="inline-flex items-center gap-2 text-primary underline-offset-4 hover:underline" href="/login">Masuk ke WAVE <ArrowRight aria-hidden="true" /></a></CardContent>
+          <CardContent>
+            <p className="text-xs text-muted-foreground mb-4">
+              Silakan masuk dengan akun Agen Besar atau akun Lapak Mitra Pengepul Anda untuk melanjutkan.
+            </p>
+            <a className="inline-flex items-center gap-2 text-primary underline-offset-4 hover:underline font-semibold text-sm" href="/login">
+              Masuk ke WAVE Bisnis <ArrowRight aria-hidden="true" className="size-4" />
+            </a>
+          </CardContent>
         </Card>
       </main>
     )
   }
 
-  if (!previewRole && (!pathname.startsWith(targetRoute) || (expectedRole && expectedRole !== userRole))) return null
+  if (!previewRole && (!pathname.startsWith(targetRoute) || (expectedRole && expectedRole !== effectiveUserRole))) {
+    return null
+  }
 
   if (role === "individual") {
     return <IndividualDashboard name={user?.name} />
@@ -89,25 +137,26 @@ export function DashboardView({
 
   return (
     <AppShell navGroups={currentNavGroups}>
-      {role === "business" ? (children ?? <BusinessDashboard />) : <div className="flex flex-col gap-6">
-        <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">Dashboard WAVE</h1>
-            <p className="mt-2 max-w-2xl text-muted-foreground">Ruang kerja awal untuk menghubungkan data material, transaksi, dan keputusan ekonomi sirkular.</p>
-          </div>
-          <Badge variant="secondary" className="w-fit gap-2 px-3 py-1.5"><RoleIcon aria-hidden="true" />{dashboardRoleLabels[role]}{previewRole ? " · preview" : ""}</Badge>
-        </section>
+      {role === "business" ? (children ?? <BusinessDashboard />) : (
+        <div className="flex flex-col gap-6">
+          <section className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <div>
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground">Dashboard WAVE</h1>
+              <p className="mt-2 max-w-2xl text-muted-foreground">Ruang kerja awal untuk menghubungkan data material, transaksi, dan keputusan ekonomi sirkular.</p>
+            </div>
+            <Badge variant="secondary" className="w-fit gap-2 px-3 py-1.5"><RoleIcon aria-hidden="true" />{dashboardRoleLabels[role]}{previewRole ? " · preview" : ""}</Badge>
+          </section>
 
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="flex flex-col gap-2 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div><p className="font-medium">Dashboard placeholder</p><p className="text-sm text-muted-foreground">Modul ini sudah terhubung ke sesi Clerk dan profil Convex. Data operasional akan masuk pada iterasi berikutnya.</p></div>
-            <span className="font-mono text-xs text-muted-foreground">AUTH_SYNC_READY</span>
-          </CardContent>
-        </Card>
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="flex flex-col gap-2 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div><p className="font-medium">Dashboard placeholder</p><p className="text-sm text-muted-foreground">Modul ini sudah terhubung ke sesi Clerk dan profil Convex. Data operasional akan masuk pada iterasi berikutnya.</p></div>
+              <span className="font-mono text-xs text-muted-foreground">AUTH_SYNC_READY</span>
+            </CardContent>
+          </Card>
 
-        <Dashboard />
-      </div>}
+          <Dashboard />
+        </div>
+      )}
     </AppShell>
   )
 }
-

@@ -47,6 +47,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { CameraCaptureDialog } from "@/components/camera-capture-dialog"
 import { BusinessIntakeSkeleton } from "./business-intake-skeleton"
 import { api } from "@/convex/_generated/api"
+import { getLapakSessionToken } from "@/modules/auth/lapak-session"
 import {
   calculateTransaction,
   canConfirmPrice,
@@ -83,11 +84,34 @@ export function BusinessIntakePage() {
   const organizations = useQuery(api.auth.organizations.listMine)
   const organizationId = organizations?.[0]?.organization._id
 
+  // Lapak Session Token Check (for Lapak logins)
+  const [lapakToken, setLapakToken] = useState<string | null>(null)
+  useEffect(() => {
+    setLapakToken(getLapakSessionToken())
+  }, [])
+
+  const lapakSession = useQuery(
+    api.lapakAuth.currentLapakSession,
+    lapakToken ? { sessionToken: lapakToken } : "skip"
+  )
+  const lapakMembers = useQuery(
+    api.lapakAuth.listMembers,
+    lapakToken ? { sessionToken: lapakToken } : "skip"
+  )
+
+  const isLapak = Boolean(lapakSession) || organizations?.[0]?.organization?.type === "small_lapak"
+
   // Supplier & Picker Selection State
   const [supplierMode, setSupplierMode] = useState<SupplierMode>(
     initialSupplierMode === "lapak" ? "lapak" : "waste_picker"
   )
   const [pickerSearch, setPickerSearch] = useState("")
+
+  useEffect(() => {
+    if (isLapak && supplierMode !== "waste_picker") {
+      setSupplierMode("waste_picker")
+    }
+  }, [isLapak, supplierMode])
 
   const allPickers = useQuery(
     api.wastePickers.list,
@@ -106,6 +130,16 @@ export function BusinessIntakePage() {
 
   // All available items based on supplierMode (unfiltered by search query)
   const allAvailablePickers = useMemo(() => {
+    if (isLapak && lapakMembers && lapakMembers.length > 0) {
+      return lapakMembers.map((member) => ({
+        id: member.id,
+        name: member.name,
+        phone: member.phone,
+        memberCode: member.memberCode,
+        lapakName: lapakSession?.organizationName || "Lapak Anda",
+      }))
+    }
+
     let source: PickerListItem[] = []
 
     if (supplierMode === "lapak") {
@@ -146,7 +180,7 @@ export function BusinessIntakePage() {
     }
 
     return source
-  }, [allPickers, linkedLapakMembers, linkedPartners, supplierMode])
+  }, [allPickers, isLapak, lapakMembers, lapakSession?.organizationName, linkedLapakMembers, linkedPartners, supplierMode])
 
   // Filtered list based on real-time search query
   const filteredPickers = useMemo(() => {
@@ -428,7 +462,7 @@ export function BusinessIntakePage() {
     setFinalPrice("2300")
   }
 
-  if (organizations === undefined) {
+  if (organizations === undefined && !lapakToken && lapakSession === undefined) {
     return <BusinessIntakeSkeleton />
   }
 
@@ -567,40 +601,46 @@ export function BusinessIntakePage() {
                   </span>
                   Pemasok Material
                 </CardTitle>
-                <div className="flex items-center rounded-lg bg-muted p-0.5 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSupplierMode("waste_picker")
-                      setSelectedPickerId(null)
-                      setPickerSearch("")
-                      setIsPickerDropdownOpen(false)
-                    }}
-                    className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
-                      supplierMode === "waste_picker"
-                        ? "bg-card text-foreground shadow-xs"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    Pemulung
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSupplierMode("lapak")
-                      setSelectedPickerId(null)
-                      setPickerSearch("")
-                      setIsPickerDropdownOpen(false)
-                    }}
-                    className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
-                      supplierMode === "lapak"
-                        ? "bg-card text-foreground shadow-xs"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    Lapak Mitra
-                  </button>
-                </div>
+                {isLapak ? (
+                  <Badge variant="outline" className="border-primary/20 bg-primary/10 text-primary text-xs font-semibold">
+                    Mitra Pemulung
+                  </Badge>
+                ) : (
+                  <div className="flex items-center rounded-lg bg-muted p-0.5 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSupplierMode("waste_picker")
+                        setSelectedPickerId(null)
+                        setPickerSearch("")
+                        setIsPickerDropdownOpen(false)
+                      }}
+                      className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
+                        supplierMode === "waste_picker"
+                          ? "bg-card text-foreground shadow-xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Pemulung
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSupplierMode("lapak")
+                        setSelectedPickerId(null)
+                        setPickerSearch("")
+                        setIsPickerDropdownOpen(false)
+                      }}
+                      className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
+                        supplierMode === "lapak"
+                          ? "bg-card text-foreground shadow-xs"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Lapak Mitra
+                    </button>
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-4 p-5">

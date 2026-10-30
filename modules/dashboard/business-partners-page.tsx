@@ -44,6 +44,7 @@ import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { getStoredTransactions, DEFAULT_PICKERS } from "@/lib/transactions/store"
 import type { TransactionRecord, WastePicker } from "@/lib/transactions/types"
+import { getLapakSessionToken } from "@/modules/auth/lapak-session"
 import { BusinessPartnersSkeleton } from "./business-partners-skeleton"
 
 type PickerListItem = {
@@ -59,9 +60,34 @@ type PickerListItem = {
 export function BusinessPartnersPage() {
   const organizations = useQuery(api.auth.organizations.listMine)
   const organizationId = organizations?.[0]?.organization._id
+  const currentOrg = organizations?.[0]?.organization
+
+  // Lapak Session Token Check (for Lapak logins)
+  const [lapakToken, setLapakToken] = useState<string | null>(null)
+  useEffect(() => {
+    setLapakToken(getLapakSessionToken())
+  }, [])
+
+  const lapakSession = useQuery(
+    api.lapakAuth.currentLapakSession,
+    lapakToken ? { sessionToken: lapakToken } : "skip"
+  )
+  const lapakMembers = useQuery(
+    api.lapakAuth.listMembers,
+    lapakToken ? { sessionToken: lapakToken } : "skip"
+  )
+  const createLapakMember = useMutation(api.lapakAuth.createMember)
+
+  const isLapak = Boolean(lapakSession) || currentOrg?.type === "small_lapak"
 
   // Tab State
   const [activeTab, setActiveTab] = useState<"pickers" | "lapaks">("pickers")
+
+  useEffect(() => {
+    if (isLapak && activeTab === "lapaks") {
+      setActiveTab("pickers")
+    }
+  }, [isLapak, activeTab])
 
   // Search & Filters
   const [pickerSearch, setPickerSearch] = useState("")
@@ -133,6 +159,21 @@ export function BusinessPartnersPage() {
   const pickersList = useMemo<PickerListItem[]>(() => {
     const list: PickerListItem[] = []
 
+    if (lapakMembers && lapakMembers.length > 0) {
+      for (const lm of lapakMembers) {
+        if (!list.some((item) => item.id === lm.id)) {
+          list.push({
+            id: lm.id,
+            name: lm.name,
+            phone: lm.phone,
+            memberCode: lm.memberCode,
+            activationStatus: "active",
+            lapakName: lapakSession?.organizationName || "Lapak Anda",
+          })
+        }
+      }
+    }
+
     if (rawPickers && rawPickers.length > 0) {
       list.push(...rawPickers)
     }
@@ -167,7 +208,7 @@ export function BusinessPartnersPage() {
     }
 
     return list
-  }, [rawPickers, linkedLapakMembers])
+  }, [rawPickers, linkedLapakMembers, lapakMembers, lapakSession])
 
   // Filtered Pickers
   const filteredPickers = useMemo(() => {
@@ -280,14 +321,18 @@ export function BusinessPartnersPage() {
     setError(null)
     setSuccess(null)
     try {
-      if (organizationId) {
+      if (lapakToken) {
+        const result = await createLapakMember({ sessionToken: lapakToken, name, phone })
+        setSuccess(`Mitra pemulung "${name}" (${result.memberCode}) berhasil didaftarkan ke lapak Anda.`)
+      } else if (organizationId) {
         const result = await createPicker({ organizationId, name, phone })
         setInviteUrl(`${window.location.origin}/activate?token=${result.inviteToken}`)
+        setSuccess(`Mitra pemulung "${name}" berhasil didaftarkan.`)
       } else {
         // Local preview fallback
         setInviteUrl(`${window.location.origin}/activate?token=DEMO_${Date.now()}`)
+        setSuccess(`Mitra pemulung "${name}" berhasil didaftarkan.`)
       }
-      setSuccess(`Mitra pemulung "${name}" berhasil didaftarkan.`)
       setName("")
       setPhone("")
     } catch (submitError) {
@@ -344,7 +389,7 @@ export function BusinessPartnersPage() {
     }
   }
 
-  if (organizations === undefined) {
+  if (organizations === undefined && !lapakToken && lapakSession === undefined) {
     return <BusinessPartnersSkeleton />
   }
 
@@ -381,23 +426,25 @@ export function BusinessPartnersPage() {
           >
             <UserPlus className="size-4" /> Daftarkan Pemulung Baru
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              setError(null)
-              setSuccess(null)
-              setLapakModalMode("create")
-              setIsLapakModalOpen(true)
-            }}
-            className="h-10 gap-2 border-border bg-card px-4 font-semibold text-foreground hover:bg-muted"
-          >
-            <Building2 className="size-4 text-primary" /> Kelola Lapak Mitra
-          </Button>
+          {!isLapak && (
+            <Button
+              variant="outline"
+              onClick={() => {
+                setError(null)
+                setSuccess(null)
+                setLapakModalMode("create")
+                setIsLapakModalOpen(true)
+              }}
+              className="h-10 gap-2 border-border bg-card px-4 font-semibold text-foreground hover:bg-muted"
+            >
+              <Building2 className="size-4 text-primary" /> Kelola Lapak Mitra
+            </Button>
+          )}
         </div>
       </div>
 
       {/* KPI Stats Overview Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={isLapak ? "grid gap-4 sm:grid-cols-3" : "grid gap-4 sm:grid-cols-2 lg:grid-cols-4"}>
         <Card className="border-border shadow-xs">
           <CardContent className="p-5">
             <div className="flex items-start justify-between">
@@ -423,24 +470,26 @@ export function BusinessPartnersPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border shadow-xs">
-          <CardContent className="p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">Lapak Pengepul Terhubung</p>
-                <h3 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
-                  {metrics.totalLapaksCount} Lapak
-                </h3>
+        {!isLapak && (
+          <Card className="border-border shadow-xs">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Lapak Pengepul Terhubung</p>
+                  <h3 className="mt-2 text-2xl font-bold tracking-tight text-foreground">
+                    {metrics.totalLapaksCount} Lapak
+                  </h3>
+                </div>
+                <span className="grid size-10 place-items-center rounded-xl bg-secondary text-primary">
+                  <Building2 className="size-5" />
+                </span>
               </div>
-              <span className="grid size-10 place-items-center rounded-xl bg-secondary text-primary">
-                <Building2 className="size-5" />
-              </span>
-            </div>
-            <p className="mt-2.5 text-xs text-muted-foreground">
-              Mitra agregator pengumpul material daur ulang
-            </p>
-          </CardContent>
-        </Card>
+              <p className="mt-2.5 text-xs text-muted-foreground">
+                Mitra agregator pengumpul material daur ulang
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="border-border shadow-xs">
           <CardContent className="p-5">
@@ -496,13 +545,15 @@ export function BusinessPartnersPage() {
               <UserRound className="size-4" />
               Anggota Pemulung ({metrics.totalPickersCount})
             </TabsTrigger>
-            <TabsTrigger
-              value="lapaks"
-              className="gap-2 px-4 py-2 text-xs font-semibold data-active:bg-card data-active:text-foreground data-active:shadow-sm"
-            >
-              <Store className="size-4" />
-              Lapak Pengepul ({metrics.totalLapaksCount})
-            </TabsTrigger>
+            {!isLapak && (
+              <TabsTrigger
+                value="lapaks"
+                className="gap-2 px-4 py-2 text-xs font-semibold data-active:bg-card data-active:text-foreground data-active:shadow-sm"
+              >
+                <Store className="size-4" />
+                Lapak Pengepul ({metrics.totalLapaksCount})
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <div className="flex items-center gap-2">
@@ -779,7 +830,8 @@ export function BusinessPartnersPage() {
         {/* ========================================================================= */}
         {/* TAB 2: LAPAK PENGEPUL                                                     */}
         {/* ========================================================================= */}
-        <TabsContent value="lapaks" className="space-y-4 outline-none">
+        {!isLapak && (
+          <TabsContent value="lapaks" className="space-y-4 outline-none">
           {/* Lapak Actions Bar */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="relative flex-1 sm:max-w-md">
@@ -900,6 +952,7 @@ export function BusinessPartnersPage() {
             ))}
           </div>
         </TabsContent>
+        )}
       </Tabs>
 
       {/* Global Alerts Banner */}
@@ -1040,7 +1093,7 @@ export function BusinessPartnersPage() {
       {/* ========================================================================= */}
       {/* MODAL 2: KELOLA LAPAK (CREATE / LINK)                                      */}
       {/* ========================================================================= */}
-      {isLapakModalOpen && (
+      {!isLapak && isLapakModalOpen && (
         <div
           role="dialog"
           aria-modal="true"
