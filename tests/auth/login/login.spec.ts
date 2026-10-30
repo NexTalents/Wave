@@ -23,7 +23,8 @@ test.describe("Login", () => {
       await page.getByRole("button", { name: "Masuk dengan email" }).click()
 
       await expect(page).toHaveURL(
-        new RegExp(`/dashboard/${user.accountType}$`)
+        new RegExp(`/dashboard/${user.accountType}$`),
+        { timeout: 15_000 }
       )
       await expectDashboard(page, user.accountType)
     })

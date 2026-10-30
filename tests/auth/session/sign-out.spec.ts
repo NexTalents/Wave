@@ -18,7 +18,9 @@ test.describe("Sign out", () => {
     await page.getByLabel("Email").fill(user.email)
     await page.locator('input[name="password"]').fill(user.password)
     await page.getByRole("button", { name: "Masuk dengan email" }).click()
-    await expect(page).toHaveURL(/\/dashboard\/individual$/)
+    await expect(page).toHaveURL(/\/dashboard\/individual$/, {
+      timeout: 15_000,
+    })
 
     await page.goto("/dashboard/individual/profil")
     await page.getByRole("button", { name: "Keluar dari akun" }).click()

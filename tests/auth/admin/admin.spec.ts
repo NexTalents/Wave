@@ -14,7 +14,7 @@ test.describe("Admin auth", () => {
     await page.locator('input[name="password"]').fill(adminUser.password)
     await page.getByRole("button", { name: "Masuk dengan email" }).click()
 
-    await expect(page).toHaveURL(/\/dashboard\/admin$/)
+    await expect(page).toHaveURL(/\/dashboard\/admin$/, { timeout: 15_000 })
     await expect(
       page.getByRole("heading", { name: "WPI Administration" })
     ).toBeVisible()

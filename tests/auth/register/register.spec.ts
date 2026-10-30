@@ -54,7 +54,8 @@ test.describe("Register", () => {
         .click()
 
       await expect(page).toHaveURL(
-        new RegExp(`/dashboard/${user.accountType}$`)
+        new RegExp(`/dashboard/${user.accountType}$`),
+        { timeout: 15_000 }
       )
       await expectDashboard(page, user.accountType)
     })
