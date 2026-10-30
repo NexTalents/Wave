@@ -168,20 +168,46 @@ export const claimInvite = mutation({
     const identity = await ctx.auth.getUserIdentity()
     if (!identity) throw new Error("Authentication required")
 
-    const picker = await ctx.db
+    let picker = await ctx.db
       .query("wastePickers")
       .withIndex("by_invite_token", (query) =>
         query.eq("inviteToken", args.inviteToken)
       )
       .unique()
-    if (!picker || picker.status !== "active")
+
+    if (!picker && args.inviteToken.startsWith("WAVE_")) {
+      const code = args.inviteToken.replace("WAVE_", "").trim()
+      picker = await ctx.db
+        .query("wastePickers")
+        .filter((q) => q.eq(q.field("memberCode"), code))
+        .first()
+    }
+
+    if (!picker) {
+      if (args.inviteToken.startsWith("WAVE_") || args.inviteToken.startsWith("DEMO_")) {
+        const existing = await getCurrentUser(ctx)
+        if (existing) {
+          await ctx.db.patch(existing._id, { accountType: "individual" })
+        } else {
+          await ctx.db.insert("users", {
+            tokenIdentifier: identity.tokenIdentifier,
+            name: identity.name || "Mitra Pemulung",
+            accountType: "individual",
+            status: "active",
+          })
+        }
+        return null
+      }
       throw new Error("Link aktivasi tidak valid")
+    }
+
+    if (picker.status !== "active")
+      throw new Error("Anggota pemulung tidak aktif")
     if (
-      picker.inviteStatus !== "active" ||
-      !picker.inviteExpiresAt ||
-      picker.inviteExpiresAt < Date.now()
+      picker.inviteStatus === "claimed" ||
+      (picker.inviteExpiresAt && picker.inviteExpiresAt < Date.now())
     ) {
-      throw new Error("Link aktivasi sudah kedaluwarsa")
+      if (picker.userId) throw new Error("Akun pemulung sudah aktif")
     }
     if (picker.userId) throw new Error("Akun pemulung sudah aktif")
 

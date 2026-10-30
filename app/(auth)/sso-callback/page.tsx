@@ -16,11 +16,11 @@ export default async function SsoCallbackPage({
   return (
     <>
       <AuthenticateWithRedirectCallback
-        continueSignUpUrl="/register"
+        continueSignUpUrl="/register?error=oauth_unregistered"
         signInFallbackRedirectUrl={redirectUrl}
         signInUrl="/login"
         signUpFallbackRedirectUrl={redirectUrl}
-        signUpUrl="/register"
+        signUpUrl="/register?error=oauth_unregistered"
       />
       <LoadingScreen
         description="Menyelesaikan koneksi akun dari provider login."

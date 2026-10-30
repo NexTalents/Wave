@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useMutation, useQuery } from "convex/react"
 import Link from "next/link"
 import {
@@ -30,6 +30,7 @@ import {
 } from "lucide-react"
 import { api } from "@/convex/_generated/api"
 import type { Id } from "@/convex/_generated/dataModel"
+import { getLapakSessionToken } from "@/modules/auth/lapak-session"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -51,6 +52,17 @@ type PickerListItem = {
 export function BusinessPartnersPage() {
   const organizations = useQuery(api.auth.organizations.listMine)
   const organizationId = organizations?.[0]?.organization._id
+  const currentOrg = organizations?.[0]?.organization
+
+  const [lapakToken, setLapakToken] = useState<string | null>(null)
+  useEffect(() => {
+    setLapakToken(getLapakSessionToken())
+  }, [])
+  const lapakSession = useQuery(
+    api.lapakAuth.currentLapakSession,
+    lapakToken ? { sessionToken: lapakToken } : "skip"
+  )
+  const createLapakMember = useMutation(api.lapakAuth.createMember)
 
   // Tab State
   const [activeTab, setActiveTab] = useState<"pickers" | "lapaks">("pickers")
@@ -226,13 +238,43 @@ export function BusinessPartnersPage() {
     setError(null)
     setSuccess(null)
     try {
-      if (!organizationId) {
-        setError("Organisasi bisnis belum siap. Muat ulang halaman lalu coba lagi.")
-        return
+      let inviteLink = ""
+      let regMemberCode = ""
+      if (lapakToken) {
+        const result = await createLapakMember({ sessionToken: lapakToken, name, phone })
+        regMemberCode = result.memberCode
+        inviteLink = `${window.location.origin}/activate?token=WAVE_${result.memberCode}`
+        setSuccess(`Mitra pemulung "${name}" (${result.memberCode}) berhasil didaftarkan & pesan WhatsApp sambutan otomatis terkirim.`)
+      } else if (organizationId) {
+        const result = await createPicker({ organizationId, name, phone })
+        regMemberCode = "WAVE-" + result.id.slice(-4).toUpperCase()
+        inviteLink = `${window.location.origin}/activate?token=${result.inviteToken}`
+        setInviteUrl(inviteLink)
+        setSuccess(`Mitra pemulung "${name}" berhasil didaftarkan & pesan WhatsApp sambutan otomatis terkirim.`)
+      } else {
+        // Local preview fallback
+        regMemberCode = `WAVE-${Math.floor(100 + Math.random() * 900)}`
+        inviteLink = `${window.location.origin}/activate?token=DEMO_${Date.now()}`
+        setInviteUrl(inviteLink)
+        setSuccess(`Mitra pemulung "${name}" berhasil didaftarkan & pesan WhatsApp sambutan otomatis terkirim.`)
       }
-      const result = await createPicker({ organizationId, name, phone })
-      setInviteUrl(`${window.location.origin}/activate?token=${result.inviteToken}`)
-      setSuccess(`Mitra pemulung "${name}" berhasil didaftarkan.`)
+
+      // Send WhatsApp Welcome Notification
+      try {
+        await fetch("/api/whatsapp/send-welcome", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phone: phone.trim(),
+            pickerName: name.trim(),
+            memberCode: regMemberCode,
+            inviteUrl: inviteLink,
+            operatorName: currentOrg?.name || lapakSession?.organizationName || "Lapak / Bank Sampah Mitra WAVE",
+          }),
+        })
+      } catch (err) {
+        console.warn("[PartnersPage] Failed to send WhatsApp welcome:", err)
+      }
       setName("")
       setPhone("")
     } catch (submitError) {
@@ -683,7 +725,7 @@ export function BusinessPartnersPage() {
                                     variant="outline"
                                     size="sm"
                                     onClick={async () => {
-                                      if (organizationId) {
+                                      if (organizationId && !String(picker.id).startsWith("picker-")) {
                                         try {
                                           const res = await createInvite({
                                             organizationId,

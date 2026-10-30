@@ -2,11 +2,16 @@
 
 import { CircleUserRound, ShieldCheck, UsersRound } from "lucide-react"
 import { usePathname } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useQuery } from "convex/react"
 import { AppShell } from "@/components/app-shell"
 import { Dashboard } from "@/components/dashboard"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { AuthStatusScreen, useAuthState } from "@/modules/auth"
+import { getLapakSessionToken } from "@/modules/auth/lapak-session"
+import { getPickerSessionToken } from "@/modules/auth/picker-session"
+import { api } from "@/convex/_generated/api"
 import { getBusinessNavGroups, navGroups } from "@/components/app-shared"
 import { dashboardRoleLabels, type DashboardRole } from "./types"
 import { IndividualDashboard } from "./individual-dashboard"
@@ -24,14 +29,45 @@ export function DashboardView({
   children?: React.ReactNode
 }) {
   const pathname = usePathname()
+  const [lapakToken, setLapakToken] = useState<string | null>(null)
+  const [pickerToken, setPickerToken] = useState<string | null>(null)
+
+  useEffect(() => {
+    setLapakToken(getLapakSessionToken())
+    setPickerToken(getPickerSessionToken())
+  }, [])
+
+  const lapakSession = useQuery(
+    api.lapakAuth.currentLapakSession,
+    lapakToken ? { sessionToken: lapakToken } : "skip"
+  )
+  const pickerSession = useQuery(
+    api.pickerAuth.currentPickerSession,
+    pickerToken ? { sessionToken: pickerToken } : "skip"
+  )
+
   const authState = useAuthState()
-  const role = authState.status === "ready" ? authState.role : "individual"
+
+  // Determine role
+  let role: DashboardRole = "individual"
+  let individualName: string | undefined = undefined
+
+  if (pickerSession) {
+    role = "individual"
+    individualName = pickerSession.name
+  } else if (lapakSession) {
+    role = "business"
+  } else if (authState.status === "ready") {
+    role = authState.role
+    individualName = authState.user.name
+  } else {
+    return <AuthStatusScreen state={authState} />
+  }
+
   const RoleIcon = roleIcons[role]
 
-  if (authState.status !== "ready") return <AuthStatusScreen state={authState} />
-
   if (role === "individual") {
-    return <IndividualDashboard name={authState.user.name} />
+    return <IndividualDashboard name={individualName} />
   }
 
   const currentNavGroups = role === "business" ? getBusinessNavGroups(pathname) : navGroups

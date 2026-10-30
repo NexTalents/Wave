@@ -1,19 +1,19 @@
 "use client"
 
 import { useSignUp } from "@clerk/nextjs/legacy"
-import { LoaderCircle } from "lucide-react"
+import { AlertTriangle, LoaderCircle } from "lucide-react"
 import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useState } from "react"
 import { AuthInput, AuthShell, authPrimaryButtonClass } from "./auth-shell"
 import { getAuthError } from "./errors"
+import { LapakRegisterForm } from "./lapak-register-form"
+import { safeRedirect } from "./redirect"
 import {
   organizationTypeLabels,
   organizationTypes,
   type OrganizationType,
 } from "./types"
-import { useRouter } from "next/navigation"
-import { LapakRegisterForm } from "./lapak-register-form"
-import { safeRedirect } from "./redirect"
 
 function LargeAgentRegisterForm({ redirectUrl }: { redirectUrl: string }) {
   const router = useRouter()
@@ -210,7 +210,59 @@ function LargeAgentRegisterForm({ redirectUrl }: { redirectUrl: string }) {
 }
 
 export function RegisterForm({ redirectUrl = "/dashboard" }: { redirectUrl?: string }) {
+  const searchParams = useSearchParams()
   const [accountRole, setAccountRole] = useState<"large_agent" | "small_lapak">("large_agent")
-  if (accountRole === "small_lapak") return <div className="space-y-4"><button className="text-sm font-semibold text-brand-600 hover:underline" onClick={() => setAccountRole("large_agent")} type="button">← Daftar sebagai agen besar</button><LapakRegisterForm /></div>
-  return <div className="space-y-4"><div className="grid gap-3 sm:grid-cols-2"><button className="rounded-2xl border-2 border-brand-500 bg-brand-50 p-4 text-left" onClick={() => setAccountRole("large_agent")} type="button"><span className="block font-semibold text-ink">Agen besar / grosir</span><span className="mt-1 block text-xs text-brand-700">Kelola lapak dan pemulung yang setor langsung.</span></button><button className="rounded-2xl border border-brand-100 bg-white p-4 text-left hover:border-brand-300" onClick={() => setAccountRole("small_lapak")} type="button"><span className="block font-semibold text-ink">Lapak kecil</span><span className="mt-1 block text-xs text-brand-700">Kelola anggota pemulung lapak sendiri.</span></button></div><LargeAgentRegisterForm redirectUrl={redirectUrl} /></div>
+
+  const oauthNotice = searchParams?.get("error") === "oauth_unregistered" && (
+    <div className="rounded-2xl border border-amber-300 bg-amber-50 p-3.5 text-xs text-amber-900 flex items-start gap-2.5">
+      <AlertTriangle className="size-4 text-amber-600 shrink-0 mt-0.5" />
+      <div>
+        <p className="font-bold">Akun Google Belum Terdaftar</p>
+        <p className="opacity-90 mt-0.5">
+          Akun Google Anda belum terdaftar di sistem WAVE. Silakan lengkapi pendaftaran di bawah ini untuk membuat akun baru.
+        </p>
+      </div>
+    </div>
+  )
+
+  if (accountRole === "small_lapak") {
+    return (
+      <div className="space-y-4">
+        {oauthNotice}
+        <button
+          className="text-sm font-semibold text-brand-600 hover:underline"
+          onClick={() => setAccountRole("large_agent")}
+          type="button"
+        >
+          ← Daftar sebagai agen besar
+        </button>
+        <LapakRegisterForm />
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {oauthNotice}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <button
+          className="rounded-2xl border-2 border-brand-500 bg-brand-50 p-4 text-left"
+          onClick={() => setAccountRole("large_agent")}
+          type="button"
+        >
+          <span className="block font-semibold text-ink">Agen besar / grosir</span>
+          <span className="mt-1 block text-xs text-brand-700">Kelola lapak dan pemulung yang setor langsung.</span>
+        </button>
+        <button
+          className="rounded-2xl border border-brand-100 bg-white p-4 text-left hover:border-brand-300"
+          onClick={() => setAccountRole("small_lapak")}
+          type="button"
+        >
+          <span className="block font-semibold text-ink">Lapak kecil</span>
+          <span className="mt-1 block text-xs text-brand-700">Kelola anggota pemulung lapak sendiri.</span>
+        </button>
+      </div>
+      <LargeAgentRegisterForm redirectUrl={redirectUrl} />
+    </div>
+  )
 }

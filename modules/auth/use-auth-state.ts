@@ -2,9 +2,12 @@
 
 import { useAuth } from "@clerk/nextjs"
 import { useConvexAuth, useQuery } from "convex/react"
+import { useEffect, useState } from "react"
 import { api } from "@/convex/_generated/api"
 import type { Id } from "@/convex/_generated/dataModel"
 import type { DashboardRole } from "@/modules/dashboard/types"
+import { getLapakSessionToken } from "./lapak-session"
+import { getPickerSessionToken } from "./picker-session"
 import { useAuthSyncStatus } from "./provider"
 import type { AccountType, OrganizationType } from "./types"
 
@@ -39,6 +42,23 @@ export type AuthState =
     }
 
 export function useAuthState(): AuthState {
+  const [pickerToken, setPickerToken] = useState<string | null>(null)
+  const [lapakToken, setLapakToken] = useState<string | null>(null)
+
+  useEffect(() => {
+    setPickerToken(getPickerSessionToken())
+    setLapakToken(getLapakSessionToken())
+  }, [])
+
+  const pickerSession = useQuery(
+    api.pickerAuth.currentPickerSession,
+    pickerToken ? { sessionToken: pickerToken } : "skip"
+  )
+  const lapakSession = useQuery(
+    api.lapakAuth.currentLapakSession,
+    lapakToken ? { sessionToken: lapakToken } : "skip"
+  )
+
   const { isLoaded: clerkLoaded, isSignedIn } = useAuth()
   const { isAuthenticated, isLoading: convexLoading } = useConvexAuth()
   const syncStatus = useAuthSyncStatus()
@@ -47,6 +67,46 @@ export function useAuthState(): AuthState {
     clerkLoaded && isSignedIn && !convexLoading && isAuthenticated ? {} : "skip",
   )
 
+  // 1. Check Picker Session (Mitra Pemulung)
+  if (pickerToken) {
+    if (pickerSession === undefined) return { status: "loading" }
+    if (pickerSession) {
+      return {
+        status: "ready",
+        user: {
+          _id: pickerSession.id as unknown as Id<"users">,
+          name: pickerSession.name,
+          accountType: "individual",
+        },
+        role: "individual",
+        organization: null,
+      }
+    }
+  }
+
+  // 2. Check Lapak Session (Lapak Mitra)
+  if (lapakToken) {
+    if (lapakSession === undefined) return { status: "loading" }
+    if (lapakSession) {
+      return {
+        status: "ready",
+        user: {
+          _id: lapakSession.id as unknown as Id<"users">,
+          name: lapakSession.name,
+          accountType: "business",
+        },
+        role: "business",
+        organization: {
+          _id: lapakSession.organizationId,
+          name: lapakSession.organizationName,
+          type: "small_lapak",
+          verificationStatus: "verified",
+        },
+      }
+    }
+  }
+
+  // 3. Check Clerk Session
   if (!clerkLoaded) return { status: "loading" }
   if (!isSignedIn) return { status: "signedOut" }
   if (convexLoading) return { status: "loading" }

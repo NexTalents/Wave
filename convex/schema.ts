@@ -270,6 +270,22 @@ export default defineSchema({
     revokedAt: v.optional(v.number()),
   }).index("by_token_hash", ["tokenHash"]),
 
+  pickerOtps: defineTable({
+    phone: v.string(),
+    code: v.string(),
+    inviteToken: v.string(),
+    expiresAt: v.number(),
+  })
+    .index("by_phone", ["phone"])
+    .index("by_token", ["inviteToken"]),
+
+  pickerSessions: defineTable({
+    pickerId: v.id("wastePickers"),
+    tokenHash: v.string(),
+    expiresAt: v.number(),
+    revokedAt: v.optional(v.number()),
+  }).index("by_token_hash", ["tokenHash"]),
+
   marketPrices: defineTable({
     organizationId: v.id("organizations"),
     material: v.string(),

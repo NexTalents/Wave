@@ -49,3 +49,8 @@ export function getPriceInfoForMaterial(material: string): MaterialPriceInfo {
   // Default to Kardus
   return MATERIAL_PRICES["Kardus"]
 }
+
+
+export function getStoredTransactions(): import("./types").TransactionRecord[] {
+  return []
+}
