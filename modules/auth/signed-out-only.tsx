@@ -1,23 +1,28 @@
 "use client"
 
-import { useAuth } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { useEffect, type ReactNode } from "react"
-import { LoadingScreen } from "@/components/loading-screen"
+import { AuthStatusScreen } from "./auth-status-screen"
+import { useAuthState } from "./use-auth-state"
 
 export function SignedOutOnly({ children }: { children: ReactNode }) {
   const router = useRouter()
-  const { isLoaded, isSignedIn } = useAuth()
+  const state = useAuthState()
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
+    if (
+      state.status === "ready" ||
+      state.status === "needsOnboarding" ||
+      state.status === "syncing"
+    ) {
       router.replace("/dashboard")
     }
-  }, [isLoaded, isSignedIn, router])
+  }, [router, state.status])
 
-  if (!isLoaded || isSignedIn) {
-    return <LoadingScreen surface="auth" />
+  if (state.status === "signedOut") return children
+  if (state.status === "convexAuthError" || state.status === "syncError" || state.status === "suspended") {
+    return <AuthStatusScreen state={state} />
   }
 
-  return children
+  return <AuthStatusScreen state={state} />
 }

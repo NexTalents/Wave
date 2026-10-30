@@ -6,6 +6,7 @@ import { useState } from "react"
 import { api } from "@/convex/_generated/api"
 import { accountTypes, organizationTypeLabels, organizationTypes, type AccountType, type OrganizationType } from "@/modules/auth/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { getAuthError } from "@/modules/auth/errors"
 
 export function AccountTypeSetup() {
   const completeOnboarding = useMutation(api.auth.users.completeOnboarding)
@@ -28,8 +29,8 @@ export function AccountTypeSetup() {
         accountType,
         ...(accountType === "business" ? { organizationName, organizationType } : {}),
       })
-    } catch {
-      setError("Profil belum dapat disimpan. Coba lagi.")
+    } catch (cause) {
+      setError(getAuthError(cause))
       setSaving(false)
     }
   }

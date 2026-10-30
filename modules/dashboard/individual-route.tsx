@@ -1,29 +1,25 @@
 "use client"
 
-import { useConvexAuth } from "convex/react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, type ReactNode } from "react"
 import { LoadingScreen } from "@/components/loading-screen"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useCurrentUser } from "@/modules/auth"
-import { AccountTypeSetup } from "./account-type-setup"
+import { AuthStatusScreen, useAuthState } from "@/modules/auth"
 
 export function IndividualRoute({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
-  const { isAuthenticated, isLoading } = useConvexAuth()
-  const user = useCurrentUser()
+  const authState = useAuthState()
+  const authRole = authState.status === "ready" ? authState.role : null
 
   useEffect(() => {
-    if (user && user.accountType !== "individual") {
-      router.replace(
-        user?.accountType === "business" ? "/dashboard/business" : "/dashboard"
-      )
+    if (authRole && authRole !== "individual") {
+      router.replace(authRole === "business" ? "/dashboard/business" : "/dashboard")
     }
-  }, [router, user])
+  }, [authRole, router])
 
-  if (isLoading || (isAuthenticated && user === undefined)) {
+  if (authState.status === "loading" || authState.status === "syncing") {
     return (
       <LoadingScreen
         description="Memuat profil dan ruang kerja personalmu."
@@ -33,7 +29,7 @@ export function IndividualRoute({ children }: { children: ReactNode }) {
     )
   }
 
-  if (!isAuthenticated) {
+  if (authState.status === "signedOut") {
     return (
       <main className="grid min-h-screen place-items-center bg-background p-6">
         <Card className="w-full max-w-md">
@@ -53,10 +49,9 @@ export function IndividualRoute({ children }: { children: ReactNode }) {
     )
   }
 
-  if (user === null) return <AccountTypeSetup />
-  if (!user) return null
+  if (authState.status !== "ready") return <AuthStatusScreen state={authState} />
 
-  if (user.accountType !== "individual") return null
+  if (authState.role !== "individual") return null
 
   return <div data-individual-route={pathname}>{children}</div>
 }

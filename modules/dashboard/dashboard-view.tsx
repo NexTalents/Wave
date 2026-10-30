@@ -1,7 +1,6 @@
 "use client"
 
-import { useConvexAuth } from "convex/react"
-import { ArrowRight, CircleUserRound, ShieldCheck, UsersRound } from "lucide-react"
+import { CircleUserRound, ShieldCheck, UsersRound } from "lucide-react"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { AppShell } from "@/components/app-shell"
@@ -9,10 +8,9 @@ import { Dashboard } from "@/components/dashboard"
 import { LoadingScreen } from "@/components/loading-screen"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useCurrentUser } from "@/modules/auth"
+import { AuthStatusScreen, useAuthState } from "@/modules/auth"
 import { getBusinessNavGroups, navGroups } from "@/components/app-shared"
 import { dashboardRoleLabels, type DashboardRole } from "./types"
-import { AccountTypeSetup } from "./account-type-setup"
 import { IndividualDashboard } from "./individual-dashboard"
 import { BusinessDashboard } from "./business-dashboard"
 
@@ -39,23 +37,23 @@ export function DashboardView({
 }) {
   const pathname = usePathname()
   const router = useRouter()
-  const { isAuthenticated, isLoading: authLoading } = useConvexAuth()
-  const user = useCurrentUser()
-  const userRole = user?.platformRole === "admin" ? "admin" : user?.accountType ?? "individual"
+  const authState = useAuthState()
+  const user = authState.status === "ready" ? authState.user : null
+  const userRole = authState.status === "ready" ? authState.role : "individual"
   const role = previewRole ?? userRole
   const RoleIcon = roleIcons[role]
   const targetRoute = roleRoutes[userRole]
 
   useEffect(() => {
-    if (!isAuthenticated || !user || previewRole) return
+    if (authState.status !== "ready" || previewRole) return
     if (expectedRole && expectedRole !== userRole) {
       router.replace(targetRoute)
       return
     }
     if (!expectedRole && !pathname.startsWith(targetRoute)) router.replace(targetRoute)
-  }, [expectedRole, isAuthenticated, pathname, previewRole, router, targetRoute, user, userRole])
+  }, [authState.status, expectedRole, pathname, previewRole, router, targetRoute, userRole])
 
-  if (authLoading || (isAuthenticated && user === undefined)) {
+  if (authState.status === "loading" || authState.status === "syncing") {
     return (
       <LoadingScreen
         description="Memeriksa sesi dan menentukan ruang kerja yang sesuai dengan akunmu."
@@ -66,18 +64,18 @@ export function DashboardView({
     )
   }
 
-  if (isAuthenticated && user === null) return <AccountTypeSetup />
-
-  if (!isAuthenticated) {
+  if (authState.status === "signedOut") {
     return (
       <main className="grid min-h-screen place-items-center bg-background p-6">
         <Card className="w-full max-w-md">
           <CardHeader><CardTitle>Login diperlukan</CardTitle></CardHeader>
-          <CardContent><a className="inline-flex items-center gap-2 text-primary underline-offset-4 hover:underline" href="/login">Masuk ke WAVE <ArrowRight aria-hidden="true" /></a></CardContent>
+          <CardContent><a className="text-primary underline-offset-4 hover:underline" href="/login">Masuk ke WAVE</a></CardContent>
         </Card>
       </main>
     )
   }
+
+  if (authState.status !== "ready") return <AuthStatusScreen state={authState} />
 
   if (!previewRole && (!pathname.startsWith(targetRoute) || (expectedRole && expectedRole !== userRole))) return null
 
@@ -110,4 +108,3 @@ export function DashboardView({
     </AppShell>
   )
 }
-
