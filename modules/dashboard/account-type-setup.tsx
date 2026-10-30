@@ -8,7 +8,7 @@ import { accountTypes, organizationTypeLabels, organizationTypes, type AccountTy
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export function AccountTypeSetup() {
-  const ensureCurrent = useMutation(api.auth.users.ensureCurrent)
+  const completeOnboarding = useMutation(api.auth.users.completeOnboarding)
   const [accountType, setAccountType] = useState<AccountType>("individual")
   const [organizationName, setOrganizationName] = useState("")
   const [organizationType, setOrganizationType] = useState<OrganizationType>("bank_sampah")
@@ -24,7 +24,7 @@ export function AccountTypeSetup() {
     setSaving(true)
     setError("")
     try {
-      await ensureCurrent({
+      await completeOnboarding({
         accountType,
         ...(accountType === "business" ? { organizationName, organizationType } : {}),
       })
