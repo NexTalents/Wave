@@ -1,5 +1,6 @@
 "use client"
 
+import { useClerk, useUser } from "@clerk/nextjs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -13,59 +14,64 @@ import {
 import {
   LoaderCircle,
   UserIcon,
-  SettingsIcon,
-  CreditCardIcon,
   LogOutIcon,
 } from "lucide-react"
 import { useSignOut } from "@/modules/auth"
 
-const user = {
-  name: "Shaban Haider",
-  email: "shaban@efferd.com",
-  avatar: "https://github.com/shabanhr.png",
+function getInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("") || "W"
 }
 
 export function NavUser() {
+  const clerk = useClerk()
+  const { isLoaded, user } = useUser()
   const { error, isSigningOut, signOut } = useSignOut()
+  const name = user?.fullName || user?.firstName || "Pengguna WAVE"
+  const email =
+    user?.primaryEmailAddress?.emailAddress || "Email belum tersedia"
+  const initials = getInitials(name)
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={<Avatar className="size-8" />}>
-        <AvatarImage src={user.avatar} />
-        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+      <DropdownMenuTrigger
+        aria-label="Buka menu akun"
+        className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        disabled={!isLoaded}
+        nativeButton
+        render={<button type="button" />}
+      >
+        <Avatar className="size-8">
+          <AvatarImage alt={name} src={user?.imageUrl} />
+          <AvatarFallback>{initials}</AvatarFallback>
+        </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60">
         <DropdownMenuGroup>
           <DropdownMenuLabel className="pointer-events-none flex items-center gap-2">
             <Avatar className="isolate size-8">
-              <AvatarImage src={user.avatar} />
-              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+              <AvatarImage alt={name} src={user?.imageUrl} />
+              <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
-            <div>
-              <span className="font-medium text-foreground">{user.name}</span>{" "}
-              <br />
+            <div className="min-w-0">
+              <span className="block truncate font-medium text-foreground">
+                {name}
+              </span>
               <div className="max-w-full overflow-hidden text-xs text-ellipsis whitespace-nowrap text-muted-foreground">
-                {user.email}
+                {email}
               </div>
             </div>
           </DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => clerk.openUserProfile()}>
             <UserIcon />
-            Account
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <SettingsIcon />
-            Settings
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <CreditCardIcon />
-            Plan & Billing
+            Kelola akun
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
@@ -81,7 +87,7 @@ export function NavUser() {
             ) : (
               <LogOutIcon />
             )}
-            {isSigningOut ? "Signing out..." : "Log out"}
+            {isSigningOut ? "Keluar..." : "Keluar"}
           </DropdownMenuItem>
         </DropdownMenuGroup>
         {error ? (
