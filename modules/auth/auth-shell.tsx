@@ -2,7 +2,6 @@
 
 import {
   ArrowLeft,
-  Building2,
   Check,
   Eye,
   EyeOff,
@@ -20,7 +19,6 @@ type AuthStep = { label: string; detail: string }
 const registerSteps: AuthStep[] = [
   { label: "Buat akun", detail: "Data akun" },
   { label: "Verifikasi", detail: "Email kamu" },
-  { label: "Selesai", detail: "Mulai bersama WAVE" },
 ]
 
 export const authPrimaryButtonClass =
@@ -37,7 +35,7 @@ export function AuthShell({
 }: {
   children: ReactNode
   description: string
-  step?: 1 | 2 | 3
+  step?: 1 | 2
   title: string
 }) {
   return (
@@ -118,8 +116,8 @@ export function AuthShell({
   )
 }
 
-function RegisterProgress({ activeStep }: { activeStep: 1 | 2 | 3 }) {
-  const icons = [UserRound, ShieldCheck, Building2]
+function RegisterProgress({ activeStep }: { activeStep: 1 | 2 }) {
+  const icons = [UserRound, ShieldCheck]
 
   return (
     <div

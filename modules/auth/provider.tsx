@@ -50,18 +50,23 @@ function AuthSync({ children }: { children: ReactNode }) {
       organizationName?: string
       organizationType?: OrganizationType
     }
+    const registrationPhone = window.sessionStorage.getItem(
+      "wave_registration_phone"
+    )
 
     void syncProfile({})
       .then(() =>
         metadata.accountType
           ? completeOnboarding({
               accountType: metadata.accountType,
+              phoneNumber: registrationPhone ?? undefined,
               organizationName: metadata.organizationName,
               organizationType: metadata.organizationType,
             })
           : undefined
       )
       .then(() => {
+        window.sessionStorage.removeItem("wave_registration_phone")
         setSyncedUserId(user.id)
         setStatus("done")
       })
@@ -115,7 +120,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ClerkProvider publishableKey={publishableKey}>
+    <ClerkProvider
+      publishableKey={publishableKey}
+      signInUrl="/login"
+      signInFallbackRedirectUrl="/dashboard"
+      signUpUrl="/register"
+      signUpFallbackRedirectUrl="/dashboard"
+    >
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
         <AuthSync>{children}</AuthSync>
       </ConvexProviderWithClerk>

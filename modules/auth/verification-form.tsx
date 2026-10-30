@@ -227,7 +227,6 @@ function AuthenticatorSetup({ redirectUrl }: { redirectUrl: string }) {
   return (
     <AuthShell
       description="Tambahkan lapisan keamanan ekstra sebelum mulai menggunakan WAVE."
-      step={3}
       title="Aktifkan authenticator app"
     >
       <div className="mx-auto max-w-[460px]">

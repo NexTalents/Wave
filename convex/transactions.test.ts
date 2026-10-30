@@ -27,6 +27,49 @@ async function seedOperator(t: ReturnType<typeof makeTest>, key: string) {
   })
 }
 
+async function seedAgentWithLapak(
+  t: ReturnType<typeof makeTest>,
+  key: string
+) {
+  return t.run(async (ctx) => {
+    const userId = await ctx.db.insert("users", {
+      tokenIdentifier: `test|${key}-operator`,
+      email: `${key}-operator@wave.test`,
+      accountType: "business",
+      status: "active",
+    })
+    const agentId = await ctx.db.insert("organizations", {
+      name: `${key} Agent`,
+      type: "large_agent",
+      verificationStatus: "verified",
+      createdBy: userId,
+    })
+    await ctx.db.insert("memberships", {
+      userId,
+      organizationId: agentId,
+      role: "operator",
+      status: "active",
+    })
+    const lapakId = await ctx.db.insert("organizations", {
+      name: `${key} Lapak`,
+      type: "small_lapak",
+      verificationStatus: "verified",
+      createdBy: userId,
+      parentOrganizationId: agentId,
+      lapakCode: `${key.toUpperCase()}-LAPAK`,
+      phone: "+628000000099",
+    })
+    const lapakPickerId = await ctx.db.insert("wastePickers", {
+      organizationId: lapakId,
+      name: `${key} Lapak Picker`,
+      phone: "+628000000098",
+      memberCode: `${key.toUpperCase()}-PICKER`,
+      status: "active",
+    })
+    return { agentId, lapakId, lapakPickerId }
+  })
+}
+
 async function expectConvexError(operation: Promise<unknown>, code: string) {
   try {
     await operation
@@ -310,5 +353,101 @@ describe("transaction authorization", () => {
         }),
       "FORBIDDEN"
     )
+  })
+
+  it("B-08 supports lapak transactions without a waste picker", async () => {
+    vi.useFakeTimers()
+    vi.stubEnv("WHATSAPP_ACCESS_TOKEN", "")
+    const t = makeTest()
+    const ids = await seedAgentWithLapak(t, "b08")
+
+    const transactionId = await t
+      .withIdentity(identity("b08-operator"))
+      .mutation(api.transactions.create, {
+        organizationId: ids.agentId,
+        supplierOrganizationId: ids.lapakId,
+        supplierType: "lapak",
+        material: "PET",
+        weightKg: 2,
+        aiGrade: "B",
+        finalGrade: "B",
+        condition: "clean",
+        note: "B-08 lapak transaction",
+        wpiPricePerKg: 5000,
+        minimumPricePerKg: 4000,
+        finalPricePerKg: 4500,
+        paymentMode: "cash",
+      })
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    const view = await t
+      .withIdentity(identity("b08-operator"))
+      .query(api.transactions.get, {
+        organizationId: ids.agentId,
+        transactionId,
+      })
+
+    expect(view).toMatchObject({
+      supplierType: "lapak",
+      picker: {
+        id: ids.lapakId,
+        name: "b08 Lapak",
+        memberCode: "B08-LAPAK",
+      },
+      grossValue: 9000,
+      cashPaid: 9000,
+    })
+    await expect(
+      t
+        .withIdentity(identity("b08-operator"))
+        .mutation(api.transactions.create, {
+          organizationId: ids.agentId,
+          supplierOrganizationId: ids.lapakId,
+          supplierType: "lapak",
+          material: "PET",
+          weightKg: 2,
+          aiGrade: "B",
+          finalGrade: "B",
+          condition: "clean",
+          note: "B-08 invalid lapak stock",
+          wpiPricePerKg: 5000,
+          minimumPricePerKg: 4000,
+          finalPricePerKg: 4500,
+          paymentMode: "stock",
+        })
+    ).rejects.toThrow("Titip stok hanya tersedia")
+  })
+
+  it("B-09 accepts a linked lapak picker while preserving picker scope", async () => {
+    vi.useFakeTimers()
+    vi.stubEnv("WHATSAPP_ACCESS_TOKEN", "")
+    const t = makeTest()
+    const ids = await seedAgentWithLapak(t, "b09")
+
+    const transactionId = await t
+      .withIdentity(identity("b09-operator"))
+      .mutation(api.transactions.create, {
+        organizationId: ids.agentId,
+        wastePickerId: ids.lapakPickerId,
+        supplierOrganizationId: ids.lapakId,
+        supplierType: "waste_picker",
+        material: "Kardus",
+        weightKg: 1,
+        aiGrade: "A",
+        finalGrade: "A",
+        condition: "dry",
+        note: "B-09 linked picker transaction",
+        wpiPricePerKg: 2300,
+        minimumPricePerKg: 2100,
+        finalPricePerKg: 2300,
+        paymentMode: "stock",
+      })
+
+    const transaction = await t.run((ctx) => ctx.db.get(transactionId))
+    expect(transaction).toMatchObject({
+      wastePickerId: ids.lapakPickerId,
+      supplierOrganizationId: ids.lapakId,
+      supplierType: "waste_picker",
+    })
   })
 })

@@ -34,6 +34,7 @@ export function toTransactionRecord(view: TransactionView): TransactionRecord {
     createdAt: view.createdAt,
     dateFormatted,
     picker: view.picker,
+    supplierType: view.supplierType,
     material: view.material,
     rawLabel: view.rawLabel,
     weightKg: view.weightKg,

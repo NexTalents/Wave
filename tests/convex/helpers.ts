@@ -5,7 +5,7 @@ interface GlobImportMeta extends ImportMeta {
   glob<T = unknown>(pattern: string): Record<string, () => Promise<T>>
 }
 
-const modules = (import.meta as GlobImportMeta).glob("../../convex/**/*.ts")
+const modules = (import.meta as GlobImportMeta).glob("../../convex/**/*.{ts,tsx}")
 
 export function makeTest() {
   return convexTest(schema, modules)

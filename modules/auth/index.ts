@@ -3,6 +3,7 @@ export { AuthProvider, useAuthSyncStatus } from "./provider"
 export { AuthStatusScreen } from "./auth-status-screen"
 export { RoleGuard, useActiveOrganization } from "./role-guard"
 export { SignedOutOnly } from "./signed-out-only"
+export { PickerActivationPage } from "./picker-activation-page"
 export {
   hasPermission,
   permissions,

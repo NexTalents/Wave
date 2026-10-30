@@ -16,11 +16,12 @@ const transactionView = v.object({
   code: v.string(),
   createdAt: v.number(),
   picker: v.object({
-    id: v.id("wastePickers"),
+    id: v.string(),
     name: v.string(),
     memberCode: v.string(),
     phone: v.string(),
   }),
+  supplierType: v.optional(v.union(v.literal("waste_picker"), v.literal("lapak"))),
   material: v.string(),
   rawLabel: v.optional(v.string()),
   weightKg: v.number(),
@@ -60,7 +61,12 @@ const transactionView = v.object({
 })
 
 async function toTransactionView(ctx: QueryCtx, transaction: Doc<"transactions">) {
-  const picker = await ctx.db.get(transaction.wastePickerId)
+  const picker = transaction.wastePickerId
+    ? await ctx.db.get(transaction.wastePickerId)
+    : null
+  const supplierOrganization = transaction.supplierOrganizationId
+    ? await ctx.db.get(transaction.supplierOrganizationId)
+    : null
   const delivery = await ctx.db
     .query("receiptDeliveries")
     .withIndex("by_transaction", (query) => query.eq("transactionId", transaction._id))
@@ -72,11 +78,12 @@ async function toTransactionView(ctx: QueryCtx, transaction: Doc<"transactions">
     code: formatTransactionCode(transaction._id, transaction._creationTime),
     createdAt: transaction._creationTime,
     picker: {
-      id: transaction.wastePickerId,
-      name: picker?.name ?? "Anggota tidak ditemukan",
-      memberCode: picker?.memberCode ?? "-",
-      phone: picker?.phone ?? "",
+      id: transaction.wastePickerId ?? transaction.supplierOrganizationId ?? "unknown",
+      name: picker?.name ?? supplierOrganization?.name ?? "Pemasok tidak ditemukan",
+      memberCode: picker?.memberCode ?? supplierOrganization?.lapakCode ?? "-",
+      phone: picker?.phone ?? supplierOrganization?.phone ?? "",
     },
+    supplierType: transaction.supplierType,
     material: transaction.material,
     rawLabel: transaction.rawLabel,
     weightKg: transaction.weightKg,
@@ -112,7 +119,9 @@ async function toTransactionView(ctx: QueryCtx, transaction: Doc<"transactions">
 export const create = mutation({
   args: {
     organizationId: v.id("organizations"),
-    wastePickerId: v.id("wastePickers"),
+    wastePickerId: v.optional(v.id("wastePickers")),
+    supplierOrganizationId: v.optional(v.id("organizations")),
+    supplierType: v.optional(v.union(v.literal("waste_picker"), v.literal("lapak"))),
     material: v.string(),
     rawLabel: v.optional(v.string()),
     weightKg: v.number(),
@@ -137,9 +146,40 @@ export const create = mutation({
       throw new Error("Price is below the minimum")
     }
 
-    const picker = await ctx.db.get(args.wastePickerId)
-    if (!picker || picker.organizationId !== args.organizationId || picker.status !== "active") {
-      throw new Error("Waste picker is not available for this organization")
+    const supplierType = args.supplierType ?? "waste_picker"
+    const picker = args.wastePickerId ? await ctx.db.get(args.wastePickerId) : null
+    const supplierOrganization = args.supplierOrganizationId
+      ? await ctx.db.get(args.supplierOrganizationId)
+      : null
+    if (supplierType === "waste_picker") {
+      const pickerOrganization = picker
+        ? await ctx.db.get(picker.organizationId)
+        : null
+      const isDirectPicker = picker?.organizationId === args.organizationId
+      const isLinkedPicker = Boolean(
+        pickerOrganization?.type === "small_lapak" &&
+          pickerOrganization.parentOrganizationId === args.organizationId
+      )
+      if (!picker || picker.status !== "active" || (!isDirectPicker && !isLinkedPicker)) {
+        throw new Error("Waste picker is not available for this organization")
+      }
+      if (
+        args.supplierOrganizationId &&
+        args.supplierOrganizationId !== picker.organizationId
+      ) {
+        throw new Error("Waste picker supplier scope is invalid")
+      }
+    } else {
+      if (
+        !supplierOrganization ||
+        supplierOrganization.type !== "small_lapak" ||
+        supplierOrganization.parentOrganizationId !== args.organizationId
+      ) {
+        throw new Error("Lapak is not available for this organization")
+      }
+      if (args.paymentMode === "stock") {
+        throw new Error("Titip stok hanya tersedia untuk transaksi pemulung")
+      }
     }
 
     const calculation = calculateTransaction({
@@ -150,6 +190,8 @@ export const create = mutation({
     const transactionId = await ctx.db.insert("transactions", {
       organizationId: args.organizationId,
       wastePickerId: args.wastePickerId,
+      supplierOrganizationId: args.supplierOrganizationId,
+      supplierType,
       operatorUserId: actor.user._id,
       material: args.material,
       rawLabel: args.rawLabel,
@@ -171,7 +213,7 @@ export const create = mutation({
       wpiEligibleAt: Date.now() + 15 * 60 * 1000,
     })
 
-    if (args.paymentMode === "stock") {
+    if (args.paymentMode === "stock" && picker && args.wastePickerId) {
       await ctx.db.insert("materialLots", {
         organizationId: args.organizationId,
         transactionId,
@@ -187,12 +229,13 @@ export const create = mutation({
       })
     }
 
-    if (picker.phone) {
+    const recipient = picker?.phone ?? supplierOrganization?.phone
+    if (recipient) {
       const deliveryId = await ctx.db.insert("receiptDeliveries", {
         transactionId,
         channel: "whatsapp",
         status: "queued",
-        recipient: picker.phone,
+        recipient,
       })
       await ctx.scheduler.runAfter(0, internal.whatsapp.sendReceipt, { deliveryId })
     }

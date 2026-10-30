@@ -11,7 +11,9 @@ const organizationType = v.union(
   v.literal("recycler"),
   v.literal("government"),
   v.literal("ngo"),
-  v.literal("platform")
+  v.literal("platform"),
+  v.literal("large_agent"),
+  v.literal("small_lapak")
 )
 
 type OrganizationType =
@@ -22,6 +24,8 @@ type OrganizationType =
   | "government"
   | "ngo"
   | "platform"
+  | "large_agent"
+  | "small_lapak"
 
 type AuthIdentity = {
   tokenIdentifier: string
@@ -240,6 +244,7 @@ export const syncProfile = mutation({
 export const completeOnboarding = mutation({
   args: {
     accountType,
+    phoneNumber: v.optional(v.string()),
     organizationName: v.optional(v.string()),
     organizationType: v.optional(organizationType),
   },
@@ -249,6 +254,10 @@ export const completeOnboarding = mutation({
 
     const user = await upsertProfile(ctx, identity)
     if (user.status !== "active") throw new ConvexError({ code: "SUSPENDED" })
+    const phoneNumber = args.phoneNumber?.trim()
+    if (phoneNumber && phoneNumber !== user.phone) {
+      await ctx.db.patch(user._id, { phone: phoneNumber })
+    }
     if (user.accountType && user.accountType !== args.accountType) {
       throw new ConvexError({ code: "ACCOUNT_TYPE_LOCKED" })
     }

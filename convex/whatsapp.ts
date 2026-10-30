@@ -62,14 +62,19 @@ export const getReceiptContext = internalQuery({
 
     const transaction = await ctx.db.get(delivery.transactionId)
     if (!transaction) return null
-    const picker = await ctx.db.get(transaction.wastePickerId)
-    if (!picker) return null
+    const picker = transaction.wastePickerId
+      ? await ctx.db.get(transaction.wastePickerId)
+      : null
+    const supplierOrganization = transaction.supplierOrganizationId
+      ? await ctx.db.get(transaction.supplierOrganizationId)
+      : null
+    if (!picker && !supplierOrganization) return null
 
     const message = formatWhatsAppReceiptMessage({
       transactionId: formatTransactionCode(transaction._id, transaction._creationTime),
       recipient: delivery.recipient,
-      memberName: picker.name,
-      memberCode: picker.memberCode,
+      memberName: picker?.name ?? supplierOrganization?.name ?? "Pemasok WAVE",
+      memberCode: picker?.memberCode ?? supplierOrganization?.lapakCode ?? "-",
       material: transaction.material,
       weightKg: transaction.weightKg,
       grade: transaction.finalGrade,

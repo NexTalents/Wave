@@ -146,8 +146,9 @@ export function getBusinessNavGroups(pathname?: string): SidebarNavGroup[] {
       },
       {
         title: "Partner pemasok",
-        path: "/dashboard/business#partners",
+        path: "/dashboard/business/partners",
         icon: <HandshakeIcon />,
+        isActive: current.startsWith("/dashboard/business/partners"),
       },
       {
         title: "Pembayaran",
