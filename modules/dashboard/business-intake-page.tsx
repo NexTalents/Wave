@@ -1,41 +1,61 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect, useRef } from "react"
+import { useQuery } from "convex/react"
 import Link from "next/link"
-import Image from "next/image"
+import { useSearchParams } from "next/navigation"
 import {
   AlertCircle,
   AlertTriangle,
+  ArrowDownToLine,
   ArrowRight,
+  Building2,
   Camera,
   Check,
   CheckCircle2,
+  ChevronsUpDown,
   Clock,
   ExternalLink,
   History,
   Info,
   LoaderCircle,
   Phone,
+  Printer,
+  Receipt,
   RefreshCw,
+  RotateCcw,
   Scale,
   ScanLine,
+  Search,
   Send,
   ShieldCheck,
   Sparkles,
+  Store,
   User,
+  UserRound,
+  Users,
   Wallet,
+  X,
   Zap,
 } from "lucide-react"
+import { cn } from "cn"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Skeleton } from "@/components/ui/skeleton"
 import { CameraCaptureDialog } from "@/components/camera-capture-dialog"
-import { calculateTransaction, canConfirmPrice, type PaymentMode } from "@/lib/transactions/rules"
+import { BusinessIntakeSkeleton } from "./business-intake-skeleton"
+import { api } from "@/convex/_generated/api"
 import {
-  DEFAULT_PICKERS,
+  calculateTransaction,
+  canConfirmPrice,
+  type PaymentMode,
+} from "@/lib/transactions/rules"
+import {
   getPriceInfoForMaterial,
   saveStoredTransaction,
+  DEFAULT_PICKERS,
 } from "@/lib/transactions/store"
 import type {
   TransactionRecord,
@@ -44,9 +64,136 @@ import type {
   WastePicker,
 } from "@/lib/transactions/types"
 
+type PickerListItem = {
+  id: string
+  name: string
+  phone?: string
+  memberCode: string
+  lapakName?: string
+}
+
+type SupplierMode = "waste_picker" | "lapak"
+
 export function BusinessIntakePage() {
-  // Step & Picker State
-  const [selectedPicker, setSelectedPicker] = useState<WastePicker>(DEFAULT_PICKERS[0])
+  const searchParams = useSearchParams()
+  const initialPickerId = searchParams.get("pickerId")
+  const initialSupplierMode = searchParams.get("supplierMode") as SupplierMode | null
+
+  // Convex context
+  const organizations = useQuery(api.auth.organizations.listMine)
+  const organizationId = organizations?.[0]?.organization._id
+
+  // Supplier & Picker Selection State
+  const [supplierMode, setSupplierMode] = useState<SupplierMode>(
+    initialSupplierMode === "lapak" ? "lapak" : "waste_picker"
+  )
+  const [pickerSearch, setPickerSearch] = useState("")
+
+  const allPickers = useQuery(
+    api.wastePickers.list,
+    organizationId ? { organizationId } : "skip"
+  ) as PickerListItem[] | undefined
+
+  const linkedPartners = useQuery(
+    api.partners.listForAgent,
+    organizationId ? { organizationId } : "skip"
+  )
+
+  const linkedLapakMembers = useQuery(
+    api.partners.listLapakMembers,
+    organizationId ? { organizationId } : "skip"
+  )
+
+  // All available items based on supplierMode (unfiltered by search query)
+  const allAvailablePickers = useMemo(() => {
+    let source: PickerListItem[] = []
+
+    if (supplierMode === "lapak") {
+      source = (linkedPartners?.lapaks ?? []).map((lapak) => ({
+        id: lapak.id,
+        name: lapak.name,
+        phone: lapak.phone,
+        memberCode: lapak.lapakCode,
+      }))
+      if (source.length === 0) {
+        source = [
+          {
+            id: "lapak-demo-1",
+            name: "Lapak Berkah Mandiri",
+            phone: "0812-8877-6655",
+            memberCode: "LAPAK-B7281A",
+          },
+          {
+            id: "lapak-demo-2",
+            name: "Lapak Sahabat Rongsok",
+            phone: "0877-3344-1122",
+            memberCode: "LAPAK-91C4DF",
+          },
+        ]
+      }
+    } else {
+      const convexList = [
+        ...(allPickers ?? []),
+        ...(linkedLapakMembers ?? []).map((member) => ({
+          id: member.id,
+          name: `${member.name} (${member.lapakName})`,
+          phone: member.phone,
+          memberCode: member.memberCode,
+          lapakName: member.lapakName,
+        })),
+      ]
+      source = convexList.length > 0 ? convexList : DEFAULT_PICKERS
+    }
+
+    return source
+  }, [allPickers, linkedLapakMembers, linkedPartners, supplierMode])
+
+  // Filtered list based on real-time search query
+  const filteredPickers = useMemo(() => {
+    const search = pickerSearch.trim().toLowerCase()
+    if (!search) return allAvailablePickers
+    return allAvailablePickers.filter((p) =>
+      `${p.name} ${p.phone ?? ""} ${p.memberCode}`.toLowerCase().includes(search)
+    )
+  }, [allAvailablePickers, pickerSearch])
+
+  const [selectedPickerId, setSelectedPickerId] = useState<string | null>(initialPickerId)
+  const [isPickerDropdownOpen, setIsPickerDropdownOpen] = useState(false)
+  const pickerDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (pickerDropdownRef.current && !pickerDropdownRef.current.contains(event.target as Node)) {
+        setIsPickerDropdownOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  // Auto-select initial picker if provided
+  useEffect(() => {
+    if (initialPickerId && allAvailablePickers.some((p) => p.id === initialPickerId)) {
+      setSelectedPickerId(initialPickerId)
+    } else if (!selectedPickerId && allAvailablePickers.length > 0) {
+      setSelectedPickerId(allAvailablePickers[0].id)
+    }
+  }, [initialPickerId, allAvailablePickers, selectedPickerId])
+
+  const selectedPicker = useMemo<WastePicker | null>(() => {
+    const picker = allAvailablePickers.find((item) => item.id === selectedPickerId) ?? allAvailablePickers[0]
+    return picker
+      ? {
+          id: picker.id,
+          name: picker.name,
+          phone: picker.phone ?? "",
+          memberCode: picker.memberCode,
+        }
+      : null
+  }, [allAvailablePickers, selectedPickerId])
+
+  // Weight & Scale State
   const [weightKg, setWeightKg] = useState("15.5")
 
   // Camera & Photo State
@@ -72,6 +219,9 @@ export function BusinessIntakePage() {
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("cash")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [completedTx, setCompletedTx] = useState<TransactionRecord | null>(null)
+
+  // Print & Receipt Modal State
+  const [isReceiptPreviewOpen, setIsReceiptPreviewOpen] = useState(false)
 
   // Active Material Pricing
   const activeMaterial = aiResult?.material || "Kardus"
@@ -130,19 +280,19 @@ export function BusinessIntakePage() {
       setFinalGrade(data.grade)
       const detectedPriceInfo = getPriceInfoForMaterial(data.material)
       setFinalPrice(String(detectedPriceInfo.prices[data.grade as WasteGrade] || 2300))
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("[Intake] Analysis error:", err)
+      const message = err instanceof Error ? err.message : "Gagal memproses foto di service AI Gradio."
       setAiError(
-        err.message ||
-          "Gagal memproses foto di service AI Gradio (56.10.12.62:7860). Anda tetap dapat mengisi data secara manual."
+        `${message} Anda tetap dapat melanjutkan dengan verifikasi kualitas manual oleh operator.`
       )
-      // Provide fallback so operator is not stuck
+      // Provide fallback so operator is never blocked
       setAiResult({
         material: "Kardus",
         rawLabel: "cardboard",
         condition: "Pemeriksaan visual manual (Kamera)",
         grade: "B",
-        note: "Service AI Gradio sedang offline atau tidak dapat dijangkau. Verifikasi grade dilakukan manual oleh operator.",
+        note: "Service AI Gradio sedang offline atau memerlukan verifikasi langsung operator.",
       })
       setFinalGrade("B")
       setFinalPrice("2300")
@@ -157,9 +307,15 @@ export function BusinessIntakePage() {
     setFinalPrice(String(priceInfo.prices[grade]))
   }
 
+  // Add / Preset Weight
+  const addWeight = (delta: number) => {
+    const current = Number(weightKg) || 0
+    setWeightKg((current + delta).toFixed(1))
+  }
+
   // Handle Submit Transaction
   const handleSubmitTransaction = async () => {
-    if (!aiResult || !isPriceValid || numericWeight <= 0) return
+    if (!aiResult || !isPriceValid || numericWeight <= 0 || !selectedPicker) return
 
     setIsSubmitting(true)
     try {
@@ -206,7 +362,7 @@ export function BusinessIntakePage() {
           waProvider = waData.provider || "simulation"
         }
       } catch (waErr) {
-        console.warn("[Intake] WhatsApp send receipt network error:", waErr)
+        console.warn("[Intake] WhatsApp send receipt error:", waErr)
       }
 
       const record: TransactionRecord = {
@@ -246,17 +402,21 @@ export function BusinessIntakePage() {
         },
       }
 
-      // Save to store
       saveStoredTransaction(record)
       setCompletedTx(record)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to submit transaction:", err)
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  // Reset form for next intake
+  // Handle Thermal Print
+  const handlePrintReceipt = () => {
+    window.print()
+  }
+
+  // Reset Form for next intake
   const handleResetForNext = () => {
     setCapturedPhotoUrl(null)
     setCapturedFile(null)
@@ -266,6 +426,10 @@ export function BusinessIntakePage() {
     setWeightKg("10.0")
     setFinalGrade("B")
     setFinalPrice("2300")
+  }
+
+  if (organizations === undefined) {
+    return <BusinessIntakeSkeleton />
   }
 
   return (
@@ -278,374 +442,612 @@ export function BusinessIntakePage() {
               <ScanLine className="size-3.5" /> Alur Setoran Masuk
             </span>
             <span className="text-muted-foreground">·</span>
-            <span className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="flex items-center gap-1 font-mono text-xs text-muted-foreground">
+              <span className="size-2 animate-pulse rounded-full bg-emerald-500" />
               Gradio AI: 56.10.12.62:7860
             </span>
           </div>
           <h1 className="mt-1 text-3xl font-bold tracking-tight text-foreground">
             Setoran Masuk & Validasi Kualitas
           </h1>
-          <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
-            Ambil foto material langsung via kamera pengawas, biarkan AI Gradio mengklasifikasikan jenis sampah & kondisi, lalu konfirmasi grade harga sesuai indeks pasar WAVE.
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Ambil foto material langsung via kamera, validasi prediksi AI & kondisi fisik, lalu tetapkan grade dan cetak struk kasir transparan.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/dashboard/business/partners"
+            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3.5 text-xs font-semibold text-foreground hover:bg-muted transition"
+          >
+            <Users className="size-3.5 text-primary" /> Direktori Partner
+          </Link>
           <Link
             href="/dashboard/business/transactions"
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 text-sm font-semibold text-foreground transition hover:bg-muted"
+            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-border bg-card px-3.5 text-xs font-semibold text-foreground hover:bg-muted transition"
           >
-            <History className="size-4" /> Riwayat Transaksi
+            <History className="size-3.5" /> Riwayat Transaksi
           </Link>
         </div>
       </div>
 
-      {/* Success Banner if Completed */}
+      {/* SUCCESS CONFIRMATION BANNER */}
       {completedTx && (
-        <Card className="border-emerald-500/40 bg-emerald-500/10 shadow-md animate-in fade-in zoom-in-95 duration-200">
+        <Card className="animate-in border-emerald-500/40 bg-emerald-500/10 shadow-md duration-200 zoom-in-95 fade-in">
           <CardContent className="p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex items-start gap-4">
                 <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-emerald-600 text-white shadow-md">
                   <CheckCircle2 className="size-6" />
                 </span>
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-mono font-semibold text-emerald-800 dark:text-emerald-300">
+                    <span className="font-mono text-xs font-bold text-emerald-800 dark:text-emerald-300">
                       {completedTx.id}
                     </span>
-                    <Badge variant="secondary" className="bg-emerald-200 text-emerald-900 border-emerald-300">
+                    <Badge variant="secondary" className="border-emerald-300 bg-emerald-200 text-emerald-900 text-xs">
                       Terkonfirmasi
                     </Badge>
-                    <Badge variant="outline" className="text-xs bg-emerald-500/20 text-emerald-900 dark:text-emerald-300 border-emerald-500/40">
-                      WhatsApp: {completedTx.whatsappDelivery.provider === "meta_cloud_api" ? "Cloud API Terkirim" : "Struk Terkirim (ID: 1379578261903928)"}
+                    <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/20 text-xs text-emerald-900 dark:text-emerald-300">
+                      WhatsApp: {completedTx.whatsappDelivery.status}
                     </Badge>
                   </div>
-                  <h3 className="text-lg font-bold text-foreground">
-                    Setoran Berhasil Dicatat & Struk Terkirim!
+                  <h3 className="text-xl font-bold text-foreground">
+                    Setoran Berhasil Dicatat & Terverifikasi!
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Material: <strong>{completedTx.weightKg} kg {completedTx.material}</strong> (Grade {completedTx.finalGrade}) · Pembayaran: <strong>Rp {completedTx.cashPaid.toLocaleString("id-ID")}</strong> kepada {completedTx.picker.name}.
+                    Pemasok: <strong>{completedTx.picker.name}</strong> ({completedTx.picker.memberCode}) · Material: <strong>{completedTx.weightKg} kg {completedTx.material} (Grade {completedTx.finalGrade})</strong>
                   </p>
-                  <div className="pt-1 flex flex-wrap items-center gap-3 text-xs text-emerald-800 dark:text-emerald-300 font-medium">
-                    <span className="flex items-center gap-1.5">
-                      <Send className="size-3" /> Terkirim ke WhatsApp: <strong>{completedTx.whatsappDelivery.recipient}</strong>
-                    </span>
-                    {completedTx.whatsappDelivery.waDirectUrl && (
-                      <a
-                        href={completedTx.whatsappDelivery.waDirectUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-300 underline font-semibold hover:text-emerald-950 dark:hover:text-white"
-                      >
-                        Buka di WhatsApp Web/App <ExternalLink className="size-3" />
-                      </a>
+                  <div className="flex items-center gap-2 pt-1">
+                    <span className="text-xs text-muted-foreground">Uang Tunai:</span>
+                    <strong className="text-lg font-black text-emerald-700 dark:text-emerald-300">
+                      Rp {completedTx.cashPaid.toLocaleString("id-ID")}
+                    </strong>
+                    {completedTx.walletCredit > 0 && (
+                      <span className="rounded bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-800 dark:text-emerald-200">
+                        +Rp {completedTx.walletCredit.toLocaleString("id-ID")} Dompet
+                      </span>
                     )}
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2.5 pt-1 sm:pt-0">
+              {/* Action Buttons for Completed Transaction */}
+              <div className="flex flex-wrap items-center gap-2 pt-2 lg:pt-0">
+                <Button
+                  onClick={handlePrintReceipt}
+                  className="gap-2 bg-neutral-900 text-white hover:bg-neutral-800 text-xs font-semibold shadow-sm"
+                >
+                  <Printer className="size-4" /> Cetak Struk Kasir
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsReceiptPreviewOpen(true)}
+                  className="gap-2 border-border bg-card text-xs font-semibold hover:bg-muted"
+                >
+                  <Receipt className="size-4 text-primary" /> Pratinjau Struk
+                </Button>
+                {completedTx.whatsappDelivery.waDirectUrl && (
+                  <a
+                    href={completedTx.whatsappDelivery.waDirectUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-600/10 px-3 text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600/20 transition"
+                  >
+                    <Send className="size-3.5" /> Buka Chat WA <ExternalLink className="size-3" />
+                  </a>
+                )}
                 <Button
                   onClick={handleResetForNext}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                  className="gap-1.5 bg-primary text-xs font-semibold text-primary-foreground hover:bg-primary/90"
                 >
-                  <Camera className="mr-1.5 size-4" /> Catat Setoran Berikutnya
+                  <Camera className="size-3.5" /> Setoran Berikutnya
                 </Button>
-                <Link
-                  href="/dashboard/business/transactions"
-                  className="inline-flex min-h-9 items-center justify-center rounded-lg border border-primary/30 bg-card px-3 text-sm font-semibold text-primary hover:bg-secondary transition"
-                >
-                  Buka di Transaksi <ArrowRight className="ml-1.5 size-3.5" />
-                </Link>
               </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-
-      {/* Main 3-Column Operator Workflow */}
+      {/* ========================================================================= */}
+      {/* 2-KOLOM ERGONOMIS LAYOUT                                                  */}
+      {/* ========================================================================= */}
       <div className="grid gap-6 lg:grid-cols-12">
-        {/* Column 1: Pemulung & Timbangan (4 cols) */}
-        <div className="space-y-6 lg:col-span-4">
-          <Card className="border-border">
-            <CardHeader className="border-b bg-muted/40 pb-4">
+        {/* ======================================================================= */}
+        {/* KOLOM KIRI (5 COLS): Pemasok, Timbangan, & Kamera Langsung             */}
+        {/* ======================================================================= */}
+        <div className="space-y-6 lg:col-span-5">
+          {/* CARD 1: IDENTITAS PEMASOK */}
+          <Card className="border-border shadow-xs">
+            <CardHeader className="border-b bg-muted/30 pb-3.5">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="text-base flex items-center gap-2 font-bold">
                   <span className="grid size-6 place-items-center rounded-md bg-primary text-xs text-primary-foreground font-bold">
                     1
                   </span>
-                  Data Pemasok & Timbangan
+                  Pemasok Material
                 </CardTitle>
-                <Badge variant="outline" className="text-xs">
-                  Tahap 1
-                </Badge>
+                <div className="flex items-center rounded-lg bg-muted p-0.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSupplierMode("waste_picker")
+                      setSelectedPickerId(null)
+                      setPickerSearch("")
+                      setIsPickerDropdownOpen(false)
+                    }}
+                    className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
+                      supplierMode === "waste_picker"
+                        ? "bg-card text-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Pemulung
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSupplierMode("lapak")
+                      setSelectedPickerId(null)
+                      setPickerSearch("")
+                      setIsPickerDropdownOpen(false)
+                    }}
+                    className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${
+                      supplierMode === "lapak"
+                        ? "bg-card text-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Lapak Mitra
+                  </button>
+                </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-5 p-5">
-              {/* Select Picker */}
+            <CardContent className="space-y-4 p-5">
               <div>
-                <label className="mb-2 block text-sm font-medium text-foreground" htmlFor="picker-select">
-                  Pilih Anggota Pemulung / Mitra
-                </label>
-                <select
-                  id="picker-select"
-                  value={selectedPicker.id}
-                  onChange={(e) => {
-                    const found = DEFAULT_PICKERS.find((p) => p.id === e.target.value)
-                    if (found) setSelectedPicker(found)
-                  }}
-                  className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                >
-                  {DEFAULT_PICKERS.map((picker) => (
-                    <option key={picker.id} value={picker.id}>
-                      {picker.name} ({picker.memberCode})
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-semibold text-foreground">
+                    Cari & Pilih {supplierMode === "lapak" ? "Lapak Pengepul" : "Mitra Pemulung"} *
+                  </label>
+                  <Link
+                    href="/dashboard/business/partners"
+                    className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-0.5"
+                  >
+                    + Mitra Baru <ExternalLink className="size-2.5" />
+                  </Link>
+                </div>
 
-                {/* Selected Picker Card Preview */}
-                <div className="mt-2.5 rounded-xl border border-border bg-muted/30 p-3 text-xs space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <User className="size-3" /> Nama:
-                    </span>
-                    <strong className="text-foreground">{selectedPicker.name}</strong>
+                {/* SEARCHABLE COMBOBOX */}
+                <div className="relative" ref={pickerDropdownRef}>
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      value={pickerSearch}
+                      onChange={(e) => {
+                        setPickerSearch(e.target.value)
+                        setIsPickerDropdownOpen(true)
+                      }}
+                      onFocus={() => setIsPickerDropdownOpen(true)}
+                      placeholder={
+                        supplierMode === "lapak"
+                          ? "Ketik nama lapak, kode, atau telepon..."
+                          : "Ketik nama pemulung, kode anggota, atau telepon..."
+                      }
+                      className="h-11 pl-9 pr-9 text-sm focus:ring-2 focus:ring-primary/20"
+                    />
+                    {pickerSearch ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPickerSearch("")
+                          setIsPickerDropdownOpen(true)
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+                        title="Hapus pencarian"
+                      >
+                        <X className="size-4" />
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setIsPickerDropdownOpen((prev) => !prev)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5"
+                        title="Buka daftar pilihan"
+                      >
+                        <ChevronsUpDown className="size-4" />
+                      </button>
+                    )}
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <Phone className="size-3" /> No. WhatsApp:
-                    </span>
-                    <span className="font-mono text-foreground">{selectedPicker.phone}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <ShieldCheck className="size-3" /> Status:
-                    </span>
-                    <span className="text-emerald-700 dark:text-emerald-400 font-medium">
-                      Aktif · Terverifikasi ({selectedPicker.totalTransactions} setoran)
-                    </span>
-                  </div>
+
+                  {/* FLOATING DROPDOWN LIST */}
+                  {isPickerDropdownOpen && (
+                    <div className="absolute left-0 right-0 z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border border-border bg-card p-1.5 shadow-lg animate-in fade-in-50 zoom-in-95">
+                      {filteredPickers.length === 0 ? (
+                        <div className="py-6 px-3 text-center">
+                          <p className="text-xs text-muted-foreground font-medium">
+                            Tidak ditemukan {supplierMode === "lapak" ? "lapak" : "pemulung"} yang cocok dengan &quot;{pickerSearch}&quot;
+                          </p>
+                          <Link
+                            href="/dashboard/business/partners"
+                            className="mt-2.5 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                          >
+                            + Tambah Mitra Baru di Partners <ExternalLink className="size-3" />
+                          </Link>
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+                            <span>Daftar Mitra ({filteredPickers.length})</span>
+                            <span className="text-[10px] text-muted-foreground/80">Klik untuk memilih</span>
+                          </div>
+                          {filteredPickers.map((p) => {
+                            const isSelected = p.id === selectedPickerId
+                            return (
+                              <button
+                                key={p.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedPickerId(p.id)
+                                  setIsPickerDropdownOpen(false)
+                                  setPickerSearch("")
+                                }}
+                                className={cn(
+                                  "flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left text-xs transition",
+                                  isSelected
+                                    ? "bg-primary/10 text-primary font-semibold ring-1 ring-primary/30"
+                                    : "hover:bg-muted text-foreground"
+                                )}
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <span
+                                    className={cn(
+                                      "grid size-8 shrink-0 place-items-center rounded-lg text-xs font-bold",
+                                      isSelected
+                                        ? "bg-primary text-white"
+                                        : "bg-muted text-muted-foreground"
+                                    )}
+                                  >
+                                    {supplierMode === "lapak" ? (
+                                      <Store className="size-4" />
+                                    ) : (
+                                      <UserRound className="size-4" />
+                                    )}
+                                  </span>
+                                  <div className="min-w-0">
+                                    <p className="truncate font-medium text-foreground text-sm">
+                                      {p.name}
+                                    </p>
+                                    <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-mono">
+                                      <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-foreground">
+                                        {p.memberCode}
+                                      </span>
+                                      {p.phone && <span>{p.phone}</span>}
+                                    </div>
+                                  </div>
+                                </div>
+                                {isSelected && (
+                                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-white">
+                                    <Check className="size-3.5" />
+                                  </span>
+                                )}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Weight Input */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-foreground flex items-center gap-1" htmlFor="weight-input">
-                    <Scale className="size-4 text-primary" /> Berat Timbangan (kg)
-                  </label>
-                  <span className="text-xs text-muted-foreground">Presisi desimal 0.1 kg</span>
+              {/* Selected Picker Card Preview */}
+              {selectedPicker ? (
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-xs space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      {supplierMode === "lapak" ? <Store className="size-4 text-primary" /> : <User className="size-4 text-primary" />}
+                      {supplierMode === "lapak" ? "Lapak Terpilih:" : "Nama Pemasok:"}
+                    </span>
+                    <strong className="text-foreground text-sm font-bold">{selectedPicker.name}</strong>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <Phone className="size-3.5 text-emerald-600" /> WhatsApp:
+                    </span>
+                    <span className="font-mono font-medium text-foreground">
+                      {selectedPicker.phone || "Tidak tersedia"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-border/60 pt-2">
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <ShieldCheck className="size-3.5 text-primary" /> Kode Identitas:
+                    </span>
+                    <span className="font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded text-xs">
+                      {selectedPicker.memberCode}
+                    </span>
+                  </div>
                 </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
+                  Belum ada mitra yang dipilih. Ketik nama atau kode di atas untuk memilih mitra.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* CARD 2: TIMBANGAN DIGITAL */}
+          <Card className="border-border shadow-xs">
+            <CardHeader className="border-b bg-muted/30 pb-3.5">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2 font-bold">
+                  <span className="grid size-6 place-items-center rounded-md bg-primary text-xs text-primary-foreground font-bold">
+                    2
+                  </span>
+                  Timbangan Material
+                </CardTitle>
+                <span className="text-xs font-mono text-muted-foreground flex items-center gap-1">
+                  <Scale className="size-3.5 text-primary" /> Satuan: Kilogram
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4 p-5">
+              <div>
+                <label className="mb-2 block text-xs font-semibold text-foreground">
+                  Berat Bersih Timbangan
+                </label>
                 <div className="relative">
                   <Input
-                    id="weight-input"
                     type="number"
                     step="0.1"
                     min="0.1"
                     value={weightKg}
                     onChange={(e) => setWeightKg(e.target.value)}
-                    className="h-12 text-lg font-bold pr-12 focus:ring-2 focus:ring-primary/20"
                     placeholder="0.0"
+                    className="h-14 pr-16 text-2xl font-black font-mono tracking-tight focus:ring-2 focus:ring-primary/20 text-foreground"
                   />
-                  <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center font-bold text-sm text-muted-foreground">
-                    kg
+                  <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm font-bold text-muted-foreground">
+                    KG
                   </span>
                 </div>
+              </div>
 
-                {/* Quick Presets */}
-                <div className="mt-2 flex gap-1.5">
-                  {["5", "10", "25", "50"].map((val) => (
+              {/* Presets & Reset */}
+              <div className="space-y-2">
+                <span className="text-[11px] font-medium text-muted-foreground block">
+                  Tombol Tambah Cepat:
+                </span>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {[5, 10, 25, 50, 100].map((val) => (
                     <button
                       key={val}
                       type="button"
-                      onClick={() => setWeightKg(val)}
-                      className="flex-1 rounded-lg border border-border bg-card py-1 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground transition"
+                      onClick={() => addWeight(val)}
+                      className="rounded-lg border border-border bg-card py-1.5 text-xs font-bold text-foreground hover:bg-muted transition text-center"
                     >
-                      {val} kg
+                      +{val}
                     </button>
                   ))}
                 </div>
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setWeightKg("0")}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground hover:text-destructive"
+                  >
+                    <RotateCcw className="size-3" /> Reset Timbangan
+                  </button>
+                </div>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Camera Trigger Card */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-foreground">
-                  Foto Sampah (Kamera Langsung)
-                </label>
-                {capturedPhotoUrl ? (
-                  <div className="relative overflow-hidden rounded-2xl border-2 border-primary/40 bg-black">
+          {/* CARD 3: KAMERA PENGAWAS SAMPAH */}
+          <Card className="border-border shadow-xs">
+            <CardHeader className="border-b bg-muted/30 pb-3.5">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2 font-bold">
+                  <span className="grid size-6 place-items-center rounded-md bg-primary text-xs text-primary-foreground font-bold">
+                    3
+                  </span>
+                  Kamera Pengawas Material
+                </CardTitle>
+                <span className="text-xs text-muted-foreground font-mono">
+                  Tanpa Akses Galeri
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent className="p-5">
+              {capturedPhotoUrl ? (
+                <div className="space-y-3">
+                  <div className="relative overflow-hidden rounded-2xl border-2 border-primary/40 bg-neutral-950 aspect-video">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={capturedPhotoUrl}
-                      alt="Pratinjau Sampah"
-                      className="h-44 w-full object-cover"
+                      alt="Foto Kamera Sampah"
+                      className="h-full w-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-3">
-                      <div className="flex items-center justify-between text-white">
-                        <span className="flex items-center gap-1 text-xs font-medium bg-emerald-600/90 px-2 py-0.5 rounded-md">
-                          <Check className="size-3" /> Foto Kamera Terkunci
-                        </span>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => setIsCameraOpen(true)}
-                          className="h-8 gap-1.5 text-xs font-semibold"
-                        >
-                          <RefreshCw className="size-3" /> Foto Ulang
-                        </Button>
-                      </div>
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3 flex items-center justify-between text-white">
+                      <span className="flex items-center gap-1.5 rounded-full bg-emerald-600/90 px-2.5 py-0.5 text-xs font-semibold backdrop-blur-sm">
+                        <Check className="size-3.5" /> Foto Terkunci
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setIsCameraOpen(true)}
+                        className="h-8 gap-1 text-xs font-bold"
+                      >
+                        <RefreshCw className="size-3" /> Foto Ulang
+                      </Button>
                     </div>
                   </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setIsCameraOpen(true)}
-                    className="group flex min-h-40 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-primary/35 bg-primary/5 p-5 text-center transition hover:border-primary hover:bg-primary/10"
-                  >
-                    <span className="grid size-14 place-items-center rounded-full bg-primary/10 text-primary group-hover:scale-110 transition shadow-sm">
-                      <Camera className="size-7" />
-                    </span>
-                    <span className="mt-3 text-sm font-bold text-foreground">
-                      Buka Kamera Pengawas
-                    </span>
-                    <span className="mt-1 text-xs text-muted-foreground max-w-xs">
-                      Foto langsung menggunakan kamera smartphone/webcam. Tidak dapat mengambil dari galeri.
-                    </span>
-                    <span className="mt-3 inline-flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1 text-[11px] font-semibold text-primary">
-                      <Zap className="size-3" /> Klik untuk Mengaktifkan Kamera
-                    </span>
-                  </button>
-                )}
-              </div>
+                  <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                    <ShieldCheck className="size-3.5 text-emerald-600 shrink-0" />
+                    Foto berhasil dikunci langsung melalui kamera untuk audit keaslian material.
+                  </p>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsCameraOpen(true)}
+                  className="group flex min-h-44 w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-primary/35 bg-primary/5 p-6 text-center transition hover:border-primary hover:bg-primary/10"
+                >
+                  <span className="grid size-14 place-items-center rounded-2xl bg-primary/10 text-primary group-hover:scale-105 transition shadow-sm">
+                    <Camera className="size-7" />
+                  </span>
+                  <span className="mt-3 text-sm font-bold text-foreground">
+                    Buka Kamera Pengawas Sampah
+                  </span>
+                  <span className="mt-1 text-xs text-muted-foreground max-w-xs">
+                    Wajib memotret material langsung melalui kamera perangkat untuk mencegah manipulasi galeri.
+                  </span>
+                  <span className="mt-3 inline-flex items-center gap-1 rounded-full bg-primary/15 px-3 py-1 text-[11px] font-semibold text-primary">
+                    <Zap className="size-3" /> Klik untuk Mengaktifkan Kamera
+                  </span>
+                </button>
+              )}
             </CardContent>
           </Card>
         </div>
 
-        {/* Column 2: Inferensi AI Gradio (4 cols) */}
-        <div className="space-y-6 lg:col-span-4">
-          <Card className="border-border">
-            <CardHeader className="border-b bg-muted/40 pb-4">
+        {/* ======================================================================= */}
+        {/* KOLOM KANAN (7 COLS): AI Gradio, Evaluasi Grade & Finansial             */}
+        {/* ======================================================================= */}
+        <div className="space-y-6 lg:col-span-7">
+          {/* CARD 1: INFERENSI AI GRADIO */}
+          <Card className="border-border shadow-xs">
+            <CardHeader className="border-b bg-muted/30 pb-3.5">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="text-base flex items-center gap-2 font-bold">
                   <span className="grid size-6 place-items-center rounded-md bg-primary text-xs text-primary-foreground font-bold">
-                    2
+                    4
                   </span>
-                  Hasil Inferensi AI Gradio
+                  Hasil Analisis AI Gradio
                 </CardTitle>
-                <Badge variant="outline" className="text-xs">
+                <span className="font-mono text-xs text-primary font-semibold">
                   Model /predict
-                </Badge>
+                </span>
               </div>
             </CardHeader>
             <CardContent className="p-5">
-              {/* State: No Photo Yet */}
+              {/* State: No Photo */}
               {!capturedPhotoUrl && !isAnalyzing && (
-                <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border border-dashed border-border p-6 text-center text-muted-foreground">
-                  <span className="grid size-12 place-items-center rounded-2xl bg-muted text-muted-foreground mb-3">
-                    <ScanLine className="size-6 text-primary/70" />
+                <div className="flex min-h-48 flex-col items-center justify-center rounded-2xl border border-dashed border-border p-6 text-center text-muted-foreground">
+                  <span className="mb-2.5 grid size-10 place-items-center rounded-xl bg-muted text-primary">
+                    <ScanLine className="size-5" />
                   </span>
-                  <p className="font-semibold text-foreground">Menunggu Foto Sampah</p>
-                  <p className="mt-1 text-xs max-w-xs leading-relaxed text-muted-foreground">
-                    Tekan tombol &quot;Buka Kamera Pengawas&quot; di kolom sebelah kiri untuk mengambil foto sampah material secara langsung.
+                  <p className="font-semibold text-foreground text-sm">Menunggu Pengambilan Foto</p>
+                  <p className="mt-1 text-xs max-w-sm text-muted-foreground">
+                    Buka kamera di kolom sebelah kiri untuk memproses jenis sampah, kondisi fisik, dan rekomendasi grade secara otomatis.
                   </p>
-                  <div className="mt-4 rounded-xl bg-muted/50 p-3 text-left text-xs space-y-1 w-full max-w-xs">
-                    <p className="font-semibold text-foreground">AI akan mendeteksi:</p>
-                    <p className="text-muted-foreground">• Jenis material (PET, Kardus, Logam, dll.)</p>
-                    <p className="text-muted-foreground">• Tingkat keutuhan & kebersihan</p>
-                    <p className="text-muted-foreground">• Rekomendasi Grade A/B/C</p>
-                    <p className="text-muted-foreground">• Catatan pengawasan operator</p>
-                  </div>
                 </div>
               )}
 
-              {/* State: Analyzing */}
+              {/* State: Analyzing with Skeleton Preview */}
               {isAnalyzing && (
-                <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border border-primary/20 bg-primary/5 p-6 text-center">
-                  <div className="relative mb-4">
-                    <span className="grid size-16 place-items-center rounded-full bg-primary/10 text-primary">
-                      <LoaderCircle className="size-8 animate-spin" />
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                      <LoaderCircle className="size-5 animate-spin" />
                     </span>
-                    <span className="absolute -bottom-1 -right-1 grid size-6 place-items-center rounded-full bg-primary text-white">
-                      <Sparkles className="size-3" />
-                    </span>
-                  </div>
-                  <h4 className="font-bold text-foreground">Menganalisis Foto dengan AI Gradio</h4>
-                  <p className="mt-1 text-xs text-muted-foreground max-w-xs">
-                    Mengirim data gambar ke endpoint <code className="font-mono text-primary">http://56.10.12.62:7860/predict</code>...
-                  </p>
-                  <div className="mt-6 w-full max-w-xs space-y-2">
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-primary/20">
-                      <div className="h-full w-2/3 bg-primary animate-pulse rounded-full" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-foreground flex items-center gap-2">
+                        Menghubungkan ke AI Gradio Server
+                        <span className="rounded bg-primary/20 px-1.5 py-0.5 font-mono text-[10px] text-primary">
+                          /predict
+                        </span>
+                      </p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">
+                        Memindai foto, mengklasifikasi jenis polimer, dan mengevaluasi grade...
+                      </p>
                     </div>
-                    <p className="text-[11px] text-muted-foreground">Ekstraksi fitur visual, deteksi jenis material & grade...</p>
+                  </div>
+
+                  {/* Skeletons simulating the AI result structure */}
+                  <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4 space-y-4">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2">
+                        <Skeleton className="h-3 w-28" />
+                        <Skeleton className="h-7 w-44 rounded-lg" />
+                        <Skeleton className="h-3 w-32" />
+                      </div>
+                      <div className="space-y-1.5 flex flex-col items-end">
+                        <Skeleton className="h-3 w-16" />
+                        <Skeleton className="size-10 rounded-xl" />
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-primary/15 space-y-2">
+                      <div className="flex justify-between">
+                        <Skeleton className="h-3 w-36" />
+                        <Skeleton className="h-3 w-12" />
+                      </div>
+                      <Skeleton className="h-2.5 w-full rounded-full" />
+                    </div>
+
+                    <div className="grid gap-2 sm:grid-cols-2 pt-2 border-t border-primary/15">
+                      <Skeleton className="h-14 rounded-xl" />
+                      <Skeleton className="h-14 rounded-xl" />
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* State: AI Error / Notice */}
+              {/* State: Error Notice */}
               {aiError && !isAnalyzing && (
-                <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-900 dark:text-amber-200">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="size-4 shrink-0 text-amber-600 mt-0.5" />
-                    <div>
-                      <p className="font-semibold">Catatan Koneksi Gradio</p>
-                      <p className="mt-0.5 text-xs opacity-90">{aiError}</p>
-                    </div>
+                <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2">
+                  <AlertTriangle className="size-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold">Pemberitahuan AI</p>
+                    <p className="mt-0.5 opacity-90">{aiError}</p>
                   </div>
                 </div>
               )}
 
-              {/* State: AI Result Ready */}
+              {/* State: Result Ready */}
               {aiResult && !isAnalyzing && (
-                <div className="space-y-4 animate-in fade-in duration-200">
-                  {/* Primary Detection Card */}
+                <div className="space-y-4">
                   <div className="rounded-2xl border border-primary/25 bg-primary/5 p-4">
                     <div className="flex items-start justify-between">
                       <div>
                         <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                           Jenis Sampah Terdeteksi
                         </span>
-                        <h3 className="mt-1 text-2xl font-black text-foreground">
+                        <h3 className="mt-0.5 text-2xl font-black text-foreground">
                           {aiResult.material}
                         </h3>
-                        <p className="text-xs text-muted-foreground font-mono">
-                          Label model: &quot;{aiResult.rawLabel}&quot;
+                        <p className="font-mono text-xs text-muted-foreground">
+                          Raw Label: &quot;{aiResult.rawLabel}&quot;
                         </p>
                       </div>
+
                       <div className="text-right">
                         <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block">
-                          Saran Grade AI
+                          Saran AI
                         </span>
-                        <span className="mt-1 inline-flex size-10 items-center justify-center rounded-xl bg-primary text-xl font-bold text-primary-foreground shadow-sm">
+                        <span className="mt-1 inline-flex size-10 items-center justify-center rounded-xl bg-primary text-xl font-black text-primary-foreground shadow-xs">
                           {aiResult.grade}
                         </span>
                       </div>
                     </div>
 
-                    {/* Confidences breakdown */}
+                    {/* Confidence Bars */}
                     {aiResult.confidences && aiResult.confidences.length > 0 && (
-                      <div className="mt-4 pt-3 border-t border-primary/15 space-y-2">
-                        <span className="text-xs font-semibold text-foreground flex items-center justify-between">
-                          <span>Tingkat Kepercayaan AI (Confidence)</span>
-                          <span className="font-mono text-primary font-bold">
+                      <div className="mt-3.5 pt-3 border-t border-primary/15 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-semibold text-foreground">Tingkat Kepercayaan AI:</span>
+                          <span className="font-mono font-bold text-primary">
                             {Math.round((aiResult.confidences[0]?.confidence || 0) * 100)}%
                           </span>
-                        </span>
-                        <div className="space-y-1.5">
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
                           {aiResult.confidences.slice(0, 3).map((item) => (
-                            <div key={item.label} className="space-y-0.5">
-                              <div className="flex justify-between text-[11px] text-muted-foreground">
+                            <div key={item.label} className="rounded-lg bg-card p-2 border border-border text-[11px]">
+                              <div className="flex justify-between text-muted-foreground">
                                 <span>{item.label}</span>
-                                <span className="font-mono">{Math.round(item.confidence * 100)}%</span>
-                              </div>
-                              <div className="h-1.5 w-full rounded-full bg-border overflow-hidden">
-                                <div
-                                  className="h-full bg-primary rounded-full transition-all"
-                                  style={{ width: `${Math.round(item.confidence * 100)}%` }}
-                                />
+                                <span className="font-mono font-bold text-foreground">
+                                  {Math.round(item.confidence * 100)}%
+                                </span>
                               </div>
                             </div>
                           ))}
@@ -654,57 +1056,49 @@ export function BusinessIntakePage() {
                     )}
                   </div>
 
-                  {/* Kondisi Box */}
-                  <div className="rounded-xl border border-border bg-card p-3.5 space-y-1">
-                    <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-                      <Info className="size-3.5 text-primary" /> Kondisi Material
-                    </span>
-                    <p className="text-sm font-medium text-foreground">
-                      {aiResult.condition}
-                    </p>
-                  </div>
+                  {/* Conditions & Notes */}
+                  <div className="grid gap-2 sm:grid-cols-2 text-xs">
+                    <div className="rounded-xl border border-border bg-card p-3 space-y-1">
+                      <span className="font-semibold text-muted-foreground flex items-center gap-1.5">
+                        <Info className="size-3.5 text-primary" /> Kondisi Material:
+                      </span>
+                      <p className="font-medium text-foreground">{aiResult.condition}</p>
+                    </div>
 
-                  {/* Catatan Box */}
-                  <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-3.5 space-y-1">
-                    <span className="text-xs font-semibold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
-                      <AlertTriangle className="size-3.5 text-amber-600" /> Catatan Model AI
-                    </span>
-                    <p className="text-xs leading-relaxed text-amber-950 dark:text-amber-200">
-                      {aiResult.note}
-                    </p>
-                  </div>
-
-                  <div className="rounded-lg bg-muted/60 px-3 py-2 text-[11px] text-muted-foreground flex items-center gap-1.5">
-                    <Clock className="size-3 shrink-0" />
-                    Operator berwenang mengubah grade & harga pada kolom kanan.
+                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-3 space-y-1">
+                      <span className="font-semibold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                        <AlertTriangle className="size-3.5 text-amber-600" /> Catatan Model AI:
+                      </span>
+                      <p className="text-amber-950 dark:text-amber-200 text-[11px] leading-relaxed">
+                        {aiResult.note}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
             </CardContent>
           </Card>
-        </div>
 
-        {/* Column 3: Keputusan Operator & Pembayaran (4 cols) */}
-        <div className="space-y-6 lg:col-span-4">
-          <Card className="border-border">
-            <CardHeader className="border-b bg-muted/40 pb-4">
+          {/* CARD 2: EVALUASI GRADE & HARGA WPI */}
+          <Card className="border-border shadow-xs">
+            <CardHeader className="border-b bg-muted/30 pb-3.5">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base flex items-center gap-2">
+                <CardTitle className="text-base flex items-center gap-2 font-bold">
                   <span className="grid size-6 place-items-center rounded-md bg-primary text-xs text-primary-foreground font-bold">
-                    3
+                    5
                   </span>
-                  Evaluasi Harga & Pembayaran
+                  Evaluasi Grade & Harga WPI
                 </CardTitle>
-                <Badge variant="outline" className="text-xs">
-                  Konfirmasi Final
-                </Badge>
+                <span className="text-xs text-muted-foreground font-semibold">
+                  Material: {activeMaterial}
+                </span>
               </div>
             </CardHeader>
-            <CardContent className="space-y-5 p-5">
+            <CardContent className="space-y-4 p-5">
               {/* Grade Selector */}
               <div>
-                <label className="mb-2 block text-sm font-medium text-foreground">
-                  Grade Final Operator
+                <label className="mb-2 block text-xs font-semibold text-foreground">
+                  Grade Kualitas Operator
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {(["A", "B", "C"] as const).map((grade) => {
@@ -717,130 +1111,136 @@ export function BusinessIntakePage() {
                         onClick={() => handleGradeChange(grade)}
                         className={`flex flex-col items-center justify-center rounded-xl border p-2.5 transition ${
                           isSelected
-                            ? "border-primary bg-primary text-primary-foreground shadow-sm font-bold"
+                            ? "border-primary bg-primary text-primary-foreground shadow-xs font-bold"
                             : "border-border bg-card text-foreground hover:bg-muted"
                         }`}
                       >
                         <span className="text-lg">{grade}</span>
                         <span className={`text-[10px] mt-0.5 ${isSelected ? "text-primary-foreground/90" : "text-muted-foreground"}`}>
-                          Rp {gradePrice.toLocaleString("id-ID")}
+                          WPI: Rp {gradePrice.toLocaleString("id-ID")}
                         </span>
                       </button>
                     )
                   })}
                 </div>
-                <p className="mt-1.5 text-xs text-muted-foreground">
-                  WPI Acuan {activeMaterial} Grade {finalGrade}: <strong>Rp {currentWpiPrice.toLocaleString("id-ID")}/kg</strong> (Min: Rp {minimumPrice.toLocaleString("id-ID")}/kg)
-                </p>
               </div>
 
               {/* Final Price Input */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="text-sm font-medium text-foreground" htmlFor="final-price">
-                    Harga Beli per kg
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-foreground">
+                      Harga Beli per kg (Rp) *
+                    </label>
+                    <span className="text-[11px] text-muted-foreground">
+                      Min: Rp {minimumPrice.toLocaleString("id-ID")}
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute inset-y-0 left-3 grid place-items-center text-xs font-bold text-muted-foreground">
+                      Rp
+                    </span>
+                    <Input
+                      type="number"
+                      min={minimumPrice}
+                      step="50"
+                      value={finalPrice}
+                      onChange={(e) => setFinalPrice(e.target.value)}
+                      className="pl-9 h-11 text-base font-bold font-mono focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                  {!isPriceValid && (
+                    <p className="mt-1 text-[11px] font-medium text-destructive flex items-center gap-1">
+                      <AlertCircle className="size-3 shrink-0" /> Di bawah batas wajar (Rp {minimumPrice.toLocaleString("id-ID")})
+                    </p>
+                  )}
+                </div>
+
+                {/* Payment Mode */}
+                <div>
+                  <label className="mb-1.5 block text-xs font-semibold text-foreground">
+                    Metode Pencairan
                   </label>
-                  <span className="text-xs text-muted-foreground">
-                    Min Rp {minimumPrice.toLocaleString("id-ID")}
-                  </span>
-                </div>
-                <div className="relative">
-                  <span className="pointer-events-none absolute inset-y-0 left-3 grid place-items-center text-sm font-bold text-muted-foreground">
-                    Rp
-                  </span>
-                  <Input
-                    id="final-price"
-                    type="number"
-                    min={minimumPrice}
-                    step="50"
-                    value={finalPrice}
-                    onChange={(e) => setFinalPrice(e.target.value)}
-                    className="pl-10 text-base font-bold focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-
-                {!isPriceValid && (
-                  <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-rose-600 dark:text-rose-400">
-                    <AlertCircle className="size-3.5 shrink-0" />
-                    Harga di bawah batas minimum (Rp {minimumPrice.toLocaleString("id-ID")}). Konfirmasi transaksi dikunci.
-                  </p>
-                )}
-              </div>
-
-              {/* Payment Mode Selector */}
-              <div>
-                <label className="mb-2 block text-sm font-medium text-foreground">
-                  Metode Pencairan
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMode("cash")}
-                    className={`rounded-xl border p-3 text-left transition ${
-                      paymentMode === "cash"
-                        ? "border-primary bg-primary/10 shadow-sm"
-                        : "border-border bg-card hover:bg-muted"
-                    }`}
-                  >
-                    <span className="block font-bold text-sm text-foreground">Tunai 100%</span>
-                    <span className="mt-0.5 block text-xs text-muted-foreground">
-                      Pencairan lunas seketika
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMode("stock")}
-                    className={`rounded-xl border p-3 text-left transition ${
-                      paymentMode === "stock"
-                        ? "border-primary bg-primary/10 shadow-sm"
-                        : "border-border bg-card hover:bg-muted"
-                    }`}
-                  >
-                    <span className="block font-bold text-sm text-foreground">Titip Stok 70%</span>
-                    <span className="mt-0.5 block text-xs text-muted-foreground">
-                      30% lot simpanan 30 hari
-                    </span>
-                  </button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMode("cash")}
+                      className={`rounded-xl border p-2.5 text-left transition ${
+                        paymentMode === "cash"
+                          ? "border-primary bg-primary/10 shadow-xs"
+                          : "border-border bg-card hover:bg-muted"
+                      }`}
+                    >
+                      <span className="block font-bold text-xs text-foreground">Tunai 100%</span>
+                      <span className="text-[10px] text-muted-foreground">Lunas seketika</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMode("stock")}
+                      className={`rounded-xl border p-2.5 text-left transition ${
+                        paymentMode === "stock"
+                          ? "border-primary bg-primary/10 shadow-xs"
+                          : "border-border bg-card hover:bg-muted"
+                      }`}
+                    >
+                      <span className="block font-bold text-xs text-foreground">Titip 70%</span>
+                      <span className="text-[10px] text-muted-foreground">30% lot 30 hari</span>
+                    </button>
+                  </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Calculation Breakdown Card */}
-              <div className="rounded-2xl bg-neutral-900 text-white p-4 shadow-md space-y-3">
-                <div className="flex items-center justify-between text-xs text-neutral-300">
-                  <span>Nilai Bruto Material</span>
-                  <span>
-                    {numericWeight} kg × Rp {numericPrice.toLocaleString("id-ID")}
+          {/* CARD 3: RINGKASAN NILAI & EKSEKUSI */}
+          <Card className="border-border shadow-xs">
+            <CardHeader className="border-b bg-muted/30 pb-3.5">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2 font-bold">
+                  <span className="grid size-6 place-items-center rounded-md bg-primary text-xs text-primary-foreground font-bold">
+                    6
                   </span>
-                </div>
+                  Rincian Pembayaran & Struk
+                </CardTitle>
+                <span className="text-xs font-mono text-muted-foreground">
+                  {numericWeight} kg × Rp {numericPrice.toLocaleString("id-ID")}
+                </span>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4 p-5">
+              {/* Financial Box */}
+              <div className="rounded-2xl bg-neutral-900 text-white p-4 space-y-2.5">
                 <div className="flex items-center justify-between text-xs text-neutral-300">
-                  <span>Total Transaksi</span>
-                  <strong className="text-white">
-                    Rp {calculation.grossValue.toLocaleString("id-ID")}
-                  </strong>
+                  <span>Total Nilai Bruto Material:</span>
+                  <span className="font-bold">Rp {calculation.grossValue.toLocaleString("id-ID")}</span>
                 </div>
 
                 {paymentMode === "stock" && (
                   <div className="flex items-center justify-between text-xs text-amber-300 border-t border-white/10 pt-2">
-                    <span>Lot Ditahan (30%)</span>
+                    <span>Lot Simpanan Ditahan (30%):</span>
                     <strong>Rp {calculation.heldValue.toLocaleString("id-ID")}</strong>
                   </div>
                 )}
 
-                <div className="border-t border-white/10 pt-2.5 flex items-end justify-between">
+                {calculation.walletCredit > 0 && (
+                  <div className="flex items-center justify-between text-xs text-emerald-300 border-t border-white/10 pt-2">
+                    <span>Sisa Masuk Dompet Digital:</span>
+                    <strong className="flex items-center gap-1">
+                      <Wallet className="size-3" /> +Rp {calculation.walletCredit.toLocaleString("id-ID")}
+                    </strong>
+                  </div>
+                )}
+
+                <div className="border-t border-white/15 pt-3 flex items-end justify-between">
                   <div>
-                    <span className="text-xs text-neutral-400 block">Dibayar Tunai Sekarang</span>
-                    <strong className="text-2xl font-black text-emerald-400">
+                    <span className="text-xs text-neutral-400 block font-medium">Uang Tunai Diterima Mitra</span>
+                    <strong className="text-2xl font-black text-emerald-400 tracking-tight">
                       Rp {calculation.cashPaid.toLocaleString("id-ID")}
                     </strong>
                   </div>
-                  {calculation.walletCredit > 0 && (
-                    <div className="text-right">
-                      <span className="text-[10px] text-neutral-400 block">Dompet Digital</span>
-                      <span className="text-xs font-semibold text-emerald-300 flex items-center justify-end gap-1">
-                        <Wallet className="size-3" /> +Rp {calculation.walletCredit.toLocaleString("id-ID")}
-                      </span>
-                    </div>
-                  )}
+                  <span className="text-[11px] text-neutral-400 font-mono text-right">
+                    WAVE Smart Rounding
+                  </span>
                 </div>
               </div>
 
@@ -852,7 +1252,8 @@ export function BusinessIntakePage() {
                   !isPriceValid ||
                   numericWeight <= 0 ||
                   isSubmitting ||
-                  isAnalyzing
+                  isAnalyzing ||
+                  !selectedPicker
                 }
                 onClick={handleSubmitTransaction}
                 className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base shadow-md disabled:opacity-50"
@@ -865,14 +1266,14 @@ export function BusinessIntakePage() {
                 ) : (
                   <>
                     <Send className="mr-2 size-5" />
-                    Konfirmasi & Kirim Struk
+                    Konfirmasi & Terbitkan Struk Resmi
                   </>
                 )}
               </Button>
 
               {!aiResult && (
                 <p className="text-center text-xs text-muted-foreground">
-                  Lakukan foto kamera dan analisis AI terlebih dahulu sebelum konfirmasi transaksi.
+                  Ambil foto kamera sampah terlebih dahulu untuk melengkapi validasi.
                 </p>
               )}
             </CardContent>
@@ -880,12 +1281,190 @@ export function BusinessIntakePage() {
         </div>
       </div>
 
-      {/* Camera Capture Dialog */}
+      {/* ========================================================================= */}
+      {/* CAMERA CAPTURE DIALOG                                                     */}
+      {/* ========================================================================= */}
       <CameraCaptureDialog
         isOpen={isCameraOpen}
         onClose={() => setIsCameraOpen(false)}
         onCapture={handlePhotoCaptured}
       />
+
+      {/* ========================================================================= */}
+      {/* MODAL PRATINJAU STRUK KASIR DIGITAL                                       */}
+      {/* ========================================================================= */}
+      {isReceiptPreviewOpen && completedTx && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-in fade-in duration-200"
+        >
+          <div className="relative flex w-full max-w-sm flex-col overflow-hidden rounded-3xl border border-border bg-white text-black shadow-2xl">
+            <div className="flex items-center justify-between border-b border-neutral-200 bg-neutral-100 px-5 py-3">
+              <span className="font-mono text-xs font-bold text-neutral-800">
+                Pratinjau Struk Kasir
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsReceiptPreviewOpen(false)}
+                className="rounded-full p-1 text-neutral-500 hover:bg-neutral-200"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="p-6 font-mono text-xs space-y-3 bg-white text-black">
+              <div className="text-center space-y-1">
+                <p className="font-bold text-base tracking-wider">WAVE RECYCLE</p>
+                <p className="text-[10px] text-neutral-600">Sistem Transparansi Harga Sampah</p>
+                <p className="text-[10px] text-neutral-500">ID: {completedTx.id}</p>
+                <p className="text-[10px] text-neutral-500">{completedTx.dateFormatted}</p>
+              </div>
+
+              <div className="border-t border-dashed border-neutral-400 pt-2 space-y-1 text-[11px]">
+                <div className="flex justify-between">
+                  <span>Mitra:</span>
+                  <strong className="text-right">{completedTx.picker.name}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span>Kode Anggota:</span>
+                  <span>{completedTx.picker.memberCode}</span>
+                </div>
+              </div>
+
+              <div className="border-t border-dashed border-neutral-400 pt-2 space-y-1 text-[11px]">
+                <div className="flex justify-between font-bold">
+                  <span>{completedTx.material} (Grade {completedTx.finalGrade})</span>
+                  <span>{completedTx.weightKg} kg</span>
+                </div>
+                <div className="flex justify-between text-neutral-600">
+                  <span>Harga WPI Pasar:</span>
+                  <span>Rp {completedTx.wpiPricePerKg.toLocaleString("id-ID")}/kg</span>
+                </div>
+                <div className="flex justify-between font-bold">
+                  <span>Harga Final Deal:</span>
+                  <span>Rp {completedTx.finalPricePerKg.toLocaleString("id-ID")}/kg</span>
+                </div>
+              </div>
+
+              <div className="border-t border-dashed border-neutral-400 pt-2 space-y-1 text-[11px]">
+                <div className="flex justify-between">
+                  <span>Total Bruto:</span>
+                  <span>Rp {completedTx.grossValue.toLocaleString("id-ID")}</span>
+                </div>
+                {completedTx.heldValue > 0 && (
+                  <div className="flex justify-between text-neutral-700">
+                    <span>Titip Stok (30%):</span>
+                    <span>Rp {completedTx.heldValue.toLocaleString("id-ID")}</span>
+                  </div>
+                )}
+                {completedTx.walletCredit > 0 && (
+                  <div className="flex justify-between text-neutral-700">
+                    <span>Masuk Dompet Digital:</span>
+                    <span>Rp {completedTx.walletCredit.toLocaleString("id-ID")}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm font-black border-t border-neutral-300 pt-1.5">
+                  <span>DIBAYAR TUNAI:</span>
+                  <span>Rp {completedTx.cashPaid.toLocaleString("id-ID")}</span>
+                </div>
+              </div>
+
+              <div className="border-t border-dashed border-neutral-400 pt-3 text-center text-[10px] text-neutral-600 space-y-1">
+                <p>Harga Terlindungi Indeks Pasar WAVE</p>
+                <p>Bantuan WhatsApp: 0811-2000-2026</p>
+              </div>
+            </div>
+
+            <div className="border-t border-neutral-200 bg-neutral-50 p-4 flex gap-2">
+              <Button
+                onClick={handlePrintReceipt}
+                className="flex-1 gap-1.5 bg-neutral-900 text-white hover:bg-neutral-800 text-xs font-semibold"
+              >
+                <Printer className="size-3.5" /> Cetak Thermal Sekarang
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsReceiptPreviewOpen(false)}
+                className="text-xs"
+              >
+                Tutup
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* HIDDEN THERMAL RECEIPT PRINT AREA (TARGET FOR @media print)               */}
+      {/* ========================================================================= */}
+      {completedTx && (
+        <div id="thermal-receipt-print-area" className="hidden">
+          <div style={{ textAlign: "center", marginBottom: "8px" }}>
+            <h2 style={{ fontSize: "14px", fontWeight: "bold", margin: 0 }}>WAVE RECYCLE</h2>
+            <p style={{ fontSize: "9px", margin: "2px 0" }}>Struk Resmi Setoran Material</p>
+            <p style={{ fontSize: "9px", margin: 0 }}>ID: {completedTx.id}</p>
+            <p style={{ fontSize: "9px", margin: 0 }}>{completedTx.dateFormatted}</p>
+          </div>
+
+          <div style={{ borderTop: "1px dashed #000", padding: "4px 0", fontSize: "10px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>Mitra:</span>
+              <span><strong>{completedTx.picker.name}</strong> ({completedTx.picker.memberCode})</span>
+            </div>
+            {completedTx.picker.phone && (
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>WA:</span>
+                <span>{completedTx.picker.phone}</span>
+              </div>
+            )}
+          </div>
+
+          <div style={{ borderTop: "1px dashed #000", padding: "4px 0", fontSize: "10px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold" }}>
+              <span>{completedTx.material} (Grade {completedTx.finalGrade})</span>
+              <span>{completedTx.weightKg} kg</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "9px" }}>
+              <span>Acuan WPI:</span>
+              <span>Rp {completedTx.wpiPricePerKg.toLocaleString("id-ID")}/kg</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>Harga Deal:</span>
+              <span>Rp {completedTx.finalPricePerKg.toLocaleString("id-ID")}/kg</span>
+            </div>
+          </div>
+
+          <div style={{ borderTop: "1px dashed #000", padding: "4px 0", fontSize: "10px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <span>Total Bruto:</span>
+              <span>Rp {completedTx.grossValue.toLocaleString("id-ID")}</span>
+            </div>
+            {completedTx.heldValue > 0 && (
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>Titip Stok (30%):</span>
+                <span>Rp {completedTx.heldValue.toLocaleString("id-ID")}</span>
+              </div>
+            )}
+            {completedTx.walletCredit > 0 && (
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span>Dompet Digital:</span>
+                <span>Rp {completedTx.walletCredit.toLocaleString("id-ID")}</span>
+              </div>
+            )}
+            <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: "12px", borderTop: "1px solid #000", paddingTop: "4px", marginTop: "4px" }}>
+              <span>TUNAI:</span>
+              <span>Rp {completedTx.cashPaid.toLocaleString("id-ID")}</span>
+            </div>
+          </div>
+
+          <div style={{ borderTop: "1px dashed #000", paddingTop: "6px", textAlign: "center", fontSize: "8px" }}>
+            <p style={{ margin: 0 }}>Transparansi Harga Bersama WAVE</p>
+            <p style={{ margin: 0 }}>Layanan: wa.me/628112002026</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

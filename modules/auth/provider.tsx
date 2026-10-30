@@ -21,13 +21,18 @@ function AuthSync() {
       organizationName?: string
       organizationType?: OrganizationType
     }
+    const registrationPhone = window.sessionStorage.getItem(
+      "wave_registration_phone"
+    )
 
     void ensureCurrent({
       accountType: metadata.accountType,
+      phoneNumber: registrationPhone ?? undefined,
       organizationName: metadata.organizationName,
       organizationType: metadata.organizationType,
     })
       .then(() => {
+        window.sessionStorage.removeItem("wave_registration_phone")
         syncedUserId.current = user.id
       })
       .catch((error: unknown) => {
@@ -66,7 +71,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ClerkProvider publishableKey={publishableKey}>
+    <ClerkProvider
+      publishableKey={publishableKey}
+      signInUrl="/login"
+      signInFallbackRedirectUrl="/dashboard"
+      signUpUrl="/register"
+      signUpFallbackRedirectUrl="/dashboard"
+    >
       <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
         <AuthSync />
         {children}

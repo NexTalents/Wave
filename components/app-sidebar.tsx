@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { LogoIcon } from "@/components/logo";
+import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
 	Sidebar,
@@ -33,7 +34,7 @@ export function AppSidebar({ navGroups = defaultNavGroups }: { navGroups?: Sideb
 			variant="sidebar"
 		>
 			<SidebarHeader className="h-(--app-header-height,3rem) flex-row items-center justify-between">
-				<Button variant="ghost" render={<a href="/dashboard" />} nativeButton={false}><LogoIcon /><span className="font-medium">WAVE</span></Button>
+				<Button variant="ghost" render={<Link href="/dashboard" />} nativeButton={false}><Image alt="WAVE" className="size-7 object-contain dark:invert" height={28} src="/assets/wave-logo.svg" width={28} /><span className="font-medium">WAVE</span></Button>
 				<CustomTrigger place="sidebar" />
 			</SidebarHeader>
 			<SidebarContent>
@@ -48,7 +49,7 @@ export function AppSidebar({ navGroups = defaultNavGroups }: { navGroups?: Sideb
 						<SidebarMenu>
 							{group.items.map((item) => (
 								<SidebarMenuItem key={item.title}>
-									<SidebarMenuButton isActive={item.isActive} tooltip={item.title} render={<a href={item.path} />}>{item.icon}<span>{item.title}</span></SidebarMenuButton>
+									<SidebarMenuButton isActive={item.isActive} tooltip={item.title} render={<Link href={item.path ?? "#"} />}>{item.icon}<span>{item.title}</span></SidebarMenuButton>
 								</SidebarMenuItem>
 							))}
 						</SidebarMenu>
@@ -59,7 +60,7 @@ export function AppSidebar({ navGroups = defaultNavGroups }: { navGroups?: Sideb
 				<LatestChange />
 				<div className="flex items-center pt-4 pb-2">
 					<ThemeSwitcher />
-					<Button className="text-muted-foreground" size="icon-sm" variant="ghost" render={<a aria-label="Settings" href="#" />} nativeButton={false}><SettingsIcon
+					<Button className="text-muted-foreground" size="icon-sm" variant="ghost" render={<Link aria-label="Settings" href="#" />} nativeButton={false}><SettingsIcon
 							/></Button>
 				</div>
 			</SidebarFooter>

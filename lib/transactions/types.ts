@@ -28,6 +28,7 @@ export type TransactionRecord = {
   createdAt: number
   dateFormatted: string
   picker: WastePicker
+  supplierType?: "waste_picker" | "lapak"
   material: string
   rawLabel?: string
   weightKg: number

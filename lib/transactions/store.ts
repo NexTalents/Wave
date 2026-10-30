@@ -1,7 +1,7 @@
 import { MaterialPriceInfo, TransactionRecord, WasteGrade, WastePicker } from "./types"
 
 export const DEFAULT_PICKERS: WastePicker[] = [
-  { id: "pick-1", name: "Siti Aminah", memberCode: "WAVE-001", phone: "0812-3456-7890", joinedDate: "Jan 2026", totalTransactions: 42 },
+  { id: "pick-1", name: "Siti Aminah", memberCode: "WAVE-001", phone: "0831-3844-3934", joinedDate: "Jan 2026", totalTransactions: 42 },
   { id: "pick-2", name: "Budi Santoso", memberCode: "WAVE-002", phone: "0878-9389-3375", joinedDate: "Feb 2026", totalTransactions: 28 },
   { id: "pick-3", name: "Joko Widodo", memberCode: "WAVE-003", phone: "0858-2404-0865", joinedDate: "Mar 2026", totalTransactions: 19 },
   { id: "pick-4", name: "Ratna Sari", memberCode: "WAVE-004", phone: "0857-4455-6677", joinedDate: "Apr 2026", totalTransactions: 35 },

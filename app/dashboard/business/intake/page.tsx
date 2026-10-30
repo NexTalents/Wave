@@ -1,4 +1,9 @@
-import { DashboardView, BusinessIntakePage } from "@/modules/dashboard"
+import { Suspense } from "react"
+import {
+  DashboardView,
+  BusinessIntakePage,
+  BusinessIntakeSkeleton,
+} from "@/modules/dashboard"
 
 export const metadata = {
   title: "Setoran Masuk & Evaluasi AI · WAVE Bisnis",
@@ -8,7 +13,9 @@ export const metadata = {
 export default function BusinessIntakeRoute() {
   return (
     <DashboardView expectedRole="business">
-      <BusinessIntakePage />
+      <Suspense fallback={<BusinessIntakeSkeleton />}>
+        <BusinessIntakePage />
+      </Suspense>
     </DashboardView>
   )
 }

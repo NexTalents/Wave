@@ -4,31 +4,27 @@ import { useSignUp } from "@clerk/nextjs/legacy"
 import { LoaderCircle } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
-import {
-  AuthInput,
-  AuthShell,
-  authPrimaryButtonClass,
-} from "./auth-shell"
+import { AuthInput, AuthShell, authPrimaryButtonClass } from "./auth-shell"
 import { getAuthError } from "./errors"
 import {
-  accountTypes,
   organizationTypeLabels,
   organizationTypes,
-  type AccountType,
   type OrganizationType,
 } from "./types"
 import { useRouter } from "next/navigation"
+import { LapakRegisterForm } from "./lapak-register-form"
 
-export function RegisterForm() {
+function LargeAgentRegisterForm() {
   const router = useRouter()
   const { isLoaded, setActive, signUp } = useSignUp()
-  const [accountType, setAccountType] = useState<AccountType>("individual")
+  const [username, setUsername] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
   const [email, setEmail] = useState("")
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [organizationName, setOrganizationName] = useState("")
   const [organizationType, setOrganizationType] =
-    useState<OrganizationType>("bank_sampah")
+    useState<OrganizationType>("large_agent")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState("")
@@ -47,16 +43,21 @@ export function RegisterForm() {
     setLoading(true)
 
     try {
-      const metadata =
-        accountType === "business"
-          ? { accountType, organizationName, organizationType }
-          : { accountType }
+      const normalizedPhone = phoneNumber.trim().startsWith("0")
+        ? `+62${phoneNumber.trim().slice(1)}`
+        : phoneNumber.trim()
+      window.sessionStorage.setItem("wave_registration_phone", normalizedPhone)
       const result = await signUp.create({
         emailAddress: email,
         firstName,
         lastName,
+        username: username.trim(),
         password,
-        unsafeMetadata: metadata,
+        unsafeMetadata: {
+          accountType: "business",
+          organizationName,
+          organizationType,
+        },
       })
 
       if (result.status === "complete" && result.createdSessionId) {
@@ -66,7 +67,7 @@ export function RegisterForm() {
       }
 
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" })
-      router.push(`/verify?mode=signup&accountType=${accountType}`)
+      router.push("/verify?mode=signup&accountType=business")
     } catch (value) {
       setError(getAuthError(value))
     } finally {
@@ -81,63 +82,33 @@ export function RegisterForm() {
       title="Buat akun WAVE"
     >
       <form className="space-y-5" onSubmit={submit}>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {accountTypes.map((type) => {
-            const selected = accountType === type
-            return (
-              <button
-                aria-pressed={selected}
-                className={
-                  selected
-                    ? "rounded-2xl border border-brand-400 bg-brand-50 p-4 text-left ring-2 ring-brand-500/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-                    : "rounded-2xl border border-brand-100 bg-white p-4 text-left transition-[background-color,border-color,box-shadow] hover:border-brand-300 hover:bg-brand-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-                }
-                key={type}
-                onClick={() => setAccountType(type)}
-                type="button"
-              >
-                <span className="block text-sm font-semibold text-brand-800">
-                  {type === "business" ? "Bisnis / organisasi" : "Individu"}
-                </span>
-                <span className="mt-1 block text-xs leading-5 text-brand-700">
-                  {type === "business"
-                    ? "Pembeli, bank sampah, agregator, atau mitra organisasi."
-                    : "Pemulung, pekerja lapangan, atau masyarakat umum."}
-                </span>
-              </button>
-            )
-          })}
+        <div className="grid gap-4 border-t border-border pt-5 sm:grid-cols-2">
+          <AuthInput
+            label="Nama bisnis / organisasi"
+            name="organizationName"
+            onChange={setOrganizationName}
+            placeholder="Contoh: Bank Sampah Maju"
+            value={organizationName}
+          />
+          <label className="block text-left">
+            <span className="mb-2 block text-xs font-medium text-brand-700">
+              Jenis organisasi
+            </span>
+            <select
+              className="h-12 w-full rounded-2xl border border-brand-100 bg-brand-50/45 px-4 text-sm text-ink transition outline-none focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-500/10"
+              onChange={(event) =>
+                setOrganizationType(event.target.value as OrganizationType)
+              }
+              value={organizationType}
+            >
+              {organizationTypes.filter((type) => type !== "small_lapak").map((type) => (
+                <option key={type} value={type}>
+                  {organizationTypeLabels[type]}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
-
-        {accountType === "business" ? (
-          <div className="grid gap-4 border-t border-border pt-5 sm:grid-cols-2">
-            <AuthInput
-              label="Nama bisnis / organisasi"
-              name="organizationName"
-              onChange={setOrganizationName}
-              placeholder="Contoh: Bank Sampah Maju"
-              value={organizationName}
-            />
-            <label className="block text-left">
-              <span className="mb-2 block text-xs font-medium text-brand-700">
-                Jenis organisasi
-              </span>
-              <select
-                className="h-12 w-full rounded-2xl border border-brand-100 bg-brand-50/45 px-4 text-sm text-ink outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-500/10"
-                onChange={(event) =>
-                  setOrganizationType(event.target.value as OrganizationType)
-                }
-                value={organizationType}
-              >
-                {organizationTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {organizationTypeLabels[type]}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        ) : null}
 
         <div className="grid gap-4 border-t border-border pt-5 sm:grid-cols-2">
           <AuthInput
@@ -154,7 +125,6 @@ export function RegisterForm() {
             name="lastName"
             onChange={setLastName}
             placeholder="Nama belakang"
-            required={false}
             value={lastName}
           />
         </div>
@@ -167,6 +137,25 @@ export function RegisterForm() {
           type="email"
           value={email}
         />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <AuthInput
+            autoComplete="username"
+            label="Username"
+            name="username"
+            onChange={setUsername}
+            placeholder="contoh: wavebisnis"
+            value={username}
+          />
+          <AuthInput
+            autoComplete="tel"
+            label="Nomor telepon"
+            name="phoneNumber"
+            onChange={setPhoneNumber}
+            placeholder="08xxxxxxxxxx"
+            type="tel"
+            value={phoneNumber}
+          />
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <AuthInput
             autoComplete="new-password"
@@ -206,7 +195,9 @@ export function RegisterForm() {
           disabled={!isLoaded || loading}
           type="submit"
         >
-          {loading ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : null}
+          {loading ? (
+            <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
+          ) : null}
           {loading
             ? "Menyiapkan verifikasi..."
             : "Konfirmasi email dan lanjutkan"}
@@ -223,4 +214,10 @@ export function RegisterForm() {
       </form>
     </AuthShell>
   )
+}
+
+export function RegisterForm() {
+  const [accountRole, setAccountRole] = useState<"large_agent" | "small_lapak">("large_agent")
+  if (accountRole === "small_lapak") return <div className="space-y-4"><button className="text-sm font-semibold text-brand-600 hover:underline" onClick={() => setAccountRole("large_agent")} type="button">← Daftar sebagai agen besar</button><LapakRegisterForm /></div>
+  return <div className="space-y-4"><div className="grid gap-3 sm:grid-cols-2"><button className="rounded-2xl border-2 border-brand-500 bg-brand-50 p-4 text-left" onClick={() => setAccountRole("large_agent")} type="button"><span className="block font-semibold text-ink">Agen besar / grosir</span><span className="mt-1 block text-xs text-brand-700">Kelola lapak dan pemulung yang setor langsung.</span></button><button className="rounded-2xl border border-brand-100 bg-white p-4 text-left hover:border-brand-300" onClick={() => setAccountRole("small_lapak")} type="button"><span className="block font-semibold text-ink">Lapak kecil</span><span className="mt-1 block text-xs text-brand-700">Kelola anggota pemulung lapak sendiri.</span></button></div><LargeAgentRegisterForm /></div>
 }

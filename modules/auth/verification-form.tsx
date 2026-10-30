@@ -38,17 +38,28 @@ function SignupVerification() {
 
     try {
       const result = await signUp.attemptEmailAddressVerification({ code })
+
       if (result.status !== "complete" || !result.createdSessionId) {
+        const missingFields = result.missingFields
+          .map((field) => field.replaceAll("_", " "))
+          .join(", ")
         setError(
-          "Kode belum menyelesaikan pendaftaran. Periksa kembali kode terbaru."
+          missingFields
+            ? `Kode benar, tetapi pendaftaran masih membutuhkan: ${missingFields}. Kembali ke formulir dan lengkapi data tersebut.`
+            : "Kode benar, tetapi pendaftaran belum selesai. Periksa pengaturan sign-up Clerk."
         )
         return
       }
 
       await setActive({ session: result.createdSessionId })
-      router.push("/verify?mode=setup")
+      router.push("/dashboard")
     } catch (value) {
-      setError(getAuthError(value))
+      const message = getAuthError(value)
+      setError(
+        message.toLowerCase().includes("already been verified")
+          ? "Email sudah terverifikasi pada percobaan sebelumnya. Mulai ulang pendaftaran dari formulir register agar proses dapat diselesaikan."
+          : message
+      )
     } finally {
       setLoading(false)
     }
@@ -86,8 +97,13 @@ function SignupVerification() {
             disabled={!isLoaded || loading}
             type="submit"
           >
-            {loading ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : null}
-            {loading ? "Memverifikasi..." : "Verifikasi dan buat akun"}
+            {loading ? (
+              <LoaderCircle
+                aria-hidden="true"
+                className="size-4 animate-spin"
+              />
+            ) : null}
+            {loading ? "Memverifikasi..." : "Verifikasi email"}
           </button>
         </form>
         <div className="mt-6 text-center">
@@ -127,7 +143,8 @@ function AuthenticatorSetup() {
   }, [isLoaded, isSignedIn, totp, user])
 
   useEffect(() => {
-    if (isLoaded && isSignedIn && user?.twoFactorEnabled) router.push("/dashboard")
+    if (isLoaded && isSignedIn && user?.twoFactorEnabled)
+      router.push("/dashboard")
   }, [isLoaded, isSignedIn, router, user])
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -151,7 +168,6 @@ function AuthenticatorSetup() {
   return (
     <AuthShell
       description="Tambahkan lapisan keamanan ekstra sebelum mulai menggunakan WAVE."
-      step={3}
       title="Aktifkan authenticator app"
     >
       <div className="mx-auto max-w-[460px]">
@@ -207,7 +223,12 @@ function AuthenticatorSetup() {
             disabled={!isLoaded || !isSignedIn || !totp || loading}
             type="submit"
           >
-            {loading ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : null}
+            {loading ? (
+              <LoaderCircle
+                aria-hidden="true"
+                className="size-4 animate-spin"
+              />
+            ) : null}
             {loading ? "Mengaktifkan..." : "Aktifkan authenticator"}
           </button>
           <button
@@ -285,9 +306,13 @@ function LoginVerification() {
       title="Verifikasi keamanan"
     >
       <div className="mx-auto max-w-[440px]">
-          <div className="mb-6 rounded-2xl bg-brand-500/10 p-5 text-center">
+        <div className="mb-6 rounded-2xl bg-brand-500/10 p-5 text-center">
           <div className="mx-auto mb-4 grid size-16 place-items-center rounded-2xl bg-brand-600 text-2xl font-semibold text-white">
-            {factor === "totp" ? <ShieldCheck aria-hidden="true" className="size-7" /> : "✓"}
+            {factor === "totp" ? (
+              <ShieldCheck aria-hidden="true" className="size-7" />
+            ) : (
+              "✓"
+            )}
           </div>
           <p className="text-sm leading-6 text-brand-700">
             {factor === "backup_code"
@@ -320,7 +345,12 @@ function LoginVerification() {
             disabled={!isLoaded || loading}
             type="submit"
           >
-            {loading ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : null}
+            {loading ? (
+              <LoaderCircle
+                aria-hidden="true"
+                className="size-4 animate-spin"
+              />
+            ) : null}
             {loading ? "Memverifikasi..." : "Verifikasi dan masuk"}
           </button>
         </form>

@@ -11,7 +11,9 @@ const organizationType = v.union(
   v.literal("recycler"),
   v.literal("government"),
   v.literal("ngo"),
-  v.literal("platform")
+  v.literal("platform"),
+  v.literal("large_agent"),
+  v.literal("small_lapak")
 )
 
 type OrganizationType =
@@ -22,6 +24,8 @@ type OrganizationType =
   | "government"
   | "ngo"
   | "platform"
+  | "large_agent"
+  | "small_lapak"
 
 async function createBusinessOrganization(
   ctx: MutationCtx,
@@ -62,6 +66,7 @@ export const current = query({
 export const ensureCurrent = mutation({
   args: {
     accountType: v.optional(accountType),
+    phoneNumber: v.optional(v.string()),
     organizationName: v.optional(v.string()),
     organizationType: v.optional(organizationType),
   },
@@ -73,6 +78,7 @@ export const ensureCurrent = mutation({
     const profile = {
       ...(identity.email ? { email: identity.email } : {}),
       ...(identity.name ? { name: identity.name } : {}),
+      ...(args.phoneNumber?.trim() ? { phone: args.phoneNumber.trim() } : {}),
     }
 
     const selectedAccountType =

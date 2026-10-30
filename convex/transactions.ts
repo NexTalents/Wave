@@ -7,7 +7,9 @@ const gradeValidator = v.union(v.literal("A"), v.literal("B"), v.literal("C"))
 export const create = mutation({
   args: {
     organizationId: v.id("organizations"),
-    wastePickerId: v.id("wastePickers"),
+    wastePickerId: v.optional(v.id("wastePickers")),
+    supplierOrganizationId: v.optional(v.id("organizations")),
+    supplierType: v.optional(v.union(v.literal("waste_picker"), v.literal("lapak"))),
     material: v.string(),
     weightKg: v.number(),
     aiGrade: gradeValidator,
@@ -28,15 +30,23 @@ export const create = mutation({
     if (args.weightKg <= 0) throw new Error("Weight must be greater than zero")
     if (args.finalPricePerKg < args.minimumPricePerKg) throw new Error("Price is below the minimum")
 
-    const picker = await ctx.db.get(args.wastePickerId)
-    if (!picker || picker.organizationId !== args.organizationId || picker.status !== "active") {
-      throw new Error("Waste picker is not available for this organization")
+    const supplierType = args.supplierType ?? "waste_picker"
+    const picker = args.wastePickerId ? await ctx.db.get(args.wastePickerId) : null
+    const supplierOrganizationId = args.supplierOrganizationId
+    if (supplierType === "waste_picker") {
+      if (!picker || picker.organizationId !== args.organizationId || picker.status !== "active") throw new Error("Waste picker is not available for this organization")
+    } else {
+      if (!supplierOrganizationId) throw new Error("Lapak wajib dipilih")
+      const lapak = await ctx.db.get(supplierOrganizationId)
+      if (!lapak || lapak.type !== "small_lapak" || lapak.parentOrganizationId !== args.organizationId) throw new Error("Lapak is not available for this organization")
     }
 
     const grossValue = args.weightKg * args.finalPricePerKg
     const transactionId = await ctx.db.insert("transactions", {
       organizationId: args.organizationId,
       wastePickerId: args.wastePickerId,
+      supplierOrganizationId,
+      supplierType,
       operatorUserId: actor.user._id,
       material: args.material,
       weightKg: args.weightKg,
@@ -56,7 +66,7 @@ export const create = mutation({
       wpiEligibleAt: Date.now() + 15 * 60 * 1000,
     })
 
-    if (args.paymentMode === "stock") {
+    if (args.paymentMode === "stock" && picker && args.wastePickerId) {
       const heldValue = grossValue * 0.3
       await ctx.db.insert("materialLots", {
         organizationId: args.organizationId,
@@ -73,7 +83,7 @@ export const create = mutation({
       })
     }
 
-    await ctx.db.insert("receiptDeliveries", { transactionId, channel: "mock_whatsapp", status: "queued", recipient: picker.phone })
+    await ctx.db.insert("receiptDeliveries", { transactionId, channel: "mock_whatsapp", status: "queued", recipient: picker?.phone })
     await writeAuditLog(ctx, { actorUserId: actor.user._id, organizationId: args.organizationId, action: "transaction.confirmed", targetType: "transaction", targetId: transactionId, metadata: { finalGrade: args.finalGrade, paymentMode: args.paymentMode } })
     return transactionId
   },
