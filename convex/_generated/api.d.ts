@@ -15,6 +15,7 @@ import type * as auth_organizations from "../auth/organizations.js";
 import type * as auth_users from "../auth/users.js";
 import type * as http from "../http.js";
 import type * as transactions from "../transactions.js";
+import type * as wastePickers from "../wastePickers.js";
 import type * as whatsapp from "../whatsapp.js";
 import type * as wpi_admin from "../wpi/admin.js";
 import type * as wpi_authorization from "../wpi/authorization.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   "auth/users": typeof auth_users;
   http: typeof http;
   transactions: typeof transactions;
+  wastePickers: typeof wastePickers;
   whatsapp: typeof whatsapp;
   "wpi/admin": typeof wpi_admin;
   "wpi/authorization": typeof wpi_authorization;

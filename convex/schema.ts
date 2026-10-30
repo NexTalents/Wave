@@ -252,6 +252,10 @@ export default defineSchema({
     condition: v.string(),
     note: v.string(),
     imageName: v.optional(v.string()),
+    rawLabel: v.optional(v.string()),
+    confidences: v.optional(
+      v.array(v.object({ label: v.string(), confidence: v.number() }))
+    ),
     wpiPricePerKg: v.number(),
     minimumPricePerKg: v.number(),
     finalPricePerKg: v.number(),
@@ -296,5 +300,7 @@ export default defineSchema({
     messageId: v.optional(v.string()),
     sentAt: v.optional(v.number()),
     errorMessage: v.optional(v.string()),
-  }).index("by_transaction", ["transactionId"]),
+  })
+    .index("by_transaction", ["transactionId"])
+    .index("by_message_id", ["messageId"]),
 })

@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
 import {
   AlertCircle,
   AlertTriangle,
@@ -31,22 +30,34 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { CameraCaptureDialog } from "@/components/camera-capture-dialog"
+import { useMutation, useQuery } from "convex/react"
+import { api } from "@/convex/_generated/api"
+import type { Id } from "@/convex/_generated/dataModel"
 import { calculateTransaction, canConfirmPrice, type PaymentMode } from "@/lib/transactions/rules"
-import {
-  DEFAULT_PICKERS,
-  getPriceInfoForMaterial,
-  saveStoredTransaction,
-} from "@/lib/transactions/store"
-import type {
-  TransactionRecord,
-  WasteConfidence,
-  WasteGrade,
-  WastePicker,
-} from "@/lib/transactions/types"
+import { getPriceInfoForMaterial } from "@/lib/transactions/store"
+import type { WasteConfidence, WasteGrade } from "@/lib/transactions/types"
+import { getAuthError } from "@/modules/auth/errors"
+import { useActiveOrganization } from "@/modules/auth"
+import { toTransactionRecord } from "./use-business-transactions"
 
 export function BusinessIntakePage() {
+  const organization = useActiveOrganization()
+  const pickers = useQuery(
+    api.wastePickers.list,
+    organization ? { organizationId: organization._id } : "skip"
+  )
+  const createPicker = useMutation(api.wastePickers.create)
+  const createTransaction = useMutation(api.transactions.create)
+
   // Step & Picker State
-  const [selectedPicker, setSelectedPicker] = useState<WastePicker>(DEFAULT_PICKERS[0])
+  const [selectedPickerId, setSelectedPickerId] = useState<Id<"wastePickers"> | null>(null)
+  const selectedPicker =
+    pickers?.find((picker) => picker._id === selectedPickerId) ?? pickers?.[0] ?? null
+  const [isAddingPicker, setIsAddingPicker] = useState(false)
+  const [newPickerName, setNewPickerName] = useState("")
+  const [newPickerPhone, setNewPickerPhone] = useState("")
+  const [isSavingPicker, setIsSavingPicker] = useState(false)
+  const [pickerError, setPickerError] = useState("")
   const [weightKg, setWeightKg] = useState("15.5")
 
   // Camera & Photo State
@@ -71,7 +82,15 @@ export function BusinessIntakePage() {
   const [finalPrice, setFinalPrice] = useState<string>("2300")
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("cash")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [completedTx, setCompletedTx] = useState<TransactionRecord | null>(null)
+  const [submitError, setSubmitError] = useState("")
+  const [completedTxId, setCompletedTxId] = useState<Id<"transactions"> | null>(null)
+  const completedView = useQuery(
+    api.transactions.get,
+    organization && completedTxId
+      ? { organizationId: organization._id, transactionId: completedTxId }
+      : "skip"
+  )
+  const completedTx = completedView ? toTransactionRecord(completedView) : null
 
   // Active Material Pricing
   const activeMaterial = aiResult?.material || "Kardus"
@@ -99,7 +118,7 @@ export function BusinessIntakePage() {
     setCapturedPhotoUrl(previewUrl)
     setAiResult(null)
     setAiError(null)
-    setCompletedTx(null)
+    setCompletedTxId(null)
     setIsAnalyzing(true)
 
     try {
@@ -130,11 +149,12 @@ export function BusinessIntakePage() {
       setFinalGrade(data.grade)
       const detectedPriceInfo = getPriceInfoForMaterial(data.material)
       setFinalPrice(String(detectedPriceInfo.prices[data.grade as WasteGrade] || 2300))
-    } catch (err: any) {
-      console.error("[Intake] Analysis error:", err)
+    } catch (error: unknown) {
+      console.error("[Intake] Analysis error:", error)
       setAiError(
-        err.message ||
-          "Gagal memproses foto di service AI Gradio (56.10.12.62:7860). Anda tetap dapat mengisi data secara manual."
+        error instanceof Error
+          ? error.message
+          : "Gagal memproses foto di service AI Gradio (56.10.12.62:7860). Anda tetap dapat mengisi data secara manual."
       )
       // Provide fallback so operator is not stuck
       setAiResult({
@@ -159,64 +179,14 @@ export function BusinessIntakePage() {
 
   // Handle Submit Transaction
   const handleSubmitTransaction = async () => {
-    if (!aiResult || !isPriceValid || numericWeight <= 0) return
+    if (!organization || !selectedPicker || !aiResult || !isPriceValid || numericWeight <= 0) return
 
     setIsSubmitting(true)
+    setSubmitError("")
     try {
-      const now = Date.now()
-      const txId = `TRX-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${String(
-        Math.floor(Math.random() * 900) + 100
-      )}`
-
-      // Send WhatsApp Receipt
-      let waStatus: "sent" | "failed" | "queued" | "simulated" | "delivered" = "sent"
-      let waMessageId: string | undefined
-      let waDirectUrl: string | undefined
-      let waFormattedMessage: string | undefined
-      let waProvider: "meta_cloud_api" | "simulation" = "simulation"
-
-      try {
-        const waResponse = await fetch("/api/whatsapp/send-receipt", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            transactionId: txId,
-            recipient: selectedPicker.phone,
-            memberName: selectedPicker.name,
-            memberCode: selectedPicker.memberCode,
-            material: aiResult.material,
-            weightKg: numericWeight,
-            grade: finalGrade,
-            wpiPricePerKg: currentWpiPrice,
-            finalPricePerKg: numericPrice,
-            grossValue: calculation.grossValue,
-            paymentMode,
-            cashPaid: calculation.cashPaid,
-            walletCredit: calculation.walletCredit,
-            heldValue: calculation.heldValue,
-          }),
-        })
-
-        if (waResponse.ok) {
-          const waData = await waResponse.json()
-          waStatus = waData.status || "sent"
-          waMessageId = waData.messageId
-          waDirectUrl = waData.waDirectUrl
-          waFormattedMessage = waData.formattedMessage
-          waProvider = waData.provider || "simulation"
-        }
-      } catch (waErr) {
-        console.warn("[Intake] WhatsApp send receipt network error:", waErr)
-      }
-
-      const record: TransactionRecord = {
-        id: txId,
-        createdAt: now,
-        dateFormatted: new Intl.DateTimeFormat("id-ID", {
-          dateStyle: "medium",
-          timeStyle: "short",
-        }).format(now),
-        picker: selectedPicker,
+      const transactionId = await createTransaction({
+        organizationId: organization._id,
+        wastePickerId: selectedPicker._id,
         material: aiResult.material,
         rawLabel: aiResult.rawLabel,
         weightKg: numericWeight,
@@ -225,34 +195,38 @@ export function BusinessIntakePage() {
         condition: aiResult.condition,
         note: aiResult.note,
         confidences: aiResult.confidences,
-        imagePreviewUrl: capturedPhotoUrl || undefined,
+        imageName: capturedFile?.name,
         wpiPricePerKg: currentWpiPrice,
         minimumPricePerKg: minimumPrice,
         finalPricePerKg: numericPrice,
-        grossValue: calculation.grossValue,
         paymentMode,
-        cashPaid: calculation.cashPaid,
-        walletCredit: calculation.walletCredit,
-        heldValue: calculation.heldValue,
-        status: "confirmed",
-        whatsappDelivery: {
-          status: waStatus,
-          recipient: selectedPicker.phone,
-          sentAt: new Intl.DateTimeFormat("id-ID", { timeStyle: "short" }).format(now),
-          messageId: waMessageId,
-          waDirectUrl,
-          formattedMessage: waFormattedMessage,
-          provider: waProvider,
-        },
-      }
-
-      // Save to store
-      saveStoredTransaction(record)
-      setCompletedTx(record)
-    } catch (err: any) {
-      console.error("Failed to submit transaction:", err)
+      })
+      setCompletedTxId(transactionId)
+    } catch (error) {
+      setSubmitError(getAuthError(error))
     } finally {
       setIsSubmitting(false)
+    }
+  }
+
+  const handleAddPicker = async () => {
+    if (!organization) return
+    setIsSavingPicker(true)
+    setPickerError("")
+    try {
+      const pickerId = await createPicker({
+        organizationId: organization._id,
+        name: newPickerName,
+        phone: newPickerPhone,
+      })
+      setSelectedPickerId(pickerId)
+      setNewPickerName("")
+      setNewPickerPhone("")
+      setIsAddingPicker(false)
+    } catch (error) {
+      setPickerError(getAuthError(error))
+    } finally {
+      setIsSavingPicker(false)
     }
   }
 
@@ -262,7 +236,7 @@ export function BusinessIntakePage() {
     setCapturedFile(null)
     setAiResult(null)
     setAiError(null)
-    setCompletedTx(null)
+    setCompletedTxId(null)
     setWeightKg("10.0")
     setFinalGrade("B")
     setFinalPrice("2300")
@@ -318,18 +292,24 @@ export function BusinessIntakePage() {
                       Terkonfirmasi
                     </Badge>
                     <Badge variant="outline" className="text-xs bg-emerald-500/20 text-emerald-900 dark:text-emerald-300 border-emerald-500/40">
-                      WhatsApp: {completedTx.whatsappDelivery.provider === "meta_cloud_api" ? "Cloud API Terkirim" : "Struk Terkirim (ID: 1379578261903928)"}
+                      WhatsApp: {completedTx.whatsappDelivery.status === "queued"
+                        ? "Struk dalam antrean"
+                        : completedTx.whatsappDelivery.status === "failed"
+                          ? "Struk gagal terkirim"
+                          : completedTx.whatsappDelivery.provider === "meta_cloud_api"
+                            ? "Cloud API Terkirim"
+                            : "Struk Tersimulasi"}
                     </Badge>
                   </div>
                   <h3 className="text-lg font-bold text-foreground">
-                    Setoran Berhasil Dicatat & Struk Terkirim!
+                    Setoran Berhasil Dicatat
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     Material: <strong>{completedTx.weightKg} kg {completedTx.material}</strong> (Grade {completedTx.finalGrade}) · Pembayaran: <strong>Rp {completedTx.cashPaid.toLocaleString("id-ID")}</strong> kepada {completedTx.picker.name}.
                   </p>
                   <div className="pt-1 flex flex-wrap items-center gap-3 text-xs text-emerald-800 dark:text-emerald-300 font-medium">
                     <span className="flex items-center gap-1.5">
-                      <Send className="size-3" /> Terkirim ke WhatsApp: <strong>{completedTx.whatsappDelivery.recipient}</strong>
+                      <Send className="size-3" /> WhatsApp: <strong>{completedTx.whatsappDelivery.recipient || "-"}</strong>
                     </span>
                     {completedTx.whatsappDelivery.waDirectUrl && (
                       <a
@@ -391,21 +371,68 @@ export function BusinessIntakePage() {
                 </label>
                 <select
                   id="picker-select"
-                  value={selectedPicker.id}
-                  onChange={(e) => {
-                    const found = DEFAULT_PICKERS.find((p) => p.id === e.target.value)
-                    if (found) setSelectedPicker(found)
-                  }}
+                  value={selectedPicker?._id ?? ""}
+                  disabled={!pickers || pickers.length === 0}
+                  onChange={(e) => setSelectedPickerId(e.target.value as Id<"wastePickers">)}
                   className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
-                  {DEFAULT_PICKERS.map((picker) => (
-                    <option key={picker.id} value={picker.id}>
+                  {pickers === undefined ? <option value="">Memuat anggota…</option> : null}
+                  {pickers?.length === 0 ? <option value="">Belum ada anggota</option> : null}
+                  {pickers?.map((picker) => (
+                    <option key={picker._id} value={picker._id}>
                       {picker.name} ({picker.memberCode})
                     </option>
                   ))}
                 </select>
 
+                {isAddingPicker || pickers?.length === 0 ? (
+                  <div className="mt-2.5 space-y-2 rounded-xl border border-border p-3">
+                    <Input
+                      aria-label="Nama anggota baru"
+                      onChange={(e) => setNewPickerName(e.target.value)}
+                      placeholder="Nama anggota"
+                      value={newPickerName}
+                    />
+                    <Input
+                      aria-label="Nomor WhatsApp anggota baru"
+                      inputMode="tel"
+                      onChange={(e) => setNewPickerPhone(e.target.value)}
+                      placeholder="08xxxxxxxxxx"
+                      value={newPickerPhone}
+                    />
+                    {pickerError ? (
+                      <p aria-live="polite" className="text-xs text-destructive" role="alert">
+                        {pickerError}
+                      </p>
+                    ) : null}
+                    <div className="flex justify-end gap-2">
+                      {pickers && pickers.length > 0 ? (
+                        <Button onClick={() => setIsAddingPicker(false)} size="sm" type="button" variant="outline">
+                          Batal
+                        </Button>
+                      ) : null}
+                      <Button
+                        disabled={isSavingPicker || !newPickerName.trim() || !newPickerPhone.trim()}
+                        onClick={() => void handleAddPicker()}
+                        size="sm"
+                        type="button"
+                      >
+                        {isSavingPicker ? "Menyimpan…" : "Simpan Anggota"}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    className="mt-2 text-xs font-semibold text-primary hover:underline"
+                    onClick={() => setIsAddingPicker(true)}
+                    type="button"
+                  >
+                    + Tambah anggota baru
+                  </button>
+                )}
+
                 {/* Selected Picker Card Preview */}
+                {selectedPicker ? (
                 <div className="mt-2.5 rounded-xl border border-border bg-muted/30 p-3 text-xs space-y-1.5">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground flex items-center gap-1">
@@ -424,10 +451,11 @@ export function BusinessIntakePage() {
                       <ShieldCheck className="size-3" /> Status:
                     </span>
                     <span className="text-emerald-700 dark:text-emerald-400 font-medium">
-                      Aktif · Terverifikasi ({selectedPicker.totalTransactions} setoran)
+                      Aktif
                     </span>
                   </div>
                 </div>
+                ) : null}
               </div>
 
               {/* Weight Input */}
@@ -848,13 +876,14 @@ export function BusinessIntakePage() {
               <Button
                 type="button"
                 disabled={
+                  !selectedPicker ||
                   !aiResult ||
                   !isPriceValid ||
                   numericWeight <= 0 ||
                   isSubmitting ||
                   isAnalyzing
                 }
-                onClick={handleSubmitTransaction}
+                onClick={() => void handleSubmitTransaction()}
                 className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-base shadow-md disabled:opacity-50"
               >
                 {isSubmitting ? (
@@ -869,6 +898,12 @@ export function BusinessIntakePage() {
                   </>
                 )}
               </Button>
+
+              {submitError ? (
+                <p aria-live="polite" className="text-center text-xs text-destructive" role="alert">
+                  {submitError}
+                </p>
+              ) : null}
 
               {!aiResult && (
                 <p className="text-center text-xs text-muted-foreground">

@@ -1,6 +1,31 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { api } from "./_generated/api"
 import { identity, makeTest } from "../tests/convex/helpers"
+
+async function seedOperator(t: ReturnType<typeof makeTest>, key: string) {
+  return t.run(async (ctx) => {
+    const userId = await ctx.db.insert("users", {
+      tokenIdentifier: `test|${key}-operator`,
+      email: `${key}-operator@wave.test`,
+      accountType: "business",
+      status: "active",
+    })
+    const organizationId = await ctx.db.insert("organizations", {
+      name: `${key} Organization`,
+      type: "bank_sampah",
+      verificationStatus: "verified",
+      createdBy: userId,
+    })
+    await ctx.db.insert("memberships", { userId, organizationId, role: "operator", status: "active" })
+    const wastePickerId = await ctx.db.insert("wastePickers", {
+      organizationId,
+      name: `Picker ${key}`,
+      memberCode: `${key.toUpperCase()}-PICKER`,
+      status: "active",
+    })
+    return { organizationId, wastePickerId }
+  })
+}
 
 async function expectConvexError(operation: Promise<unknown>, code: string) {
   try {
@@ -12,7 +37,14 @@ async function expectConvexError(operation: Promise<unknown>, code: string) {
 }
 
 describe("transaction authorization", () => {
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllEnvs()
+  })
+
   it("B-03 allows an operator to create a transaction in its organization", async () => {
+    vi.useFakeTimers()
+    vi.stubEnv("WHATSAPP_ACCESS_TOKEN", "")
     const t = makeTest()
     const ids = await t.run(async (ctx) => {
       const userId = await ctx.db.insert("users", {
@@ -58,8 +90,6 @@ describe("transaction authorization", () => {
         minimumPricePerKg: 4000,
         finalPricePerKg: 4500,
         paymentMode: "cash",
-        cashPaid: 9000,
-        walletCredit: 0,
       })
 
     const transaction = await t.run((ctx) => ctx.db.get(transactionId))
@@ -75,11 +105,87 @@ describe("transaction authorization", () => {
       organizationId: ids.organizationId,
       operatorUserId: expect.any(String),
       status: "confirmed",
+      grossValue: 9000,
+      cashPaid: 9000,
+      walletCredit: 0,
     })
     expect(auditLogs).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ action: "transaction.confirmed" }),
       ])
+    )
+
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+    const view = await t
+      .withIdentity(identity("b03-operator"))
+      .query(api.transactions.get, {
+        organizationId: ids.organizationId,
+        transactionId,
+      })
+    expect(view).toMatchObject({
+      code: expect.stringMatching(/^TRX-\d{8}-[A-Z0-9]{6}$/),
+      picker: { name: "Picker B-03" },
+      delivery: { channel: "mock_whatsapp", status: "sent" },
+    })
+  })
+
+  it("B-06 computes stock payment values on the server", async () => {
+    vi.useFakeTimers()
+    const t = makeTest()
+    const ids = await seedOperator(t, "b06")
+
+    const transactionId = await t
+      .withIdentity(identity("b06-operator"))
+      .mutation(api.transactions.create, {
+        ...ids,
+        material: "PET",
+        weightKg: 10,
+        aiGrade: "A",
+        finalGrade: "A",
+        condition: "clean",
+        note: "B-06 stock",
+        wpiPricePerKg: 5000,
+        minimumPricePerKg: 4000,
+        finalPricePerKg: 4999,
+        paymentMode: "stock",
+      })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+
+    const transaction = await t.run((ctx) => ctx.db.get(transactionId))
+    const lots = await t.run((ctx) => ctx.db.query("materialLots").take(5))
+    expect(transaction).toMatchObject({ grossValue: 49990, cashPaid: 34500, walletCredit: 493 })
+    expect(lots[0]).toMatchObject({ initialValue: 14997 })
+  })
+
+  it("B-07 lists transactions only for members of the organization", async () => {
+    vi.useFakeTimers()
+    const t = makeTest()
+    const own = await seedOperator(t, "b07a")
+    await seedOperator(t, "b07b")
+    await t.withIdentity(identity("b07a-operator")).mutation(api.transactions.create, {
+      ...own,
+      material: "Kardus",
+      weightKg: 3,
+      aiGrade: "B",
+      finalGrade: "B",
+      condition: "dry",
+      note: "B-07",
+      wpiPricePerKg: 2300,
+      minimumPricePerKg: 2100,
+      finalPricePerKg: 2300,
+      paymentMode: "cash",
+    })
+    await t.finishAllScheduledFunctions(vi.runAllTimers)
+
+    const list = await t
+      .withIdentity(identity("b07a-operator"))
+      .query(api.transactions.listForOrganization, { organizationId: own.organizationId })
+    expect(list).toHaveLength(1)
+    await expectConvexError(
+      t
+        .withIdentity(identity("b07b-operator"))
+        .query(api.transactions.listForOrganization, { organizationId: own.organizationId }),
+      "FORBIDDEN"
     )
   })
 
@@ -141,8 +247,6 @@ describe("transaction authorization", () => {
           minimumPricePerKg: 4000,
           finalPricePerKg: 4500,
           paymentMode: "cash",
-          cashPaid: 4500,
-          walletCredit: 0,
         })
     ).rejects.toThrow("Waste picker is not available")
   })
