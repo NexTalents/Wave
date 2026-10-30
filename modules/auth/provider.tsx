@@ -3,11 +3,20 @@
 import { ClerkProvider, useAuth, useUser } from "@clerk/nextjs"
 import { ConvexReactClient, useConvexAuth, useMutation } from "convex/react"
 import { ConvexProviderWithClerk } from "convex/react-clerk"
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react"
 import { api } from "@/convex/_generated/api"
 import type { AccountType, OrganizationType } from "./types"
 
 export type AuthSyncStatus = "idle" | "syncing" | "done" | "error"
+
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+const convex = convexUrl ? new ConvexReactClient(convexUrl) : null
 
 const AuthSyncStatusContext = createContext<AuthSyncStatus>("idle")
 
@@ -50,7 +59,7 @@ function AuthSync({ children }: { children: ReactNode }) {
               organizationName: metadata.organizationName,
               organizationType: metadata.organizationType,
             })
-          : undefined,
+          : undefined
       )
       .then(() => {
         setSyncedUserId(user.id)
@@ -85,11 +94,6 @@ function AuthSync({ children }: { children: ReactNode }) {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
-  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
-  const convex = useMemo(
-    () => (convexUrl ? new ConvexReactClient(convexUrl) : null),
-    [convexUrl]
-  )
 
   if (!publishableKey || !convex) {
     return (
