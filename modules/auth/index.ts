@@ -11,6 +11,7 @@ export {
 } from "./permissions"
 export { useCurrentUser } from "./use-current-user"
 export { useAuthState } from "./use-auth-state"
+export { useSignOut } from "./use-sign-out"
 export type {
   AuthOrganizationSummary,
   AuthState,

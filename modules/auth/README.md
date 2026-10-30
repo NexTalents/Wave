@@ -51,39 +51,65 @@ npx convex run auth/admin:grantPlatformAdmin '{"email":"admin@example.com"}'
 
 The command is internal and is not exposed through the public `api`. It does not create a Clerk account. Use the exact email from the Clerk profile, keep the command out of application code, and use `revokePlatformAdmin` to remove the role.
 
-## Use in an authenticated area
+## Session state and route guards
 
 Wrap only the part of the app that needs authentication:
 
 ```tsx
 import { AuthProvider } from "@/modules/auth"
 
-export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
+export default function ProtectedLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return <AuthProvider>{children}</AuthProvider>
 }
 ```
 
-Use `RequireAuth` for presentation. It is not a security boundary; Convex functions must enforce permissions on the server.
+Use `useAuthState` when a component needs the session state. The state distinguishes a signed-out user, a Clerk session that Convex cannot authenticate, profile synchronization, onboarding, suspension, and a ready session.
 
 ```tsx
-import { RequireAuth } from "@/modules/auth"
+import { useAuthState } from "@/modules/auth"
 
 export function PrivatePanel() {
-  return <RequireAuth fallback={<p>Silakan masuk.</p>}>{/* private UI */}</RequireAuth>
+  const state = useAuthState()
+  if (state.status !== "ready") return null
+  return <p>Halo, {state.user.firstName ?? "pengguna"}.</p>
 }
 ```
 
-New business modules should add a permission to `permissions.ts` only when the feature exists, then call the Convex authorization helper before reading or writing organization data.
-
-## Client API
-
-Use `useCurrentUser` after the provider is mounted to read the local Convex profile. `AuthProvider` performs the profile synchronization before authenticated dashboard flows consume it.
+Use `RoleGuard` in dashboard layouts. Its redirect is only a client navigation aid; it is not a security boundary.
 
 ```tsx
-import { useCurrentUser } from "@/modules/auth"
+import { RoleGuard } from "@/modules/auth"
 
-const user = useCurrentUser()
+export default function BusinessLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return <RoleGuard allow={["business"]}>{children}</RoleGuard>
+}
 ```
+
+Business screens can read the active organization selected by `me`:
+
+```tsx
+import { useActiveOrganization } from "@/modules/auth"
+
+const organization = useActiveOrganization()
+```
+
+Use `useSignOut` for custom sign-out buttons. It redirects to `/login`, exposes a loading state, and prevents duplicate clicks:
+
+```tsx
+import { useSignOut } from "@/modules/auth"
+
+const { isSigningOut, signOut } = useSignOut()
+```
+
+New business modules should add a permission to `permissions.ts` only when the feature exists, then call the Convex authorization helper before reading or writing organization data.
 
 ## Convex API
 
@@ -93,7 +119,11 @@ Organization-scoped mutations should derive the actor from the session and check
 import { requirePermission } from "../auth/authorization"
 import { permissions } from "../../modules/auth/permissions"
 
-const actor = await requirePermission(ctx, args.organizationId, permissions.depositsCreate)
+const actor = await requirePermission(
+  ctx,
+  args.organizationId,
+  permissions.depositsCreate
+)
 ```
 
 Do not accept a user ID from the client for authorization, and do not use a UI guard as a security check. The Convex function is the enforcement point.

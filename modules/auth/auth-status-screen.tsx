@@ -1,15 +1,15 @@
 "use client"
 
-import { useClerk } from "@clerk/nextjs"
 import { LogOut, ShieldAlert } from "lucide-react"
 import { LoadingScreen } from "@/components/loading-screen"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AccountTypeSetup } from "@/modules/dashboard/account-type-setup"
 import type { AuthState } from "./use-auth-state"
+import { useSignOut } from "./use-sign-out"
 
 export function AuthStatusScreen({ state }: { state: AuthState }) {
-  const { signOut } = useClerk()
+  const { error: signOutError, isSigningOut, signOut } = useSignOut()
 
   if (state.status === "loading" || state.status === "syncing") {
     return (
@@ -39,12 +39,14 @@ export function AuthStatusScreen({ state }: { state: AuthState }) {
         ? {
             title: "Profil belum tersinkron",
             message: state.message,
-            detail: "Keluar lalu masuk kembali untuk mencoba sinkronisasi ulang.",
+            detail:
+              "Keluar lalu masuk kembali untuk mencoba sinkronisasi ulang.",
           }
         : {
             title: "Akun tidak dapat digunakan",
             message: "Akun kamu dinonaktifkan. Hubungi admin WAVE.",
-            detail: "Jika ini tampak keliru, minta admin memeriksa status akunmu.",
+            detail:
+              "Jika ini tampak keliru, minta admin memeriksa status akunmu.",
           }
 
   return (
@@ -58,13 +60,20 @@ export function AuthStatusScreen({ state }: { state: AuthState }) {
             <p>{copy.message}</p>
             <p>{copy.detail}</p>
           </div>
+          {signOutError ? (
+            <p className="text-sm text-destructive" role="alert">
+              {signOutError}
+            </p>
+          ) : null}
           <Button
+            aria-busy={isSigningOut}
             className="w-full"
-            onClick={() => void signOut({ redirectUrl: "/login" })}
+            disabled={isSigningOut}
+            onClick={() => void signOut()}
             type="button"
           >
             <LogOut aria-hidden="true" />
-            Keluar
+            {isSigningOut ? "Keluar..." : "Keluar"}
           </Button>
         </CardContent>
       </Card>
