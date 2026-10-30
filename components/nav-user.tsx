@@ -1,6 +1,11 @@
 "use client";
 
-import { useClerk } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useClerk, useUser } from "@clerk/nextjs";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { clearLapakSessionToken, getLapakSessionToken } from "@/modules/auth/lapak-session";
 import {
 	Avatar,
 	AvatarFallback,
@@ -15,16 +20,51 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { UserIcon, SettingsIcon, CreditCardIcon, LogOutIcon } from "lucide-react";
-
-const user = {
-	name: "Shaban Haider",
-	email: "shaban@efferd.com",
-	avatar: "https://github.com/shabanhr.png",
-};
+import { UserIcon, SettingsIcon, LogOutIcon } from "lucide-react";
 
 export function NavUser() {
+	const router = useRouter();
 	const { signOut } = useClerk();
+	const { user: clerkUser } = useUser();
+
+	const [lapakToken, setLapakToken] = useState<string | null>(null);
+	useEffect(() => {
+		setLapakToken(getLapakSessionToken());
+	}, []);
+
+	const lapakSession = useQuery(
+		api.lapakAuth.currentLapakSession,
+		lapakToken ? { sessionToken: lapakToken } : "skip"
+	);
+	const logoutLapak = useMutation(api.lapakAuth.logoutLapak);
+
+	const isLapak = Boolean(lapakSession);
+
+	const displayName = isLapak
+		? (lapakSession?.name || lapakSession?.organizationName || "Mitra Lapak")
+		: (clerkUser?.fullName || clerkUser?.firstName || "Agen WAVE");
+
+	const displaySubtext = isLapak
+		? `${lapakSession?.organizationName || "Lapak"} · ${lapakSession?.lapakCode}`
+		: (clerkUser?.primaryEmailAddress?.emailAddress || "Agen Besar WAVE");
+
+	const displayAvatar = isLapak ? undefined : clerkUser?.imageUrl;
+	const avatarFallback = (displayName.charAt(0) || "W").toUpperCase();
+
+	const handleLogout = async () => {
+		if (lapakToken) {
+			try {
+				await logoutLapak({ sessionToken: lapakToken });
+			} catch {
+				// Ignore errors during token invalidation
+			}
+			clearLapakSessionToken();
+			window.location.href = "/login";
+			return;
+		}
+
+		await signOut({ redirectUrl: "/login" });
+	};
 
 	return (
 		<DropdownMenu>
@@ -38,56 +78,47 @@ export function NavUser() {
 				}
 			>
 				<Avatar className="size-8">
-					<AvatarImage src={user.avatar} />
-					<AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+					{displayAvatar && <AvatarImage src={displayAvatar} />}
+					<AvatarFallback className={isLapak ? "bg-primary/20 text-primary font-bold" : ""}>
+						{avatarFallback}
+					</AvatarFallback>
 				</Avatar>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-60">
 				<DropdownMenuGroup>
 					<DropdownMenuLabel className="pointer-events-none flex items-center gap-2">
 						<Avatar className="isolate size-8">
-							<AvatarImage src={user.avatar} />
-							<AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+							{displayAvatar && <AvatarImage src={displayAvatar} />}
+							<AvatarFallback className={isLapak ? "bg-primary/20 text-primary font-bold" : ""}>
+								{avatarFallback}
+							</AvatarFallback>
 						</Avatar>
-						<div>
-							<span className="font-medium text-foreground">{user.name}</span>{" "}
-							<br />
-							<div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-muted-foreground text-xs">
-								{user.email}
+						<div className="overflow-hidden">
+							<span className="font-medium text-foreground block truncate">{displayName}</span>
+							<div className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-muted-foreground text-xs font-mono">
+								{displaySubtext}
 							</div>
 						</div>
 					</DropdownMenuLabel>
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>
-					<DropdownMenuItem>
-						<UserIcon
-						/>
-						Account
+					<DropdownMenuItem onClick={() => router.push("/dashboard/business/partners")}>
+						<UserIcon />
+						{isLapak ? "Data Anggota Pemulung" : "Mitra & Pemasok"}
 					</DropdownMenuItem>
-					<DropdownMenuItem>
-						<SettingsIcon
-						/>
-						Settings
-					</DropdownMenuItem>
+					{!isLapak && (
+						<DropdownMenuItem onClick={() => router.push("/dashboard/business")}>
+							<SettingsIcon />
+							Pengaturan Agen
+						</DropdownMenuItem>
+					)}
 				</DropdownMenuGroup>
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>
-					<DropdownMenuItem>
-						<CreditCardIcon
-						/>
-						Plan & Billing
-					</DropdownMenuItem>
-				</DropdownMenuGroup>
-				<DropdownMenuSeparator />
-				<DropdownMenuGroup>
-					<DropdownMenuItem
-						onClick={() => void signOut({ redirectUrl: "/login" })}
-						variant="destructive"
-					>
-						<LogOutIcon
-						/>
-						Log out
+					<DropdownMenuItem onClick={handleLogout} variant="destructive">
+						<LogOutIcon />
+						Keluar (Log out)
 					</DropdownMenuItem>
 				</DropdownMenuGroup>
 			</DropdownMenuContent>
