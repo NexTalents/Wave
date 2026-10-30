@@ -1,49 +1,5 @@
-import { v } from "convex/values"
-import { mutation, query } from "../_generated/server"
-import { getCurrentUser, requireUser, writeAuditLog } from "./authorization"
-
-const organizationCreationType = v.union(
-  v.literal("bank_sampah"),
-  v.literal("aggregator"),
-  v.literal("industrial_buyer"),
-  v.literal("recycler"),
-  v.literal("government"),
-  v.literal("ngo"),
-  v.literal("platform"),
-)
-
-export const create = mutation({
-  args: { name: v.string(), type: organizationCreationType },
-  handler: async (ctx, args) => {
-    const user = await requireUser(ctx)
-    const name = args.name.trim()
-    if (!name) throw new Error("Organization name is required")
-
-    const organizationId = await ctx.db.insert("organizations", {
-      name,
-      type: args.type,
-      verificationStatus: "pending",
-      createdBy: user._id,
-    })
-
-    await ctx.db.insert("memberships", {
-      userId: user._id,
-      organizationId,
-      role: "owner",
-      status: "active",
-    })
-
-    await writeAuditLog(ctx, {
-      actorUserId: user._id,
-      organizationId,
-      action: "organization.created",
-      targetType: "organization",
-      targetId: organizationId,
-    })
-
-    return organizationId
-  },
-})
+import { query } from "../_generated/server"
+import { getCurrentUser } from "./authorization"
 
 export const listMine = query({
   args: {},

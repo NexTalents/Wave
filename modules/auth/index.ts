@@ -1,5 +1,5 @@
 export { RequireAuth } from "./guards"
-export { AuthProvider } from "./provider"
+export { AuthProvider, useAuthSyncStatus } from "./provider"
 export { SignedOutOnly } from "./signed-out-only"
 export {
   hasPermission,

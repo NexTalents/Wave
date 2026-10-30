@@ -30,7 +30,9 @@ export default defineSchema({
     ),
     platformRole: v.optional(v.literal("admin")),
     status: v.union(v.literal("active"), v.literal("suspended")),
-  }).index("by_token_identifier", ["tokenIdentifier"]),
+  })
+    .index("by_token_identifier", ["tokenIdentifier"])
+    .index("by_email", ["email"]),
 
   organizations: defineTable({
     name: v.string(),

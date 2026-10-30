@@ -12,6 +12,30 @@ async function expectConvexError(operation: Promise<unknown>, code: string) {
 }
 
 describe("auth profile and onboarding", () => {
+  it("U-04 returns anonymous when there is no identity", async () => {
+    const t = makeTest()
+
+    await expect(t.query(api.auth.users.me, {})).resolves.toEqual({ status: "anonymous" })
+  })
+
+  it("U-05 reports a missing profile for an unknown identity", async () => {
+    const t = makeTest()
+
+    await expect(t.withIdentity(identity("u05")).query(api.auth.users.me, {})).resolves.toEqual({
+      status: "missing_profile",
+    })
+  })
+
+  it("U-06 reports onboarding is needed after profile sync", async () => {
+    const t = makeTest()
+
+    await t.withIdentity(identity("u06")).mutation(api.auth.users.syncProfile, {})
+    const result = await t.withIdentity(identity("u06")).query(api.auth.users.me, {})
+
+    expect(result).toMatchObject({ status: "needs_onboarding" })
+    if (result.status === "needs_onboarding") expect(result.user.accountType).toBeUndefined()
+  })
+
   it("U-01 rejects syncProfile without an identity", async () => {
     const t = makeTest()
 
@@ -147,5 +171,58 @@ describe("auth profile and onboarding", () => {
 
     expect(users).toHaveLength(1)
     expect(users[0]).toMatchObject({ accountType: "business", tokenIdentifier: "test|u12" })
+  })
+
+  it("U-13 reports a suspended profile", async () => {
+    const t = makeTest()
+    const userIdentity = identity("u13")
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("users", {
+        tokenIdentifier: userIdentity.tokenIdentifier,
+        email: userIdentity.email,
+        name: userIdentity.name,
+        accountType: "individual",
+        status: "suspended",
+      })
+    })
+
+    await expect(t.withIdentity(userIdentity).query(api.auth.users.me, {})).resolves.toEqual({
+      status: "suspended",
+    })
+  })
+
+  it("U-14 maps a platform admin to the admin role", async () => {
+    const t = makeTest()
+    const userIdentity = identity("u14")
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("users", {
+        tokenIdentifier: userIdentity.tokenIdentifier,
+        email: userIdentity.email,
+        name: userIdentity.name,
+        accountType: "individual",
+        platformRole: "admin",
+        status: "active",
+      })
+    })
+
+    const result = await t.withIdentity(userIdentity).query(api.auth.users.me, {})
+
+    expect(result).toMatchObject({ status: "ready", role: "admin" })
+  })
+
+  it("U-15 never returns the token identifier from me", async () => {
+    const t = makeTest()
+    const userIdentity = identity("u15")
+
+    await t.withIdentity(userIdentity).mutation(api.auth.users.completeOnboarding, {
+      accountType: "individual",
+    })
+    const result = await t.withIdentity(userIdentity).query(api.auth.users.me, {})
+
+    expect(result).not.toHaveProperty("tokenIdentifier")
+    expect(result).toMatchObject({ status: "ready" })
+    if (result.status === "ready") expect(result.user).not.toHaveProperty("tokenIdentifier")
   })
 })

@@ -1,8 +1,7 @@
 import { v } from "convex/values"
 import { mutation, query } from "../_generated/server"
-import { hasPermission, permissions } from "../../modules/auth/permissions"
+import { permissions } from "../../modules/auth/permissions"
 import {
-  requireMembership,
   requirePermission,
   writeAuditLog,
 } from "../auth/authorization"
@@ -76,13 +75,15 @@ export const createSource = mutation({
 export const overview = query({
   args: { organizationId: v.id("organizations") },
   handler: async (ctx, args) => {
-    const actor = await requireMembership(ctx, args.organizationId)
+    const actor = await requirePermission(
+      ctx,
+      args.organizationId,
+      permissions.marketDataRead,
+    )
     if (!isOrganizationScope(args.organizationId, actor.organization._id))
       throw new Error("Organization scope mismatch")
     if (actor.organization.verificationStatus !== "verified")
       throw new Error("Organization verification required")
-    if (!hasPermission(actor.membership.role, permissions.marketDataRead))
-      throw new Error("Permission denied")
     const [observations, snapshots] = await Promise.all([
       ctx.db
         .query("wpiObservations")

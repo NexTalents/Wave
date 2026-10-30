@@ -29,6 +29,51 @@ type AuthIdentity = {
   name?: string
 }
 
+const organizationRole = v.union(
+  v.literal("owner"),
+  v.literal("admin"),
+  v.literal("operator"),
+  v.literal("aggregator"),
+  v.literal("buyer"),
+  v.literal("data_viewer"),
+)
+
+const userSummary = v.object({
+  _id: v.id("users"),
+  name: v.optional(v.string()),
+  email: v.optional(v.string()),
+  accountType: v.optional(accountType),
+  platformRole: v.optional(v.literal("admin")),
+})
+
+const organizationSummary = v.object({
+  _id: v.id("organizations"),
+  name: v.string(),
+  type: organizationType,
+  verificationStatus: v.union(
+    v.literal("pending"),
+    v.literal("verified"),
+    v.literal("suspended"),
+  ),
+})
+
+const meResult = v.union(
+  v.object({ status: v.literal("anonymous") }),
+  v.object({ status: v.literal("missing_profile") }),
+  v.object({ status: v.literal("suspended") }),
+  v.object({ status: v.literal("needs_onboarding"), user: userSummary }),
+  v.object({
+    status: v.literal("ready"),
+    user: userSummary,
+    role: v.union(v.literal("individual"), v.literal("business"), v.literal("admin")),
+    organization: v.union(organizationSummary, v.null()),
+    membership: v.union(
+      v.object({ role: organizationRole, status: v.literal("active") }),
+      v.null(),
+    ),
+  }),
+)
+
 async function findUserByTokenIdentifier(ctx: MutationCtx, tokenIdentifier: string) {
   return ctx.db
     .query("users")
@@ -38,8 +83,9 @@ async function findUserByTokenIdentifier(ctx: MutationCtx, tokenIdentifier: stri
 
 async function upsertProfile(ctx: MutationCtx, identity: AuthIdentity) {
   const existing = await findUserByTokenIdentifier(ctx, identity.tokenIdentifier)
+  const email = identity.email?.trim().toLowerCase()
   const profile = {
-    ...(identity.email ? { email: identity.email } : {}),
+    ...(email ? { email } : {}),
     ...(identity.name ? { name: identity.name } : {}),
   }
 
@@ -109,6 +155,76 @@ async function createBusinessOrganization(
 export const current = query({
   args: {},
   handler: async (ctx) => getCurrentUser(ctx),
+})
+
+export const me = query({
+  args: {},
+  returns: meResult,
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) return { status: "anonymous" as const }
+
+    const user = await getCurrentUser(ctx)
+    if (!user) return { status: "missing_profile" as const }
+
+    const summary = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      accountType: user.accountType,
+      platformRole: user.platformRole,
+    }
+    if (user.status !== "active") return { status: "suspended" as const }
+
+    const membership = (
+      await ctx.db
+        .query("memberships")
+        .withIndex("by_user", (query) => query.eq("userId", user._id))
+        .take(50)
+    ).find((entry) => entry.status === "active")
+    const organization = membership
+      ? await ctx.db.get(membership.organizationId)
+      : null
+
+    if (user.platformRole === "admin") {
+      return {
+        status: "ready" as const,
+        user: summary,
+        role: "admin" as const,
+        organization: organization
+          ? {
+              _id: organization._id,
+              name: organization.name,
+              type: organization.type,
+              verificationStatus: organization.verificationStatus,
+            }
+          : null,
+        membership: membership
+          ? { role: membership.role, status: "active" as const }
+          : null,
+      }
+    }
+    if (!user.accountType) {
+      return { status: "needs_onboarding" as const, user: summary }
+    }
+
+    return {
+      status: "ready" as const,
+      user: summary,
+      role: user.accountType,
+      organization: organization
+        ? {
+            _id: organization._id,
+            name: organization.name,
+            type: organization.type,
+            verificationStatus: organization.verificationStatus,
+          }
+        : null,
+      membership: membership
+        ? { role: membership.role, status: "active" as const }
+        : null,
+    }
+  },
 })
 
 export const syncProfile = mutation({

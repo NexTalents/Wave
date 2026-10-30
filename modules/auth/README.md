@@ -41,6 +41,16 @@ Routes:
 
 Business registration stores the account type and creates a pending Convex organization with the registering user as owner. Individual registration creates only the user profile.
 
+## Bootstrap platform admin
+
+Admin access is granted only to an existing, already-synchronized Convex user. After that user has signed in once and `syncProfile` has created the profile, run the internal mutation from the Convex CLI:
+
+```bash
+npx convex run auth/admin:grantPlatformAdmin '{"email":"admin@example.com"}'
+```
+
+The command is internal and is not exposed through the public `api`. It does not create a Clerk account. Use the exact email from the Clerk profile, keep the command out of application code, and use `revokePlatformAdmin` to remove the role.
+
 ## Use in an authenticated area
 
 Wrap only the part of the app that needs authentication:
@@ -67,7 +77,7 @@ New business modules should add a permission to `permissions.ts` only when the f
 
 ## Client API
 
-Use `useCurrentUser` after the provider is mounted. It creates the local Convex profile the first time an authenticated Clerk session is seen.
+Use `useCurrentUser` after the provider is mounted to read the local Convex profile. `AuthProvider` performs the profile synchronization before authenticated dashboard flows consume it.
 
 ```tsx
 import { useCurrentUser } from "@/modules/auth"
