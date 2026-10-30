@@ -28,4 +28,18 @@ test.describe("Login", () => {
       await expectDashboard(page, user.accountType)
     })
   }
+
+  test("wrong password shows an error and stays on login", async ({ page }) => {
+    const user = authUsers[0]
+    if (!user) throw new Error("Individual test user is not configured")
+
+    await page.goto("/login")
+    await expectAuthShell(page, "Masuk ke WAVE")
+    await page.getByLabel("Email").fill(user.email)
+    await page.locator('input[name="password"]').fill(`${user.password}-wrong`)
+    await page.getByRole("button", { name: "Masuk dengan email" }).click()
+
+    await expect(page).toHaveURL(/\/login$/)
+    await expect(page.getByRole("alert")).toBeVisible()
+  })
 })
