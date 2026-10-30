@@ -4,18 +4,33 @@ The module provides a custom WAVE auth experience backed by Clerk and Convex. Th
 
 ## Setup
 
-Add these values to `.env.local`:
+Copy `.env.example` to `.env.local`, then fill the local Clerk and Convex values:
 
 ```env
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/register
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/dashboard
+NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/dashboard
 NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
 ```
 
-Set `CLERK_JWT_ISSUER_DOMAIN` in the Convex deployment environment. The value is the Clerk Frontend API URL used by the Convex integration.
+`CLERK_SECRET_KEY` is server-only and must never be exposed to client code or committed. The four redirect variables keep Clerk's server redirects on the custom WAVE routes.
+
+Set `CLERK_JWT_ISSUER_DOMAIN` in the Convex deployment environment, not in the browser environment. The value must be the Clerk Frontend API URL used by the Convex integration:
+
+```bash
+npx convex env set CLERK_JWT_ISSUER_DOMAIN <Clerk-Frontend-API-URL>
+```
+
+Verify it with `npx convex env list` without copying the value into documentation. Do not change a production deployment without explicit approval.
 
 Enable Clerk's Convex integration or create a Clerk JWT template named `convex`. `ConvexProviderWithClerk` requests that token template when the integration is not active; without it, Clerk can show a signed-in session while Convex still sees the request as unauthenticated.
 
 Enable email/password in Clerk. Email verification may remain enabled for production, but can be disabled in the Development instance for local end-to-end tests. Google and Apple buttons are available on `/login` when those social connections are enabled in the Clerk Dashboard.
+
+For local auth testing, configure the Clerk Development instance with the `convex` JWT template/integration and allow `http://localhost:3000/sso-callback`. Keep `WAVE_TEST_*` credentials in `.env` or CI secrets only; never put them in `.env.example` with real values.
 
 Routes:
 
