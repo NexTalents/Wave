@@ -25,8 +25,10 @@ const roleIcons = {
 
 export function DashboardView({
   children,
+  expectedRole,
 }: {
   children?: React.ReactNode
+  expectedRole?: DashboardRole
 }) {
   const pathname = usePathname()
   const [lapakToken, setLapakToken] = useState<string | null>(null)

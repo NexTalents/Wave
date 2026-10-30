@@ -13,6 +13,9 @@ import {
   BarChart3Icon,
   HandshakeIcon,
   ReceiptTextIcon,
+  ClipboardCheckIcon,
+  DatabaseIcon,
+  ShieldCheckIcon,
 } from "lucide-react"
 
 export type SidebarNavItem = {
