@@ -10,6 +10,8 @@ const organizationCreationType = v.union(
   v.literal("government"),
   v.literal("ngo"),
   v.literal("platform"),
+  v.literal("large_agent"),
+  v.literal("small_lapak"),
 )
 
 export const create = mutation({

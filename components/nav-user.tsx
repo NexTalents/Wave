@@ -28,7 +28,20 @@ export function NavUser() {
 
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger render={<Avatar className="size-8" />}><AvatarImage src={user.avatar} /><AvatarFallback>{user.name.charAt(0)}</AvatarFallback></DropdownMenuTrigger>
+			<DropdownMenuTrigger
+				render={
+					<button
+						aria-label="Buka menu pengguna"
+						className="rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+						type="button"
+					/>
+				}
+			>
+				<Avatar className="size-8">
+					<AvatarImage src={user.avatar} />
+					<AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+				</Avatar>
+			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-60">
 				<DropdownMenuGroup>
 					<DropdownMenuLabel className="pointer-events-none flex items-center gap-2">
